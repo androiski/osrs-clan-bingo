@@ -57,7 +57,7 @@ async function loadSample(){
 let data, sampleShown = false;
 if (live){
   mode = "live";
-  data = {state: live.state, dry: live.dry, drops: live.drops, byPlayer: live.byPlayer, nowH: live.now_h};
+  data = {state: live.state, dry: live.dry, drops: live.drops, byPlayer: live.byPlayer, byAct: live.byAct, nowH: live.now_h};
   startMs = Date.parse(live.start); endMs = Date.parse(live.end); updatedMs = Date.parse(live.updated);
 } else {
   try { const cfg = await (await fetch("config.json", {cache: "no-cache"})).json(); if (cfg.start) startMs = Date.parse(cfg.start); if (cfg.end) endMs = Date.parse(cfg.end); } catch {}

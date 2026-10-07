@@ -258,3 +258,4 @@ section.legend{margin-top:32px}
 .foot .demos{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin-bottom:12px}
 .foot .demos a{text-decoration:none;color:var(--ink);font-size:.85rem;padding:4px 10px}
 .foot .demos a[aria-current="page"]{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.dry .drynote{color:var(--muted);font-size:.8rem;margin:8px 0 0}

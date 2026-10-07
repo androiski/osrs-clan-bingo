@@ -207,7 +207,7 @@ function updateDrops(counts, events, recent, clog, live, now, start, end){
 function buildState(history, events, start, end, now, warnings){
   const H = t => Math.round((t - start) / 36) / 100;   // hours since the start, 2 decimals
   const nowH = H(Math.min(now, end));
-  const state = {}, dry = {}, drops = {}, byPlayer = {};
+  const state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {};
   const times = [0, ...history.points.map(p => H(p[0]))];
   const snapshots = [replay(history, start), ...history.points.map(p => replay(history, p[0]))];
   const gain = (vals, rsn, acts) => acts.reduce((s, a) => s + Math.max(0, ((vals[rsn] || {})[a] || 0) - ((history.baseline[rsn] || {})[a] || 0)), 0);
@@ -236,6 +236,9 @@ function buildState(history, events, start, end, now, warnings){
         const latest = snapshots[snapshots.length - 1];
         (byPlayer[i] ||= {})[team.id] = team.members.map(m => [m, gain(latest, m, track.acts)])
           .filter(r => r[1] > 0).sort((a, b) => b[1] - a[1]);
+        // Per-boss totals for tiles tracking several bosses (their drop rates differ).
+        if (track.acts.length > 1) (byAct[i] ||= {})[team.id] =
+          Object.fromEntries(track.acts.map(a => [a, team.members.reduce((s, m) => s + gain(latest, m, [a]), 0)]));
       }
 
       // Completion.
@@ -274,7 +277,7 @@ function buildState(history, events, start, end, now, warnings){
     });
   }
   return {updated: new Date(now * 1000).toISOString(), start: config.start, end: config.end,
-    now_h: Math.max(0, nowH), warnings, state, dry, drops, byPlayer};
+    now_h: Math.max(0, nowH), warnings, state, dry, drops, byPlayer, byAct};
 }
 
 export {main, updateHistory, updateDrops, buildState};
