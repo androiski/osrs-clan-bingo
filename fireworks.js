@@ -91,7 +91,7 @@ export function fireworks(color, iconUrls = []){
       }
     return letters.filter(l => l.length).map(px => {
       const xs = px.map(q => q[0]), lw = Math.max(...xs) - Math.min(...xs) + step;
-      return {px, w, h, lw, mid: (Math.max(...xs) + Math.min(...xs)) / 2, scale: 1, size: step * 0.8, word: true, shadow: step * 0.55};
+      return {px, w, h, lw, mid: (Math.max(...xs) + Math.min(...xs)) / 2, scale: 1, size: step * 0.8, word: true, shadow: step * 0.55, slow: 1.6};
     });
   }
 
@@ -104,12 +104,12 @@ export function fireworks(color, iconUrls = []){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, sx: x, sy: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
         color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-18, 0),
-        shadow: s.shadow || 0, solid: true, cx, cy});
+        shadow: s.shadow || 0, solid: true, cx, cy, slow: s.slow || 1});
     }
     if (s.word){
-      // A burst about as wide as the letter: sparks coast roughly the letter's width.
-      const reach = Math.max(s.lw, 40) / 55;   // with drag 0.982 a spark travels ~55x its starting speed
-      for (let i = 0; i < 70; i++) spark(x, y, rand(0, Math.PI * 2), reach * rand(0.55, 1.1), {size: rand(3.2, 5), gravity: 0.03});
+      // A big burst per letter: sparks coast about twice the letter's width.
+      const reach = Math.max(s.lw, 40) * 2 / 55;   // with drag 0.982 a spark travels ~55x its starting speed
+      for (let i = 0; i < 130; i++) spark(x, y, rand(0, Math.PI * 2), reach * Math.sqrt(Math.random()) * 1.15, {size: rand(3.5, 5.5), gravity: 0.03, decay: rand(0.006, 0.01)});
     } else for (let i = 0; i < 40; i++) spark(x, y, rand(0, Math.PI * 2), rand(2, 5), {size: 2.5});
   }
 
@@ -168,7 +168,7 @@ export function fireworks(color, iconUrls = []){
       r.trail.forEach(([x, y], k) => { ctx.globalAlpha = (k + 1) / r.trail.length * 0.7; ctx.fillStyle = r.color; ctx.fillRect(x - 2, y - 2, 4, 4); });
       ctx.globalAlpha = 1; ctx.fillStyle = pale; ctx.fillRect(r.x - 2.5, r.y - 2.5, 5, 5);
       if (r.y <= r.top || r.vy > -1.2){
-        if (r.shape){ flashes.push({x: r.x, y: r.y, r: 160, life: 1}); shapeBurst(r.x, r.y, r.shape); }
+        if (r.shape){ flashes.push({x: r.x, y: r.y, r: 220, life: 1}); shapeBurst(r.x, r.y, r.shape); }
         else burst(r.x, r.y);
         rockets.splice(i, 1);
       }
@@ -181,22 +181,23 @@ export function fireworks(color, iconUrls = []){
       p.px = p.x; p.py = p.y;
       if (p.shape){
         // One smooth path, worked out from the dot's age so there are no jumps: glide out from
-        // the burst into place (~1.2 s). The fall starts before the glide ends, so the dots
-        // never stop: they drift down, then drop exponentially faster, each at a slightly
-        // different speed so the shape droops like a firework, fading at the end.
+        // the burst into place (~1.2 s). The fall starts well before the glide ends and always
+        // includes a steady drift, so the dots never stop: they drift down, then drop
+        // exponentially faster, each at a slightly different speed so the shape droops like a
+        // firework, fading at the end. Bingo! runs slower (p.slow) so it stays up longer.
         p.age += dt;
         if (p.age < 0) continue;
-        const t = Math.max(0, p.age - 50);
-        if (t > 170){ sparks.splice(i, 1); continue; }
+        const t = Math.max(0, p.age - 40), T = t / p.slow;
+        if (T > 170){ sparks.splice(i, 1); continue; }
         if (p.fall === undefined){ p.fall = rand(0.8, 1.25); p.side = rand(-1, 1); }
-        const ease = 1 - Math.pow(1 - Math.min(1, p.age / 70), 3);
-        const drop = p.fall * (0.25 * t + 2.6 * (Math.exp(t / 38) - 1 - t / 38));
+        const ease = 1 - Math.pow(1 - Math.min(1, p.age / 70), 2);
+        const drop = p.fall * (0.4 * t + 2.6 * (Math.exp(T / 38) - 1 - T / 38));
         // While falling, spread outward from the shape's centre like ordinary sparks, fastest at
         // first and then levelling off (as if slowed by drag), with a little randomness.
-        const spread = 1 - Math.exp(-t / 80);
+        const spread = 1 - Math.exp(-T / 80);
         p.x = p.sx + (p.tx - p.sx) * ease + ((p.tx - p.cx) * 0.4 + p.side * 30) * spread;
         p.y = p.sy + (p.ty - p.sy) * ease + (p.ty - p.cy) * 0.25 * spread + drop;
-        p.fade = 1 - Math.pow(Math.max(0, t - 70) / 100, 1.5);
+        p.fade = 1 - Math.pow(Math.max(0, T - 70) / 100, 1.5);
         if (p.solid){ solids.push(p); continue; }
         // Items fade in over ~0.75 s.
         ctx.globalAlpha = 0.8 * Math.min(1, p.age / 45);
