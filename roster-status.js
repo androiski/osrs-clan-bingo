@@ -65,6 +65,9 @@ window.ROSTER_STATUS = {
   "Halfmeatball": {
    "status": "unsynced"
   },
+  "nafun": {
+   "status": "missing"
+  },
   "tv milk": {
    "status": "unsynced"
   },
