@@ -82,7 +82,8 @@ export function fireworks(color, iconUrls = []){
     g.font = font; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.fillText(word, 4, h / 2);
     const step = Math.max(3, Math.round(fontPx / 30)), d = g.getImageData(0, 0, w, h).data, px = [];
     for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step)
-      if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, pick([pale, pale, light, base])]);
+      // OSRS chat yellow, whatever the team's colour.
+      if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, pick(["#ffff00", "#ffff00", "#ffff00", "#ffee55"])]);
     return {px, w, h, scale: 1, size: step * 0.8, hold: 90, word: true};
   }
 
