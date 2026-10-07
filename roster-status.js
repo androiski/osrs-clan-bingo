@@ -1,8 +1,9 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-07 13:41 UTC",
+ "checked": "2026-10-07 20:06 UTC",
  "players": {
   "yaint thiccy": {
-   "status": "unsynced"
+   "status": "synced",
+   "log_last_changed": "2026-10-07 18:11:52"
   },
   "Cenaras": {
    "status": "unsynced"
@@ -28,7 +29,7 @@ window.ROSTER_STATUS = {
   },
   "ll Grub ll": {
    "status": "synced",
-   "log_last_changed": "2026-04-12 02:05:28"
+   "log_last_changed": "2026-10-07 17:17:18"
   },
   "duhmass": {
    "status": "synced",
@@ -59,7 +60,7 @@ window.ROSTER_STATUS = {
   },
   "Bhnr": {
    "status": "synced",
-   "log_last_changed": "2026-09-11 17:32:10"
+   "log_last_changed": "2026-10-07 17:38:50"
   },
   "Halfmeatball": {
    "status": "unsynced"
