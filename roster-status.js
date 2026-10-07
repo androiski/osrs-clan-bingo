@@ -90,6 +90,10 @@ window.ROSTER_STATUS = {
   "Lootbuster42": {
    "status": "synced",
    "log_last_changed": "2026-10-02 04:34:26"
+  },
+  "PlE": {
+   "status": "synced",
+   "log_last_changed": "2026-10-05 20:52:18"
   }
  }
 };
