@@ -1,6 +1,8 @@
-// Cloudflare Worker for mod entries: tiles a mod marks as completed by hand (e.g. from a
-// screenshot) when TempleOSRS missed them. The board's update job reads the list and treats
-// each entry like a drop, so count tiles, Barrows sets and the Bingo all work as usual.
+// Cloudflare Worker for mod entries, which manually edit a tile for a team:
+//   "done"  a completion TempleOSRS missed (e.g. from a screenshot). The update job treats it
+//           like a drop, so count tiles, Barrows sets and the Bingo all work as usual.
+//   "void"  unchecks a completion (the drop that finished the tile stops counting; progress
+//           stays, and the next qualifying drop completes it again).
 //
 //   GET    /entries          the list (public, so the update job and the page can read it)
 //   POST   /check            {password} -> 200 if right; the mod panel uses it to unlock
@@ -70,8 +72,16 @@ export default {
 function clean(e){
   if (!e || typeof e !== "object") return "Missing entry.";
   const str = (v, n) => typeof v === "string" && v.trim() && v.length <= n ? v.trim() : null;
+  if (e.action === "void"){
+    const out = {action: "void", team: str(e.team, 10), tile: Number.isInteger(e.tile) && e.tile >= 0 && e.tile < 25 ? e.tile : null,
+      by: str(e.by, 20), h: Number.isFinite(e.h) ? e.h : null, item: e.item == null ? null : str(e.item, 60),
+      itemId: Number.isInteger(e.itemId) ? e.itemId : null, note: e.note == null || e.note === "" ? null : str(e.note, 200), mod: str(e.mod, 30)};
+    if (!out.team || out.tile == null || !out.by || out.h == null || !out.mod) return "Team, tile, the completion and your name are needed.";
+    if (e.note && !out.note) return "The note is too long.";
+    return out;
+  }
   const out = {
-    team: str(e.team, 10), tile: Number.isInteger(e.tile) && e.tile >= 0 && e.tile < 25 ? e.tile : null,
+    action: "done", team: str(e.team, 10), tile: Number.isInteger(e.tile) && e.tile >= 0 && e.tile < 25 ? e.tile : null,
     by: str(e.by, 20), when: str(e.when, 30),
     item: e.item == null ? null : str(e.item, 60), itemId: e.itemId == null ? null : Number.isInteger(e.itemId) ? e.itemId : NaN,
     note: e.note == null || e.note === "" ? null : str(e.note, 200), mod: str(e.mod, 30),

@@ -32,7 +32,13 @@ lock it out for an hour.
 
 ## Entries
 
-Each entry: team, tile, player, item (left out for the XP tile, which it just marks
-done), time, the mod's name and an optional note. On the board it counts exactly like a
-drop at that time: a single item finishes a normal tile, three shards finish the shards
-tile, and so on. Entries after the first Bingo don't count. Removing an entry undoes it.
+Two kinds, both with the mod's name and an optional note:
+
+- **Mark done**: team, tile, player, item (left out for the XP tile, which it just marks
+  done) and time. On the board it counts exactly like a drop at that time: a single item
+  finishes a normal tile, three shards finish the shards tile, and so on.
+- **Uncheck**: undoes a team's completion of a tile (say a drop wasn't legit). The drop
+  that finished it stops counting and is shown as unchecked; any other progress stays,
+  and the next qualifying drop completes the tile again.
+
+Entries after the first Bingo don't count. Removing an entry undoes it.
