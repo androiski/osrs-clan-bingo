@@ -60,7 +60,7 @@ if (live){
   data = {state: live.state, dry: live.dry, drops: live.drops, byPlayer: live.byPlayer, nowH: live.now_h};
   startMs = Date.parse(live.start); endMs = Date.parse(live.end); updatedMs = Date.parse(live.updated);
 } else {
-  try { const cfg = await (await fetch("config.json", {cache: "no-cache"})).json(); if (cfg.start) startMs = Date.parse(cfg.start); } catch {}
+  try { const cfg = await (await fetch("config.json", {cache: "no-cache"})).json(); if (cfg.start) startMs = Date.parse(cfg.start); if (cfg.end) endMs = Date.parse(cfg.end); } catch {}
   mode = "preview";
   if (demoMode && demoMode !== "preview"){
     mode = "demo";
@@ -80,11 +80,15 @@ const since = ms => {
   return mins < 1 ? "just now" : mins < 90 ? `${mins} min ago` : `${Math.round(mins / 60)} h ${mins % 60} min ago`;
 };
 const clock = ms => new Date(ms).toLocaleTimeString(undefined, {hour: "numeric", minute: "2-digit"});
+// Under the title: the event's dates, plus how fresh the data is while it runs.
+const dates = () => startMs && endMs
+  ? `${new Date(startMs).toLocaleString(undefined, {weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit"})} – ${when(endMs)}`
+  : startMs ? `Starts ${when(startMs)}` : "";
 function renderStatus(){
-  status.textContent = mode === "preview" ? (startMs ? `Starts ${when(startMs)}` : "")
-    : Date.now() < startMs ? `Starts ${when(startMs)}`
-    : Date.now() > endMs ? `Ended ${when(endMs)} · final results`
-    : `Updated ${since(updatedMs)} · refreshes every 30 minutes`;
+  const now = Date.now();
+  status.textContent = [dates(),
+    mode === "preview" || now < startMs ? "" : now > endMs ? "final results" : `updated ${since(updatedMs)}`]
+    .filter(Boolean).join(" · ");
   for (const el of document.querySelectorAll("[data-since]")) el.textContent = `${clock(updatedMs)} (${since(updatedMs)})`;
 }
 setInterval(renderStatus, 30000);
