@@ -141,11 +141,10 @@ async function main(){
 // Builds state.json: Temple's drops plus mod entries, cut off at the first Bingo.
 function finish(history, events, entries, start, end, now, warnings){
   const all = [...events, ...manualEvents(entries)].sort((a, b) => a.t - b.t);
-  const voids = (entries || []).filter(e => e.action === "void");
-  let state = buildState(history, all, start, end, now, warnings, voids);
+  let state = buildState(history, all, start, end, now, warnings);
   // Nothing after the first Bingo counts (it may be earlier than last run's, after a late sync
   // or a mod entry; or gone, if a mod entry was removed).
-  if (state.bingo && start + state.bingo.h * 3600 < end) state = buildState(history, all, start, start + state.bingo.h * 3600, now, warnings, voids);
+  if (state.bingo && start + state.bingo.h * 3600 < end) state = buildState(history, all, start, start + state.bingo.h * 3600, now, warnings);
   if (state.bingo){
     state.final_at = new Date((start + state.bingo.h * 3600 + (config.verify_hours ?? 3) * 3600) * 1000).toISOString();
     log(`Bingo! ${state.bingo.team} at ${state.bingo.h} h. Late drops are checked until ${state.final_at}.`);
@@ -173,12 +172,11 @@ async function modEntries(){
   }
 }
 
-// Each "done" entry becomes a drop ("manual"), or for a tile with no item (the XP tile) a straight
+// Each entry becomes a drop ("manual"), or for a tile with no item (the XP tile) a straight
 // "done" ("manual-tile"). Entries that don't fit the board are skipped with a note in the log.
 function manualEvents(entries){
   const out = [];
   for (const e of entries || []){
-    if (e.action === "void") continue;   // handled in buildState
     const p = teamOf(e.by), t = Math.floor(Date.parse(e.when) / 1000);
     if (!p || p.team !== e.team || !TILES[e.tile] || !Number.isFinite(t)){ log(`  ! Mod entry ${e.id} doesn't match the board; skipped.`); continue; }
     if (e.itemId != null){
@@ -286,8 +284,7 @@ function updateDrops(counts, events, recent, clog, live, now, start, end){
 
 // ---- what the site shows -------------------------------------------------------------
 
-// voids: mod entries that uncheck a completion (see worker/index.js).
-function buildState(history, events, start, end, now, warnings, voids = []){
+function buildState(history, events, start, end, now, warnings){
   const H = t => Math.round((t - start) / 36) / 100;   // hours since the start, 2 decimals
   const nowH = H(Math.min(now, end));
   const state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {};
@@ -304,10 +301,7 @@ function buildState(history, events, start, end, now, warnings, voids = []){
     TILES.forEach((tile, i) => {
       const rows = TILE_ITEMS[i] || [];
       const info = new Map(rows.map(r => [r[1], r]));
-      // A voided completion's drop doesn't count (it's still listed, as not counting).
-      const myVoids = voids.filter(v => v.team === team.id && v.tile === i);
-      const isVoid = e => myVoids.some(v => v.by === e.rsn && Math.abs(H(e.t) - v.h) < 0.02 && (v.itemId == null || v.itemId === e.id));
-      const all = teamEvents.filter(e => info.has(e.id)), evs = all.filter(e => !isVoid(e));
+      const evs = teamEvents.filter(e => info.has(e.id));
       const track = TRACK[i];
 
       // KC/XP over time, and each player's share.
@@ -333,7 +327,7 @@ function buildState(history, events, start, end, now, warnings, voids = []){
       if (tile.s === "xp"){
         const cross = series.find(p => p[1] >= tile.target);
         progress = series[series.length - 1][1];
-        if (cross && !myVoids.some(v => Math.abs(cross[0] - v.h) < 0.02)) done = {by: "Team", when: cross[0], item: `${Math.round(tile.target / 1000)}k reached`};
+        if (cross) done = {by: "Team", when: cross[0], item: `${Math.round(tile.target / 1000)}k reached`};
       } else if (rows.some(r => r[3])){
         // Barrows: four different pieces of one brother, from anyone on the team.
         const sets = {};
@@ -356,7 +350,7 @@ function buildState(history, events, start, end, now, warnings, voids = []){
       }
       // A mod marked the tile done without an item (the XP tile, or anything Temple can't show).
       if (!done){
-        const m = teamEvents.find(e => e.src === "manual-tile" && e.tile === i && !isVoid(e));
+        const m = teamEvents.find(e => e.src === "manual-tile" && e.tile === i);
         if (m) done = {by: m.rsn, when: H(m.t), item: "Marked done by a mod", manual: true};
       }
       if (done && done.ev && done.ev.src === "manual") done.manual = true;
@@ -364,9 +358,8 @@ function buildState(history, events, start, end, now, warnings, voids = []){
       else if (progress) state[team.id][i] = {done: false, progress};
 
       // Every drop on this tile except the one that finished it.
-      const list = all.filter(e => !done || e !== done.ev).map(e => ({
-        h: H(e.t), name: e.name, id: e.id, by: e.rsn, kind: info.get(e.id)[2] && !isVoid(e) ? "progress" : "other",
-        ...(e.src === "manual" ? {manual: true} : {}), ...(isVoid(e) ? {voided: true} : {})}));
+      const list = evs.filter(e => !done || e !== done.ev).map(e => ({
+        h: H(e.t), name: e.name, id: e.id, by: e.rsn, kind: info.get(e.id)[2] ? "progress" : "other", ...(e.src === "manual" ? {manual: true} : {})}));
       if (list.length) (drops[i] ||= {})[team.id] = list;
     });
   }

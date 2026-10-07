@@ -67,8 +67,7 @@ Every run is a commit, so git history is the audit trail.
 
 Screenshots are the primary verification, so mods can add a tile TempleOSRS missed straight
 from the page: select the tile, then open "Mod entry" at the bottom of the tile panel
-(team → player → item → time). It can also uncheck a completion: that drop stops counting,
-progress stays, and the next qualifying drop completes the tile again. It's locked by a password that a small Cloudflare Worker checks, so the password
+(team → player → item → time). It's locked by a password that a small Cloudflare Worker checks, so the password
 isn't in this public repo. An entry counts like a drop at that time, and the board rebuilds
 within a couple of minutes (`.github/workflows/mod-entry.yml`). Setup: `worker/README.md`.
 
