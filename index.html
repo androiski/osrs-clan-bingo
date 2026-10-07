@@ -26,6 +26,7 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
   </header>
 
   <div class="banner" id="banner" role="status" hidden></div>
+  <div class="countdown" id="countdown" hidden></div>
 
   <div class="callout" role="note">
     <h2>Open your collection log, or your drops won't count</h2>
@@ -33,7 +34,7 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
       <li><b>Before the event starts:</b> install the TempleOSRS RuneLite plugin and turn on <b>Automatically sync Collection Log</b> and <b>Auto-Update</b> in its settings. Then open your collection log in game and click through every page.</li>
       <li><b>During the event:</b> if you get a bingo drop you already had in your log, open that page of your collection log again. Repeat drops only reach the board once you do.</li>
     </ol>
-    <a href="#rules">Full rules</a>
+    <a href="#rules">Rules and info</a>
   </div>
 
   <div class="scores" id="scores"></div>
@@ -52,8 +53,8 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
   </div>
 
   <section class="rules" id="rules">
-    <h2>Rules</h2>
-    <p class="note">The board updates itself from TempleOSRS. Nobody needs to post screenshots, but it can only see what your collection log tells it.</p>
+    <h2>Rules and Info</h2>
+    <p class="note">The board updates itself from TempleOSRS, so it can only see what your collection log tells it.</p>
     <div class="lgrid">
       <div><b>How to win</b>The first team to complete a full line wins. A line is any row, column or diagonal of 5 tiles.</div>
       <div><b>Before the start</b>Install the TempleOSRS RuneLite plugin. In its settings, turn on Automatically sync Collection Log (Collection Log section) and Auto-Update (Ranks section). Then open your collection log and click through every page, so Temple records what you already have.</div>
@@ -61,6 +62,7 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
       <div><b>Repeat drops</b>If you already had the item, the board only sees your count go up. Open that item's collection log page after the drop so Temple picks up the new count. If you're unsure, open it anyway.</div>
       <div><b>Drop times</b>Each tile shows when the board first saw the drop, not the exact minute it happened. If two teams finish a line close together, organisers decide the winner by hand.</div>
       <div><b>KC and XP</b>Progress charts and the Runecraft tile use your TempleOSRS stats, which Auto-Update refreshes when you log out. On long grinds, log out now and then.</div>
+      <div><b>Screenshots, just in case</b>Keep the clan event plugin on and screenshot every bingo drop. If the board misses one, organisers can check it.</div>
       <div><b>No Temple profile, no points</b>If Temple can't find your RSN, nothing you get will count. Check the Teams list below.</div>
     </div>
   </section>

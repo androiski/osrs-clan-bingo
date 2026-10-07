@@ -38,6 +38,13 @@ function loadScript(src){
       if (!startedAlready && ms <= Date.now()){ clearInterval(id); setTimeout(() => location.reload(), 2000); }
     }, 1000);
   }
+  function showCountdown(ms, note){
+    const box = document.getElementById("countdown");
+    box.innerHTML = `<h2>Bingo starts in</h2><div class="timer" role="timer" aria-label="Time until the bingo starts"></div>` +
+      `<p class="when"><b>${when(ms)}</b> (your time). ${note}</p>`;
+    countdown(box.querySelector(".timer"), ms);
+    box.hidden = false;
+  }
   const when = ms => new Date(ms).toLocaleString(undefined, {weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZoneName: "short"});
   if (live){
     Object.assign(window, {state: live.state, dry: live.dry, drops: live.drops, byPlayer: live.byPlayer, NOW_H: live.now_h});
@@ -47,13 +54,7 @@ function loadScript(src){
     status.textContent = Date.now() < startMs ? `Starts ${when(startMs)}`
       : Date.now() > endMs ? `Ended ${when(endMs)} · final results`
       : `Updated ${updated} · refreshes every 30 minutes`;
-    if (Date.now() < startMs){
-      const banner = document.getElementById("banner");
-      banner.innerHTML = `<h2>Starting soon</h2><div class="timer" role="timer" aria-label="Time until the bingo starts"></div>` +
-        `<p class="when">Starts <b>${when(startMs)}</b> (your time). Drops count from then.</p>`;
-      countdown(banner.querySelector(".timer"), startMs);
-      banner.hidden = false;
-    }
+    if (Date.now() < startMs) showCountdown(startMs, "Drops count from then.");
   } else {
     await loadScript("sample-data.js");
     let starts = "", startMs = 0;
@@ -61,11 +62,9 @@ function loadScript(src){
       if (cfg.start){ startMs = Date.parse(cfg.start); starts = `Starts ${when(startMs)}`; } } catch {}
     status.textContent = starts ? starts.trim() : "Sample data";
     const banner = document.getElementById("banner");
-    banner.innerHTML = `<h2>Preview</h2><p>This page is a preview with sample data, to show how it could look.</p>` +
-      (startMs ? `<div class="timer" role="timer" aria-label="Time until the bingo starts"></div>` +
-        `<p class="when">The bingo starts <b>${when(startMs)}</b> (your time), and the board goes live then.</p>` : "");
-    if (startMs) countdown(banner.querySelector(".timer"), startMs);
+    banner.innerHTML = `<h2>Preview</h2><p>This page is a preview with sample data, to show how it could look.</p>`;
     banner.hidden = false;
+    if (startMs > Date.now()) showCountdown(startMs, "The board goes live then.");
   }
   start();
 })();
