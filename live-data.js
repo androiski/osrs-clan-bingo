@@ -214,7 +214,7 @@ function renderResults(){
   const title = isWinner ? `${chosen.t.name} won!`
     : winner || ended ? `${chosen.t.name} came ${ordinal(place)}`
     : `${chosen.t.name} are ${ordinal(place)} so far`;
-  const sub = chosen.first ? `First line completed @ ${dayLabel(hoursOf(chosen.first.when))}`
+  const sub = chosen.first ? `${isWinner ? "BINGO" : "First line completed"} @ ${dayLabel(hoursOf(chosen.first.when))}`
     : `${chosen.best} of 5 on their best line · ${plural(chosen.tiles, "tile")}`;
   announce(isWinner ? "win" : "team", `${teamIco(chosen.t, "tico-l")}${title}`, 0, "", sub);
   box.style.setProperty("--c", colorVar(chosen.t.id));
