@@ -411,4 +411,4 @@ export function start(){
     .observe(document.getElementById("dry"));
 }
 
-export {ranking, stats, playerStats, teamIco, colorVar, dayLabel, hoursOf, whenKey, valueAt, LINES, ICON};
+export {render, ranking, stats, playerStats, teamIco, colorVar, dayLabel, hoursOf, whenKey, valueAt, LINES, ICON};
