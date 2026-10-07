@@ -59,7 +59,7 @@ function loadScript(src){
     : `Updated ${updated} · refreshes every 30 minutes`;
   if (mode !== "live"){
     banner.innerHTML = demo ? window.bingoDemo.banner()
-      : `<h2>Preview</h2><p>This page is a preview with sample data, to show how it could look.</p>`;
+      : `<h2>Preview</h2><p>Everything below is a preview with sample data, to show how it could look.</p>`;
     banner.hidden = false;
   }
 
@@ -147,6 +147,11 @@ function loadScript(src){
     // Before the start, show the Teams list (who has synced their log) right under the
     // "open your collection log" notice.
     document.querySelector(".callout").after(document.querySelector("section.rosters"));
+  }
+  if (mode === "preview"){
+    // The Teams list is real; everything below it is sample data. Put the "Preview" box
+    // between them so it's clear where the sample starts.
+    document.querySelector("section.rosters").after(banner);
   }
 
   start();
