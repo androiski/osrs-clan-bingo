@@ -165,6 +165,9 @@ section.rosters h2,section.legend h2{font-family:var(--display);font-weight:400;
 .chip.warn{color:var(--warn);border-color:var(--warn)}
 .chip.bad{color:var(--bg);background:var(--bad);border-color:var(--bad);font-weight:600}
 
+.banner{margin:20px 0 0;padding:12px 16px;border:2px dashed var(--warn);border-radius:6px;background:color-mix(in srgb,var(--panel) 85%,var(--warn))}
+.banner h2{font-family:var(--display);font-weight:400;color:var(--warn);font-size:24px;margin:0 0 4px;text-shadow:var(--shadow)}
+.banner p{margin:0}
 .callout{background:var(--panel);border:1px solid var(--gold);border-left:5px solid var(--gold);border-radius:2px 6px 6px 2px;padding:14px 16px;margin:20px 0 0}
 .callout h2{font-family:var(--display);font-weight:400;color:var(--gold);font-size:24px;text-shadow:var(--shadow);margin:0 0 8px}
 .callout ol{margin:0 0 8px;padding-left:1.3em}
