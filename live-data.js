@@ -80,10 +80,27 @@ function loadScript(src){
     const winner = TEAMS.map(t => ({t, first: stats(t.id).first})).filter(r => r.first)
       .sort((a, b) => whenKey(a.first.when) - whenKey(b.first.when))[0];
     if (winner){
-      announce("win", `${winner.t.name} ${Date.now() > endMs ? "won" : "has won"}!`, 0, "",
+      const team = winner.t, people = playerStats(team);
+      const plural = (n, w) => `<b>${n}</b> ${w}${n === 1 ? "" : "s"}`;
+      const names = team.members.length > 1 ? team.members.slice(0, -1).join(", ") + " and " + team.members.at(-1) : team.members[0];
+      announce("win", `${team.name} won!`, 0, "",
         `First line completed @ ${dayLabel(hoursOf(winner.first.when))}`);
-      box.style.setProperty("--c", colorVar(winner.t.id));
-      fireworks(getComputedStyle(document.documentElement).getPropertyValue(`--${winner.t.id}`).trim());
+      box.style.setProperty("--c", colorVar(team.id));
+      box.insertAdjacentHTML("beforeend",
+        `<p class="congrats">Congrats to ${names}!</p>` +
+        `<div class="roll">${people.map(p => `<div><b class="who">${p.name}</b>` +
+          `<span>${plural(p.tiles, "tile")} · ${plural(p.drops, "drop")} · <b>${p.kc.toLocaleString("en-GB")}</b> KC</span>` +
+          (p.icons.length ? `<span class="got">${p.icons.map(i => `<img src="${i.src}" alt="${i.name}" title="${i.name}">`).join("")}</span>` : "") +
+          `</div>`).join("")}</div>`);
+      // Item-shaped bursts use the icons of the tiles this team finished.
+      const icons = [...new Set(people.flatMap(p => p.icons.map(i => i.src)))].slice(0, 10);
+      const stop = fireworks(getComputedStyle(document.documentElement).getPropertyValue(`--${team.id}`).trim(), icons);
+      if (stop){
+        box.insertAdjacentHTML("beforeend", `<p class="hint">Click anywhere to stop the fireworks.</p>`);
+        const off = () => { stop(); box.querySelector(".hint")?.remove();
+          removeEventListener("pointerdown", off); removeEventListener("keydown", off); };
+        addEventListener("pointerdown", off); addEventListener("keydown", off);
+      }
     } else if (Date.now() <= endMs){
       announce("go", "The Bingo Has Started!", endMs, "Time until the bingo ends",
         `Ends <b>${when(endMs)}</b> (your time). First team to complete a line wins.`);

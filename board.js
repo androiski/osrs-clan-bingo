@@ -344,6 +344,24 @@ themeBtn.onclick = () => {
 };
 darkQuery.addEventListener("change", renderThemeBtn);
 
+// Each player's bingo stats: tiles they finished (with icons), drops they got,
+// and kill count on tracked bosses. Best first.
+function playerStats(team){
+  const t = state[team.id] || {};
+  return team.members.map(m => {
+    const finished = Object.entries(t).filter(([, e]) => e.done && e.by === m);
+    let dropsGot = finished.length, kc = 0;
+    for (const [i, byTeam] of Object.entries(drops)) dropsGot += ((byTeam || {})[team.id] || []).filter(d => d.by === m).length;
+    for (const [i, tr] of Object.entries(TRACK)){
+      if (tr.unit !== "KC") continue;
+      const row = (((byPlayer[i] || {})[team.id]) || []).find(r => r[0] === m);
+      if (row) kc += row[1];
+    }
+    const icons = finished.map(([i, e]) => ({src: e.id ? ICON(e.id) : tileIcon(+i), name: TILES[i].n}));
+    return {name: m, tiles: finished.length, drops: dropsGot, kc, icons};
+  }).sort((a, b) => b.tiles - a.tiles || b.drops - a.drops || b.kc - a.kc);
+}
+
 // Called by index.html once the event data has loaded.
 function start(){
   renderThemeBtn(); renderRosters(); renderLegend(); render();
