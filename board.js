@@ -13,7 +13,7 @@ function tileIcon(i){
   return row ? ICON(row[1]) : null;
 }
 const tileFace = (i, tile) => { const src = tileIcon(i);
-  return `${src ? `<img class="tico" src="${src}" alt="" loading="lazy">` : ""}<span class="tname">${tile.n}</span>`; };
+  return `${src ? `<img class="tico" src="${src}" alt="" loading="lazy">` : ""}<span class="tname"><span class="full">${tile.n}</span><span class="short">${tile.short || tile.n}</span></span>`; };
 
 let view = "all", selected = 12;
 // A team's icon (chompy bird, greyhound, cake), sized by the class.

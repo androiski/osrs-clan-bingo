@@ -13,32 +13,33 @@ export const SOURCES = {
   xp:     {mark:"XP", label:"Hiscores XP", detail:"Team total gained during the event, from TempleOSRS hiscores. Players must be updated on Temple before the start (Auto-Update does this when you log out)."}
 };
 
+// n: full tile name; short: shorter name used on phones, where tiles are small.
 export const TILES = [
   {n:"Ring of Endurance", s:"clog"},
-  {n:"1 Enhanced or 3 Armor Seeds", s:"qty", target:3, count:"Armour seeds", alone:["Enhanced crystal weapon seed"], rule:"Seeds can come from different players on the team."},
+  {n:"1 Enhanced or 3 Armor Seeds", short:"Crystal Seeds", s:"qty", target:3, count:"Armour seeds", alone:["Enhanced crystal weapon seed"], rule:"Seeds can come from different players on the team."},
   {n:"Dragonhunter Wand", s:"clog"},
   {n:"Any Pet", s:"clog", rule:"Every pet counts, including skilling pets and the chompy chick."},
-  {n:"Any ToA Purple (no LB/Fang)", s:"clog"},
+  {n:"Any ToA Purple (no LB/Fang)", short:"ToA Purple", s:"clog"},
   {n:"3 Venator Shards", s:"qty", target:3, count:"Shards", rule:"Shards can come from different players on the team."},
-  {n:"Any Maggot King Unique", s:"clog", rule:"Crimson kisten, Elder venator fang or the Maggot marquess pet."},
-  {n:"Any Virtus Piece", s:"clog"},
+  {n:"Any Maggot King Unique", short:"Maggot King Unique", s:"clog", rule:"Crimson kisten, Elder venator fang or the Maggot marquess pet."},
+  {n:"Any Virtus Piece", short:"Virtus Piece", s:"clog"},
   {n:"Inky Paint", s:"clog"},
-  {n:"Any Voidwaker Piece", s:"clog"},
-  {n:"Any ToB Purple (no Avernic)", s:"clog"},
-  {n:"Araxxor Fang or 3 Hally Pieces", s:"qty", target:3, count:"Hally pieces", alone:["Araxyte fang"], countIcon:29796 /* Noxious halberd */, rule:"Pieces can come from different players on the team."},
-  {n:"500,000 Runecraft XP", s:"xp", target:500000},
-  {n:"1 Full Barrows Set", s:"qty", target:4, rule:"All 4 pieces of one brother's set. Pieces can come from different players on the team."},
+  {n:"Any Voidwaker Piece", short:"Voidwaker Piece", s:"clog"},
+  {n:"Any ToB Purple (no Avernic)", short:"ToB Purple", s:"clog"},
+  {n:"Araxxor Fang or 3 Hally Pieces", short:"Fang / 3 Hally", s:"qty", target:3, count:"Hally pieces", alone:["Araxyte fang"], countIcon:29796 /* Noxious halberd */, rule:"Pieces can come from different players on the team."},
+  {n:"500,000 Runecraft XP", short:"500k RC XP", s:"xp", target:500000},
+  {n:"1 Full Barrows Set", short:"Barrows Set", s:"qty", target:4, rule:"All 4 pieces of one brother's set. Pieces can come from different players on the team."},
   {n:"Pharaoh's Sceptre", s:"clog"},
-  {n:"1 Tanz Fang", s:"clog"},
+  {n:"1 Tanz Fang", short:"Tanz Fang", s:"clog"},
   {n:"Golden Tench", s:"clog"},
   {n:"Dragon Limbs", s:"clog"},
-  {n:"Any PNM Unique", s:"clog"},
-  {n:"Horn or Oathplate Piece", s:"clog", rule:"Soulflame horn, Oathplate helm, chest or legs. Oathplate shards don't count."},
+  {n:"Any PNM Unique", short:"PNM Unique", s:"clog"},
+  {n:"Horn or Oathplate Piece", short:"Horn / Oathplate", s:"clog", rule:"Soulflame horn, Oathplate helm, chest or legs. Oathplate shards don't count."},
   {n:"Crystal Tool Seed", s:"clog"},
-  {n:"Any Doom Unique (no pet)", s:"clog", rule:"Avernic treads, Eye of Ayak, Mokhaiotl cloth or waystone. Dom and Demon tear don't count."},
-  {n:"Any CoX Purple (no prayer scroll)", s:"clog"},
-  {n:"A Zenyte", s:"clog"},
-  {n:"Any Cerb Crystal", s:"clog"}
+  {n:"Any Doom Unique (no pet)", short:"Doom Unique", s:"clog", rule:"Avernic treads, Eye of Ayak, Mokhaiotl cloth or waystone. Dom and Demon tear don't count."},
+  {n:"Any CoX Purple (no prayer scroll)", short:"CoX Purple", s:"clog"},
+  {n:"A Zenyte", short:"Zenyte", s:"clog"},
+  {n:"Any Cerb Crystal", short:"Cerb Crystal", s:"clog"}
 ];
 
 // The icon shown on each board tile, by clog item name (looked up in TILE_ITEMS).
