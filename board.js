@@ -10,6 +10,8 @@ const tileFace = (i, tile) => { const src = tileIcon(i);
   return `${src ? `<img class="tico" src="${src}" alt="" loading="lazy">` : ""}<span class="tname">${tile.n}</span>`; };
 
 let view = "all", selected = 12;
+// A team's icon (chompy bird, greyhound, cake), sized by the class.
+const teamIco = (t, cls = "tico-s") => t.icon ? `<img class="${cls}" src="${ICON(t.icon)}" alt="">` : "";
 const colorVar = id => `var(--${id})`;
 const fmt = n => n >= 1000 ? Math.round(n/1000) + "k" : String(n);
 
@@ -54,7 +56,7 @@ function renderScores(){
   document.getElementById("scores").innerHTML = ranked.map((r,i)=>`
     <div class="score${r.first?" won":""}" style="--c:${colorVar(r.t.id)}">
       <span class="rank">#${i+1}</span>
-      <h2>${r.t.name}</h2>
+      <h2>${teamIco(r.t, "tico-m")}${r.t.name}</h2>
       ${r.first
         ? `<div class="bingo">Bingo! Line completed @ ${dayLabel(hoursOf(r.first.when))}</div>`
         : `<div class="nums"><span><b>${r.best}</b>of 5 on their best line</span><span><b>${r.tiles}</b>tiles</span></div>
@@ -66,7 +68,7 @@ function renderViewbar(){
   const vb = document.getElementById("viewbar");
   vb.innerHTML = '<span>Show</span>' +
     `<button class="btn" data-view="all" aria-pressed="${view==="all"}">All teams</button>` +
-    TEAMS.map(t=>`<button class="btn" data-team data-view="${t.id}" style="--c:${colorVar(t.id)}" aria-pressed="${view===t.id}">${t.name}</button>`).join("");
+    TEAMS.map(t=>`<button class="btn" data-team data-view="${t.id}" style="--c:${colorVar(t.id)}" aria-pressed="${view===t.id}">${teamIco(t)}${t.name}</button>`).join("");
   vb.querySelectorAll("button").forEach(b=>b.onclick=()=>{view=b.dataset.view;render();});
 }
 
@@ -146,7 +148,7 @@ function renderDetail(){
       else if (prog) st = `<div class="st">${prog}</div>`;
       else if (tile.s === "xp" && e && e.progress) st = `<div class="st">${progressText(tile,e)}</div>`;
       else st = `<div class="st empty">-</div>`;
-      return `<div class="trow" style="--c:${colorVar(t.id)}"><div class="tn">${t.name}</div>${st}</div>`;
+      return `<div class="trow" style="--c:${colorVar(t.id)}"><div class="tn">${teamIco(t)}${t.name}</div>${st}</div>`;
     }).join("");
 }
 
@@ -175,7 +177,7 @@ function renderRosters(){
     const synced = t.members.filter(m=>players[m] && players[m].status === "synced").length;
     return `
     <div class="roster" style="--c:${colorVar(t.id)}">
-      <h3>${t.name} (${rs ? `${synced}/${t.members.length} synced` : t.members.length})</h3>
+      <h3>${teamIco(t)}${t.name} (${rs ? `${synced}/${t.members.length} synced` : t.members.length})</h3>
       <ul>${t.members.map(m=>`<li><span>${m}</span>${rosterChip(players[m])}</li>`).join("")}</ul>
     </div>`;
   }).join("");
@@ -289,7 +291,7 @@ function renderDry(){
       `<img class="ico ${dr.kind}" src="${ICON(dr.id)}" alt="${dr.name}" title="${got(dr.name, dr.by, dr.h)}${dr.kind === "other" ? " (doesn't count)" : ""}">`).join("");
     const who = ((byPlayer[selected]||{})[s.t.id]||[]);
     const split = who.length ? `<tr class="who"><td colspan="3">${who.map(([m,v])=>`<span>${m} <b>${fmtN(v, tr.unit)}</b>${icons(m)}</span>`).join('<i>·</i>')}</td></tr>` : "";
-    return `<tr class="team"><td><span class="sw" style="--c:${colorVar(s.t.id)}"></span> ${s.t.name}</td><td class="n">${fmtN(s.total, tr.unit)}</td><td>${status}</td></tr>${split}`;
+    return `<tr class="team"><td><span class="sw" style="--c:${colorVar(s.t.id)}"></span> ${teamIco(s.t)}${s.t.name}</td><td class="n">${fmtN(s.total, tr.unit)}</td><td>${status}</td></tr>${split}`;
   }).join("");
 
 

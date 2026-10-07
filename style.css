@@ -117,6 +117,11 @@ h1{font-family:var(--display);font-weight:400;font-size:48px;line-height:1.1;tex
   display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;text-align:center;font-family:var(--plain);font-weight:400;
   font-size:16px;line-height:1.1;color:var(--ink);transition:background .15s}
 .tile .tico{width:40px;height:36px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.6));flex:none}
+/* team icons */
+.tico-s,.tico-m,.tico-l{object-fit:contain;image-rendering:pixelated;flex:none}
+.tico-s{width:22px;height:20px;margin-right:5px;vertical-align:-5px}
+.tico-m{width:30px;height:27px;margin-right:6px;vertical-align:-6px}
+.tico-l{width:54px;height:48px;margin-right:10px;vertical-align:-10px;filter:drop-shadow(2px 2px 0 #000)}
 .tile:hover{background:color-mix(in srgb,var(--tile) 80%,var(--gold))}
 .tile[aria-pressed="true"]{outline:2px solid var(--gold);outline-offset:-3px}
 .tile.done{background:color-mix(in srgb,var(--tile) 45%,var(--c));color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
