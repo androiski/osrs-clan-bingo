@@ -65,6 +65,13 @@ h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-r
 .viewbar .btn[data-team]{border-left:4px solid var(--c)}
 
 .main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+/* No tile selected: no panel, so the board widens (up to what fits the window's height). */
+.main.nodetail{grid-template-columns:minmax(0,1fr)}
+@media (min-width:901px){
+  .main.nodetail .boardframe{max-width:max(760px,calc(100vh - 60px));margin-inline:auto}
+  .main.nodetail .tile .tico{width:54px;height:48px}
+  .main.nodetail .tile{font-size:1.05em}
+}
 @media (max-width:900px){
   .main{grid-template-columns:1fr}
   /* One column on phones: put the tile panel right under the board, before the progress
