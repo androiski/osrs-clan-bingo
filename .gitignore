@@ -1,0 +1,5 @@
+# Local tooling and scratch files
+.claude/
+__pycache__/
+*.pyc
+.env
