@@ -36,7 +36,7 @@ export const TILES = [
   {n:"Any PNM Unique", short:"PNM Unique", s:"clog"},
   {n:"Horn or Oathplate Piece", short:"Horn / Oathplate", s:"clog", rule:"Soulflame horn, Oathplate helm, chest or legs. Oathplate shards don't count."},
   {n:"Crystal Tool Seed", s:"clog"},
-  {n:"Any Doom Unique (no pet)", short:"Doom Unique", s:"clog", rule:"Avernic treads, Eye of Ayak, Mokhaiotl cloth or waystone. Dom and Demon tear don't count."},
+  {n:"Any Doom Unique (no pet)", short:"Doom Unique", s:"clog", rule:"Avernic treads, Eye of Ayak or Mokhaiotl cloth. Dom, the Mokhaiotl waystone and Demon tear don't count."},
   {n:"Any CoX Purple (no prayer scroll)", short:"CoX Purple", s:"clog"},
   {n:"A Zenyte", short:"Zenyte", s:"clog"},
   {n:"Any Cerb Crystal", short:"Cerb Crystal", s:"clog"}
@@ -137,7 +137,7 @@ export const TILE_ITEMS = {
   18:[["Inquisitor's mace",24417,1],["Inquisitor's great helm",24419,1],["Inquisitor's hauberk",24420,1],["Inquisitor's plateskirt",24421,1],["Nightmare staff",24422,1],["Volatile orb",24514,1],["Harmonised orb",24511,1],["Eldritch orb",24517,1],["Little Nightmare",24491,0],["Jar of Dreams",24495,0],["Slepey tablet",25837,0],["Parasitic egg",25838,0]],
   19:[["Soulflame horn",30759,1],["Oathplate helm",30750,1],["Oathplate chest",30753,1],["Oathplate legs",30756,1],["Yami",30888,0],["Chasm teleport scroll",30775,0],["Oathplate shards",30765,0],["Rite of vile transference",30806,0],["Forgotten lockbox",30763,0],["Dossier",30805,0],["Barrel of demonic tallow (full)",30795,0]],
   20:[["Crystal tool seed",23953,1],["Smolcano",23760,0],["Zalcano shard",23908,0],["Uncut onyx",6571,0]],
-  21:[["Avernic treads",31088,1],["Eye of Ayak",31115,1],["Mokhaiotl cloth",31109,1],["Mokhaiotl waystone",31099,1],["Dom",31130,0],["Demon tear",31111,0]],
+  21:[["Avernic treads",31088,1],["Eye of Ayak",31115,1],["Mokhaiotl cloth",31109,1],["Mokhaiotl waystone",31099,0],["Dom",31130,0],["Demon tear",31111,0]],
   22:[["Twisted bow",20997,1],["Elder maul",21003,1],["Kodai insignia",21043,1],["Dragon claws",13652,1],["Ancestral hat",21018,1],["Ancestral robe top",21021,1],["Ancestral robe bottom",21024,1],["Dinh's bulwark",21015,1],["Dragon hunter crossbow",21012,1],["Twisted buckler",21000,1],["Olmlet",20851,0],["Metamorphic dust",22386,0],["Dexterous prayer scroll",21034,0],["Arcane prayer scroll",21079,0],["Torn prayer scroll",21047,0],["Dark relic",21027,0],["Onyx",6573,0],["Twisted ancestral colour kit",24670,0],["Xeric's guard",22388,0],["Xeric's warrior",22390,0],["Xeric's sentinel",22392,0],["Xeric's general",22394,0],["Xeric's champion",22396,0]],
   23:[["Zenyte shard",19529,1],["Light frame",19586,0],["Heavy frame",19589,0],["Ballista limbs",19592,0],["Monkey tail",19610,0],["Ballista spring",19601,0]],
   24:[["Eternal crystal",13227,1],["Pegasian crystal",13229,1],["Primordial crystal",13231,1],["Hellpuppy",13247,0],["Jar of Souls",13245,0],["Smouldering stone",13233,0],["Key master teleport",13249,0]]
