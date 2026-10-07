@@ -2,8 +2,9 @@
 // returned stop() is called; browsers pause them while the tab isn't visible. Skipped
 // (returns nothing) for people who've asked their device to reduce motion.
 //
-// Bursts are spheres, willows, crackles, and item shapes: sparks fly out, form the pixel
-// shape of one of the given item icons, hold it for a moment, then fall away.
+// The first rocket spells out BINGO. After that, bursts are spheres, willows, crackles, and
+// item shapes: sparks fly out, form the pixel shape of one of the given item icons, hold
+// it for a moment, then fall away.
 // Every 15-20 seconds there's a small finale volley.
 export function fireworks(color, iconUrls = []){
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -53,7 +54,7 @@ export function fireworks(color, iconUrls = []){
 
   const rockets = [], sparks = [], flashes = [];
   const t0 = performance.now();
-  let nextLaunch = 0, nextFinale = t0 + rand(15000, 20000), last = t0, running = true;
+  let nextLaunch = t0 + 2600, nextFinale = t0 + rand(15000, 20000), last = t0, running = true;   // the BINGO rocket goes up alone first
 
   function launch(x = W * rand(0.1, 0.9)){
     rockets.push({x, y: H + 10, vx: rand(-0.6, 0.6), vy: -rand(H / 70, H / 52), top: H * rand(0.12, 0.42),
@@ -67,16 +68,30 @@ export function fireworks(color, iconUrls = []){
       color: o.color ?? pick(shades), size: o.size ?? 3, crackle: o.crackle || false});
   }
 
-  function shapeBurst(x, y){
-    const s = pick(shapes);
-    const scale = Math.max(3, Math.min(9, Math.min(W, H) * 0.26 / Math.max(s.w, s.h)));
+  // A word spelled out in sparks, in the RuneScape font (already loaded by the page).
+  function wordShape(word){
+    const fontPx = Math.round(Math.min(W * 0.32, H * 0.45, 300));
+    const font = `${fontPx}px "RuneScape Bold", Georgia, serif`;
+    const c = document.createElement("canvas"), g = c.getContext("2d");
+    g.font = font;
+    const w = Math.ceil(g.measureText(word).width) + 8, h = Math.ceil(fontPx * 1.15);
+    c.width = w; c.height = h;
+    g.font = font; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.fillText(word, 4, h / 2);
+    const step = Math.max(3, Math.round(fontPx / 26)), d = g.getImageData(0, 0, w, h).data, px = [];
+    for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step)
+      if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, pick([pale, pale, light, base])]);
+    return {px, w, h, scale: 1, size: step * 0.95, hold: 150};
+  }
+
+  function shapeBurst(x, y, s = pick(shapes)){
+    const scale = s.scale || Math.max(3, Math.min(9, Math.min(W, H) * 0.26 / Math.max(s.w, s.h)));
     const cx = Math.min(Math.max(x, s.w * scale / 2 + 12), W - s.w * scale / 2 - 12);
     const cy = Math.max(y, s.h * scale / 2 + 12);
-    const hold = rand(45, 70);
+    const hold = s.hold || rand(45, 70), size = s.size || scale * 0.9;
     for (const [px, py, col] of s.px){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
-        color: col, size: scale * 0.9, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-4, 0), hold});
+        color: col, size, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-4, 0), hold});
     }
     for (let i = 0; i < 40; i++) spark(x, y, rand(0, Math.PI * 2), rand(2, 5), {size: 2});
   }
@@ -135,7 +150,11 @@ export function fireworks(color, iconUrls = []){
       r.x += (r.vx + Math.sin(t / 60 + i) * 0.3) * dt; r.y += r.vy * dt; r.vy *= Math.pow(0.982, dt);
       r.trail.forEach(([x, y], k) => { ctx.globalAlpha = (k + 1) / r.trail.length * 0.7; ctx.fillStyle = r.color; ctx.fillRect(x - 1.5, y - 1.5, 3, 3); });
       ctx.globalAlpha = 1; ctx.fillStyle = pale; ctx.fillRect(r.x - 2, r.y - 2, 4, 4);
-      if (r.y <= r.top || r.vy > -1.2){ burst(r.x, r.y); rockets.splice(i, 1); }
+      if (r.y <= r.top || r.vy > -1.2){
+        if (r.shape){ flashes.push({x: r.x, y: r.y, r: 160, life: 1}); shapeBurst(r.x, r.y, r.shape); }
+        else burst(r.x, r.y);
+        rockets.splice(i, 1);
+      }
     }
 
     ctx.lineCap = "square";
@@ -166,7 +185,12 @@ export function fireworks(color, iconUrls = []){
     else { removeEventListener("resize", size); canvas.remove(); }
   }
 
-  for (let i = 0; i < 3; i++) setTimeout(() => running && launch(W * (0.25 + 0.5 * i / 2)), i * 250);   // opening volley
+  // Opening: one rocket up the middle that spells BINGO, then a small volley.
+  document.fonts.load('48px "RuneScape Bold"').catch(() => {}).finally(() => {
+    if (!running) return;
+    rockets.push({x: W / 2, y: H + 10, vx: 0, vy: -H / 55, top: H * 0.3, color: pale, trail: [], shape: wordShape("BINGO")});
+    for (let i = 0; i < 3; i++) setTimeout(() => running && launch(W * (0.2 + 0.6 * i / 2)), 1800 + i * 300);
+  });
   requestAnimationFrame(frame);
 
   // Stop launching; what's in the air fades out quickly, then the canvas is removed.
