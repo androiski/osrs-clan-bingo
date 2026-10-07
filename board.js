@@ -1,5 +1,11 @@
 // Scoring and drawing: board, scores, tile panel, progress chart, rosters, theme.
 
+import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS} from "./data.js";
+
+// The event data being shown (live or sample), set once by live-data.js through setData().
+let state = {}, dry = {}, drops = {}, byPlayer = {}, NOW_H = 0;
+export function setData(d){ ({state, dry, drops, byPlayer} = d); NOW_H = d.nowH; }
+
 function tileIcon(i){
   if (TILES[i].s === "xp") return TRACK[i].icon;
   if (typeof TILE_ICON[i] === "number") return ICON(TILE_ICON[i]);
@@ -329,9 +335,15 @@ function renderDry(){
 }
 
 
+// live-data.js redraws the results box under the title whenever the board redraws,
+// so it follows the chosen team.
+let afterRender = null;
+export const onRender = fn => { afterRender = fn; };
+export const getView = () => view;
+
 function render(){
   renderScores(); renderViewbar(); renderBoard(); renderDetail(); renderDry();
-  if (window.renderResults) renderResults();   // the box under the title follows the chosen team
+  if (afterRender) afterRender();
 }
 
 
@@ -378,10 +390,12 @@ function playerStats(team){
   }).sort((a, b) => b.tiles - a.tiles || b.drops - a.drops || b.effort - a.effort);
 }
 
-// Called by index.html once the event data has loaded.
-function start(){
+// Called by live-data.js once the event data has loaded.
+export function start(){
   renderThemeBtn(); renderRosters(); renderLegend(); render();
   let lastDryW = 0;
   new ResizeObserver(()=>{ const w = document.getElementById("dry").clientWidth; if (w !== lastDryW){ lastDryW = w; renderDry(); } })
     .observe(document.getElementById("dry"));
 }
+
+export {ranking, stats, playerStats, teamIco, colorVar, dayLabel, hoursOf, whenKey, valueAt, LINES, ICON};

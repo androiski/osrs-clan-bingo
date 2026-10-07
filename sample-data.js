@@ -1,6 +1,10 @@
 // Made-up event data so the board can be previewed before the event.
-// The live site replaces this file with one that loads state.json.
-// Provides: state (completions), dry (team KC/XP over time), drops, byPlayer.
+// live-data.js loads it when there is no live data yet (and for the demo modes on dev).
+// Default export: {state, dry, drops, byPlayer, nowH}, the same shape live-data.js builds
+// from state.json.
+
+import {TEAMS, TILES, TRACK, TILE_ITEMS} from "./data.js";
+import {valueAt} from "./board.js";
 
 function sample(){
   const d = (by, when, item, extra) => Object.assign({done:true, by, when, item}, extra||{});
@@ -148,3 +152,5 @@ const state = sample();
 const dry = sampleDry();
 const drops = sampleDrops();
 const byPlayer = samplePlayers();
+
+export default {state, dry, drops, byPlayer, nowH: NOW_H};

@@ -13,11 +13,12 @@
 //   events.json   every drop counted, with player, item and time
 //   state.json    what the site shows, rebuilt from the three files above each run
 
-const fs = require("fs");
-const path = require("path");
-const {TEAMS, TILES, TRACK, TILE_ITEMS} = require("./data.js");
+import fs from "node:fs";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {TEAMS, TILES, TRACK, TILE_ITEMS} from "./data.js";
 
-const ROOT = __dirname;
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA = process.env.BINGO_DATA || path.join(ROOT, "data");   // overridable for test runs
 const API = "https://templeosrs.com/api";
 const GAP_MS = 13000;     // Temple asks for about 5 requests a minute
@@ -276,5 +277,8 @@ function buildState(history, events, start, end, now, warnings){
     now_h: Math.max(0, nowH), warnings, state, dry, drops, byPlayer};
 }
 
-if (require.main === module) main().catch(err => { console.error(err.message || err); process.exit(1); });
-module.exports = {main, updateHistory, updateDrops, buildState};
+export {main, updateHistory, updateDrops, buildState};
+
+// Run the job when started directly (node update.js), not when imported by a test.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
+  main().catch(err => { console.error(err.message || err); process.exit(1); });
