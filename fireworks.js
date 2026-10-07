@@ -93,7 +93,7 @@ export function fireworks(color, iconUrls = []){
     const size = s.size || scale * 0.9;
     for (const [px, py, col, k = 1] of s.px){
       if (sparks.length >= MAX_SPARKS) break;
-      sparks.push({x, y, px: x, py: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
+      sparks.push({x, y, px: x, py: y, sx: x, sy: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
         color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-18, 0),
         shadow: s.shadow || 0, solid: true});
     }
@@ -171,21 +171,20 @@ export function fireworks(color, iconUrls = []){
       const p = sparks[i];
       p.px = p.x; p.py = p.y;
       if (p.shape){
-        // Fly to its place in the shape, then fall.
+        // One smooth path, worked out from the dot's age so there are no jumps: glide out from
+        // the burst and come to rest exactly in place (~1.2 s), then fall from rest, slowly and
+        // then exponentially faster, each dot at a slightly different speed so the shape droops
+        // like a firework, fading at the end.
         p.age += dt;
-        // Drift out from the burst and ease into place over about a second, fading in.
         if (p.age < 0) continue;
-        if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
-        else {
-          // Once formed it starts to fall straight away: barely at first, so the shape stays
-          // readable, then exponentially faster. Each dot falls at a slightly different speed,
-          // so the shape droops and smears downward like a firework, fading at the end.
-          const t = p.age - 70;
-          if (t > 170){ sparks.splice(i, 1); continue; }
-          if (p.fall === undefined) p.fall = rand(0.8, 1.25);
-          p.x = p.tx; p.y = p.ty + 2 * p.fall * (Math.exp(t / 38) - 1);
-          p.fade = 1 - Math.pow(Math.max(0, t - 70) / 100, 1.5);
-        }
+        const t = Math.max(0, p.age - 70);
+        if (t > 170){ sparks.splice(i, 1); continue; }
+        if (p.fall === undefined) p.fall = rand(0.8, 1.25);
+        const ease = 1 - Math.pow(1 - Math.min(1, p.age / 70), 3);
+        const drop = 2.6 * p.fall * (Math.exp(t / 38) - 1 - t / 38);
+        p.x = p.sx + (p.tx - p.sx) * ease;
+        p.y = p.sy + (p.ty - p.sy) * ease + drop;
+        p.fade = 1 - Math.pow(Math.max(0, t - 70) / 100, 1.5);
         if (p.solid){ solids.push(p); continue; }
         // Items fade in over ~0.75 s.
         ctx.globalAlpha = 0.8 * Math.min(1, p.age / 45);
