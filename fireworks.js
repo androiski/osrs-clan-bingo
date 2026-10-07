@@ -164,7 +164,7 @@ export function fireworks(color, iconUrls = []){
     for (let i = rockets.length - 1; i >= 0; i--){
       const r = rockets[i];
       r.trail.push([r.x, r.y]); if (r.trail.length > Math.round(10 / Math.max(dt, 0.25))) r.trail.shift();
-      r.x += (r.vx + Math.sin(t / 60 + i) * 0.3) * dt; r.y += r.vy * dt; r.vy *= Math.pow(0.982, dt);
+      r.x += (r.vx + (r.steady ? 0 : Math.sin(t / 60 + i) * 0.3)) * dt; r.y += r.vy * dt; r.vy *= Math.pow(0.982, dt);
       r.trail.forEach(([x, y], k) => { ctx.globalAlpha = (k + 1) / r.trail.length * 0.7; ctx.fillStyle = r.color; ctx.fillRect(x - 2, y - 2, 4, 4); });
       ctx.globalAlpha = 1; ctx.fillStyle = pale; ctx.fillRect(r.x - 2.5, r.y - 2.5, 5, 5);
       if (r.y <= r.top || r.vy > -1.2){
@@ -233,8 +233,9 @@ export function fireworks(color, iconUrls = []){
   document.fonts.load('48px "RuneScape Bold"').catch(() => {}).finally(() => {
     if (!running) return;
     const at = [W / 2, H * 0.32];
-    wordShape("Bingo!").forEach((s, k) => setTimeout(() => running && rockets.push({x: at[0] + s.mid, y: H + 10, vx: 0, vy: -H / 55,
-      top: at[1] + rand(-H * 0.06, H * 0.06), color: pale, trail: [], shape: {...s, at}}), k * 140));
+    // All six go up together and burst at the same moment, so the word appears at once.
+    for (const s of wordShape("Bingo!")) rockets.push({x: at[0] + s.mid, y: H + 10, vx: 0, vy: -H / 55,
+      top: at[1], color: pale, trail: [], shape: {...s, at}, steady: true});
     for (let i = 0; i < 3; i++) setTimeout(() => running && launch(W * (0.2 + 0.6 * i / 2)), 1800 + i * 300);
   });
   requestAnimationFrame(frame);
