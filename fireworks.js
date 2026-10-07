@@ -4,7 +4,7 @@
 //
 // The first rocket spells out BINGO. After that, bursts are spheres, willows, crackles, and
 // item shapes: sparks fly out, form the pixel shape of one of the given item icons, hold
-// it for a moment, then fall away.
+// it for about two seconds, then fall away.
 // Every 15-20 seconds there's a small finale volley.
 export function fireworks(color, iconUrls = []){
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -90,7 +90,7 @@ export function fireworks(color, iconUrls = []){
     const scale = s.scale || Math.max(3, Math.min(9, Math.min(W, H) * 0.26 / Math.max(s.w, s.h)));
     const cx = Math.min(Math.max(x, s.w * scale / 2 + 12), W - s.w * scale / 2 - 12);
     const cy = Math.max(y, s.h * scale / 2 + 12);
-    const hold = s.hold || rand(45, 70), size = s.size || scale * 0.9;
+    const hold = s.hold || rand(110, 150), size = s.size || scale * 0.9;
     for (const [px, py, col] of s.px){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
