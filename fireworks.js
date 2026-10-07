@@ -103,8 +103,8 @@ export function fireworks(color, iconUrls = []){
     for (const [px, py, col, k = 1] of s.px){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, sx: x, sy: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
-        color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-18, 0),
-        shadow: s.shadow || 0, solid: true, cx, cy, slow: s.slow || 1});
+        color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-5, 0),
+        shadow: s.shadow || 0, solid: true, slow: s.slow || 1});
     }
     if (s.word){
       // A big burst per letter: sparks coast about twice the letter's width.
@@ -180,23 +180,27 @@ export function fireworks(color, iconUrls = []){
       const p = sparks[i];
       p.px = p.x; p.py = p.y;
       if (p.shape){
-        // One smooth path, worked out from the dot's age so there are no jumps: glide out from
-        // the burst into place (~1.2 s). The fall starts well before the glide ends and always
-        // includes a steady drift, so the dots never stop: they drift down, then drop
-        // exponentially faster, each at a slightly different speed so the shape droops like a
-        // firework, fading at the end. Bingo! runs slower (p.slow) so it stays up longer.
+        // One smooth path, worked out from the dot's age so there are no jumps. Every dot flies
+        // out from the burst like a spark slowed by drag, all on the same curve, so the shape just
+        // grows into place (~1.2 s) and keeps expanding slowly: no dot ever stops or settles. The
+        // fall starts before it's fully formed, slowly and then exponentially faster, each dot at
+        // a slightly different speed so the shape droops like a firework, fading at the end.
+        // Bingo! runs slower (p.slow) so it stays up longer.
         p.age += dt;
         if (p.age < 0) continue;
         const t = Math.max(0, p.age - 40), T = t / p.slow;
         if (T > 170){ sparks.splice(i, 1); continue; }
         if (p.fall === undefined){ p.fall = rand(0.8, 1.25); p.side = rand(-1, 1); }
-        const ease = 1 - Math.pow(1 - Math.min(1, p.age / 70), 2);
+        const grow = (1 - Math.exp(-p.age / 25)) / (1 - Math.exp(-70 / 25));   // 1 at age 70, then creeps on
         const drop = p.fall * (0.4 * t + 2.6 * (Math.exp(T / 38) - 1 - T / 38));
-        // While falling, spread outward from the shape's centre like ordinary sparks, fastest at
-        // first and then levelling off (as if slowed by drag), with a little randomness.
-        const spread = 1 - Math.exp(-T / 80);
-        p.x = p.sx + (p.tx - p.sx) * ease + ((p.tx - p.cx) * 0.4 + p.side * 30) * spread;
-        p.y = p.sy + (p.ty - p.sy) * ease + (p.ty - p.cy) * 0.25 * spread + drop;
+        // While falling, spread outward like ordinary sparks, fastest at
+        // first and then levelling off (as if slowed by drag). The random sideways drift eases in
+        // gently, so neighbouring dots don't visibly jostle as the fall begins.
+        const spread = 1 - Math.exp(-T / 80), drift = T * T / (T * T + 90 * 90);
+        // Spread is measured from the burst point, the same direction the dot is already moving,
+        // so it never doubles back.
+        p.x = p.sx + (p.tx - p.sx) * (grow + 0.4 * spread) + p.side * 30 * drift;
+        p.y = p.sy + (p.ty - p.sy) * (grow + 0.25 * spread) + drop;
         p.fade = 1 - Math.pow(Math.max(0, T - 70) / 100, 1.5);
         if (p.solid){ solids.push(p); continue; }
         // Items fade in over ~0.75 s.
