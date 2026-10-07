@@ -19,7 +19,9 @@ for (let c=0;c<5;c++) LINES.push([0,1,2,3,4].map(r=>r*5+c));
 LINES.push([0,6,12,18,24],[4,8,12,16,20]);
 
 // Sortable key for a completion time. Sample data uses "Day N, HH:MM".
+// Live data gives hours since the start as a number.
 function whenKey(when){
+  if (typeof when === "number") return when*60 + 1440;
   const m = /Day (\d+), (\d+):(\d+)/.exec(when || "");
   return m ? (+m[1])*1440 + (+m[2])*60 + (+m[3]) : Infinity;
 }

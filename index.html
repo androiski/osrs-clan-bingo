@@ -17,7 +17,7 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
   <header class="top">
     <div>
       <h1>Bingo Board 2026</h1>
-      <p class="sub">Proof of concept with sample data. Nothing here is live yet.</p>
+      <p class="sub" id="status">Loading…</p>
     </div>
     <div class="controls">
       <button class="btn icon" id="themeBtn" type="button"></button>
@@ -78,7 +78,6 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
 <script src="roster-status.js"></script>
 <script src="data.js"></script>
 <script src="board.js"></script>
-<script src="sample-data.js"></script>
-<script>start();</script>
+<script src="live-data.js"></script>
 </body>
 </html>

@@ -9,12 +9,12 @@ const TEAMS = [
 const SOURCES = {
   clog:   {mark:"Log", label:"Collection log", detail:"Read from TempleOSRS. First-time drops show up on their own. For a repeat drop, open that collection log page again."},
   qty:    {mark:"Log ×", label:"Collection log count", detail:"Counted from how much your collection log count has gone up since the start. Open the item's collection log page after every drop."},
-  xp:     {mark:"XP", label:"Hiscores XP", detail:"Team total gained during the event, read from a Temple competition. Players must be updated before the start."}
+  xp:     {mark:"XP", label:"Hiscores XP", detail:"Team total gained during the event, from TempleOSRS hiscores. Players must be updated on Temple before the start."}
 };
 
 const TILES = [
   {n:"Ring of Endurance", s:"clog"},
-  {n:"1 Enhanced or 3 Armor Seeds", s:"qty", target:3, count:"Armour seeds", rule:"Seeds can come from different players on the team."},
+  {n:"1 Enhanced or 3 Armor Seeds", s:"qty", target:3, count:"Armour seeds", alone:["Enhanced crystal weapon seed"], rule:"Seeds can come from different players on the team."},
   {n:"Dragonhunter Wand", s:"clog"},
   {n:"Any Pet", s:"clog", rule:"Every pet counts, including skilling pets and the chompy chick."},
   {n:"Any ToA Purple (no LB/Fang)", s:"clog"},
@@ -24,7 +24,7 @@ const TILES = [
   {n:"Inky Paint", s:"clog"},
   {n:"Any Voidwaker Piece", s:"clog"},
   {n:"Any ToB Purple (no Avernic)", s:"clog"},
-  {n:"Araxxor Fang or 3 Hally Pieces", s:"qty", target:3, count:"Hally pieces", countIcon:29796 /* Noxious halberd */, rule:"Pieces can come from different players on the team."},
+  {n:"Araxxor Fang or 3 Hally Pieces", s:"qty", target:3, count:"Hally pieces", alone:["Araxyte fang"], countIcon:29796 /* Noxious halberd */, rule:"Pieces can come from different players on the team."},
   {n:"500,000 Runecraft XP", s:"xp", target:500000},
   {n:"1 Full Barrows Set", s:"qty", target:4, rule:"All 4 pieces of one brother's set. Pieces can come from different players on the team."},
   {n:"Pharaoh's Sceptre", s:"clog"},
@@ -104,3 +104,6 @@ const TILE_ITEMS = {
   23:[["Zenyte shard",19529,1],["Light frame",19586,0],["Heavy frame",19589,0],["Ballista limbs",19592,0],["Monkey tail",19610,0],["Ballista spring",19601,0]],
   24:[["Eternal crystal",13227,1],["Pegasian crystal",13229,1],["Primordial crystal",13231,1],["Hellpuppy",13247,0],["Jar of Souls",13245,0],["Smouldering stone",13233,0],["Key master teleport",13249,0]]
 };
+
+// Lets the update job (update.js, run by Node) read the same lists the site uses.
+if (typeof module !== "undefined") module.exports = {TEAMS, TILES, TRACK, TILE_ITEMS};
