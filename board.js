@@ -27,13 +27,14 @@ function dryness(i, teamId, kc){
   return {chance: Math.exp(-alone) * short, rate: alone + count / n, approx: !!d.approx};
 }
 // Luck, like the Collection Log Luck plugin: the share of teams that would also still be
-// waiting after this much KC. Low means dry, e.g. "76%" or "8% · very dry"; details on hover.
-const fmtDry = x => {
+// waiting after this much KC (for a team that got it, the KC it took). Low means dry, e.g.
+// "76%" or "8% · very dry"; details on hover.
+const fmtDry = (x, done) => {
   if (!x) return "";
   const luck = x.chance * 100, l = luck < 1 ? "<1%" : luck > 99 ? ">99%" : `${Math.round(luck)}%`;
   const word = luck < 10 ? "very dry" : luck < 25 ? "dry" : "";
   const rate = x.rate == null ? "" : `${x.rate < 0.1 ? "<0.1" : x.rate.toFixed(1)}× the drop rate, `;
-  const long = `${rate}${Math.round(100 - luck)}% of teams would have it by now${x.approx ? " (rough estimate)" : ""}`;
+  const long = `${rate}${Math.round(100 - luck)}% of teams would have it ${done ? "by then" : "by now"}${x.approx ? " (rough estimate)" : ""}`;
   return `<span class="luck${word ? ` ${word === "dry" ? "warn" : "bad"}` : ""}" title="${long}">${x.approx ? "≈ " : ""}${l}${word ? ` · ${word}` : ""}</span>`;
 };
 
@@ -281,7 +282,7 @@ function renderDry(){
     }).join("");
     el.innerHTML = `<h3>Progress</h3>
       <p class="dsub">Not on the hiscores, so no KC to chart.</p>
-      <table><thead><tr><th>Team</th><th>Got it</th></tr></thead><tbody>${rows}</tbody></table>`;
+      <table><thead><tr><th>Team</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
     return;
   }
 
@@ -341,12 +342,12 @@ function renderDry(){
 
   const hasDry = !!DRY[selected];
   const rows = series.map(s=>{
-    // Got it: the item's icon (its name on hover), who got it and when.
+    // Status: the item's icon (its name on hover), who got it and when.
     const gotIt = s.doneH == null ? ""
       : tile.s === "xp" ? `<img class="ico" src="${tr.icon}" alt="" title="${fmtN(tile.target, "XP")} reached">${dayLabel(s.doneH)}`
       : `${s.e.id ? `<img class="ico" src="${ICON(s.e.id)}" alt="${s.e.item}" title="${s.e.item} (${fmtN(s.doneV, tr.unit)} ${tr.unit})">` : ""}` +
         `${s.e.by && s.e.by !== "Team" ? `${s.e.by} · ` : ""}${dayLabel(hoursOf(s.e.when))}`;
-    const dryCell = s.doneH == null ? fmtDry(dryness(selected, s.t.id, s.total)) : "";
+    const dryCell = fmtDry(dryness(selected, s.t.id, s.doneH == null ? s.total : s.doneV), s.doneH != null);
     // Each player's gain, with icons for every drop they got here (the finishing one included).
     const all = [...s.drops.filter(dr=>dr.kind !== "done"),
       ...(s.e && s.e.done && s.e.id ? [{name:s.e.item, id:s.e.id, by:s.e.by, h:hoursOf(s.e.when), kind:"done"}] : [])];
@@ -370,9 +371,9 @@ function renderDry(){
       </svg>
       <div class="tip" hidden></div>
     </div>
-    <table><thead><tr><th>Team</th><th class="n">${tr.unit}</th>${hasDry ? `<th>Luck</th>` : ""}<th>Got it</th></tr></thead><tbody>${rows}</tbody></table>` +
-    (hasDry ? `<p class="drynote">Luck: share of teams that would still be waiting after this many ` +
-      (DRY[selected].barrows ? `chests for a full set (rough).` : `${tr.unit}. Lower is drier.`) +
+    <table><thead><tr><th>Team</th><th class="n">${tr.unit}</th>${hasDry ? `<th>Luck</th>` : ""}<th>Status</th></tr></thead><tbody>${rows}</tbody></table>` +
+    (hasDry ? `<p class="drynote">Luck: share of teams still waiting at this ` +
+      (DRY[selected].barrows ? `many chests, or the chests it took, for a full set (rough).` : `${tr.unit}, or the ${tr.unit} it took. Lower is drier.`) +
       (DRY[selected].approx ? ` ≈ = rough estimate.` : "") + `</p>` : "");
 
   const svg = el.querySelector("svg"), cross = el.querySelector(".cross"), tip = el.querySelector(".tip");
