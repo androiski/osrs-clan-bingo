@@ -177,7 +177,7 @@ function renderRosters(){
   const all = TEAMS.flatMap(t=>t.members);
   const count = st => all.filter(m=>players[m] && players[m].status === st).length;
   document.getElementById("rosterNote").textContent = rs
-    ? `Checked on TempleOSRS ${rs.checked}. ${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced needs to install the plugin and open their collection log before the start.`
+    ? `Checked on TempleOSRS ${rs.checked}. ${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced should install the plugin and sync/open their collection log before the start.`
     : "Temple status hasn't been checked yet. Run check_temple_roster.py to fill this in.";
   document.getElementById("rosters").innerHTML = TEAMS.map(t=>{
     const synced = t.members.filter(m=>players[m] && players[m].status === "synced").length;
