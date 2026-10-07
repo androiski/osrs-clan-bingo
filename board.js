@@ -15,7 +15,7 @@ function tileIcon(i){
 const tileFace = (i, tile) => { const src = tileIcon(i);
   return `${src ? `<img class="tico" src="${src}" alt="" loading="lazy">` : ""}<span class="tname"><span class="full">${tile.n}</span><span class="short">${tile.short || tile.n}</span></span>`; };
 
-let view = "all", selected = 12;
+let view = "all", selected = null;   // the tile shown in the panel; null = none (click it again to deselect)
 // Icon for a tracked boss (its pet) or skill, and the distinct icons for a tile's tracking.
 const actIcon = act => { const ic = ACT_ICON[act]; return typeof ic === "number" ? ICON(ic) : ic; };
 const trackIcons = tr => [...new Set(tr.acts.map(actIcon).filter(Boolean))]
@@ -115,7 +115,7 @@ function renderBoard(){
     const prog = !done ? progressText(tile, e) : "";
     return `<button class="tile ${done?"done":""}" style="--c:${colorVar(view)}" data-i="${i}" aria-pressed="${selected===i}"><span class="src">${src.mark}</span>${tileFace(i, tile)}${prog?`<span class="tprog">${prog}</span>`:""}</button>`;
   }).join("");
-  board.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;render();});
+  board.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{selected = selected === +b.dataset.i ? null : +b.dataset.i; render();});
 }
 
 // The tile panel's summary: what counts (item icons, or the skill for XP tiles), and the
@@ -139,6 +139,9 @@ function tileSummary(i, tile, src){
 
 function renderDetail(){
   const el = document.getElementById("detail");
+  el.hidden = selected == null;
+  el.closest(".main").classList.toggle("nodetail", selected == null);
+  if (selected == null){ el.innerHTML = ""; return; }
   const tile = TILES[selected], src = SOURCES[tile.s];
   const tIco = tileIcon(selected);
   const rows = TILE_ITEMS[selected] || [];
@@ -253,6 +256,8 @@ function niceMax(v){
 
 function renderDry(){
   const el = document.getElementById("dry");
+  el.hidden = selected == null;
+  if (selected == null){ el.innerHTML = ""; return; }
   const tile = TILES[selected], tr = TRACK[selected];
   const teamDrops = t => ((drops[selected]||{})[t.id]||[]).slice().sort((a,b)=>a.h-b.h);
 

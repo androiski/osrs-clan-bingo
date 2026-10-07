@@ -28,7 +28,7 @@ const ordinal = n => n + (["th", "st", "nd", "rd"][n % 100 > 10 && n % 100 < 14 
 // ---- load: live data, a demo, or the preview ----
 // The preview (before there's any live data) shows an empty board, with a button in the
 // Preview box that fills it with sample data.
-let startMs = 0, endMs = 0, updatedMs = 0, mode;   // "live" | "demo" | "preview"
+let startMs = 0, endMs = 0, updatedMs = 0, finalMs = null, mode;   // "live" | "demo" | "preview"
 let live = null;
 if (!demoMode){
   try {
@@ -59,13 +59,16 @@ if (live){
   mode = "live";
   data = {state: live.state, dry: live.dry, drops: live.drops, byPlayer: live.byPlayer, byAct: live.byAct, nowH: live.now_h};
   startMs = Date.parse(live.start); endMs = Date.parse(live.end); updatedMs = Date.parse(live.updated);
+  // After a Bingo the update job keeps checking late drops for a few hours, then stops.
+  if (live.final_at) finalMs = Date.parse(live.final_at);
+  if (live.final) finalMs = Math.min(finalMs || Infinity, Date.now());
 } else {
   try { const cfg = await (await fetch("config.json", {cache: "no-cache"})).json(); if (cfg.start) startMs = Date.parse(cfg.start); if (cfg.end) endMs = Date.parse(cfg.end); } catch {}
   mode = "preview";
   if (demoMode && demoMode !== "preview"){
     mode = "demo";
     data = await loadSample();
-    ({startMs, endMs, updatedMs} = demo.prepare(data));
+    ({startMs, endMs, updatedMs, finalMs = null} = demo.prepare(data));
   } else if (demoMode === "preview"){
     data = await loadSample(); sampleShown = true;
   } else {
@@ -87,7 +90,8 @@ const dates = () => startMs && endMs
 function renderStatus(){
   const now = Date.now();
   status.textContent = [dates(),
-    mode === "preview" || now < startMs ? "" : now > endMs ? "final results" : `updated ${since(updatedMs)}`]
+    mode === "preview" || now < startMs ? "" : now > endMs || (finalMs && now >= finalMs) ? "final results"
+      : `updated ${since(updatedMs)}${finalMs ? ` · results final ${clock(finalMs)}` : ""}`]
     .filter(Boolean).join(" · ");
   for (const el of document.querySelectorAll("[data-since]")) el.textContent = `${clock(updatedMs)} (${since(updatedMs)})`;
 }
@@ -219,10 +223,11 @@ function renderResults(){
       : `First line completed @ ${dayLabel(lineH)}`)
     : `${chosen.best} of 5 on their best line · ${plural(chosen.tiles, "tile")}`;
   announce(isWinner ? "win" : "team", `${teamIco(chosen.t, "tico-l")}${title}`, 0, "", sub);
+  box.querySelector("h2").insertAdjacentHTML("afterend", fireworksControl());   // right under the title, easy to spot
   box.style.setProperty("--c", colorVar(chosen.t.id));
   box.insertAdjacentHTML("beforeend",
     `<p class="congrats">${isWinner ? `Congrats to ${names(chosen.t)}!` : "Player contributions"}</p>` +
-    playerCards(chosen.t) + fireworksControl());
+    playerCards(chosen.t));
 }
 onRender(() => { renderResults(); renderStatus(); });
 

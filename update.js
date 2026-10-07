@@ -25,6 +25,11 @@ const GAP_MS = 13000;     // Temple asks for about 5 requests a minute
 const PRE_START_H = 3;    // start taking the baseline this long before the event
 const POST_END_H = 2;     // keep reading new log items this long after the end
 
+const LINES = [];   // rows, columns and diagonals of the 5x5 board
+for (let r = 0; r < 5; r++) LINES.push([0, 1, 2, 3, 4].map(c => r * 5 + c));
+for (let c = 0; c < 5; c++) LINES.push([0, 1, 2, 3, 4].map(r => r * 5 + c));
+LINES.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
+
 const config = readJSON(process.env.BINGO_CONFIG || path.join(ROOT, "config.json"), {});
 const log = (...a) => console.log(...a);
 
@@ -74,10 +79,21 @@ async function main(){
   const start = Date.parse(startISO) / 1000, end = Date.parse(endISO) / 1000;
   const now = Math.floor(Date.now() / 1000);
   if (!(start < end)) throw new Error("config.json: start must be before end (ISO 8601, e.g. 2026-10-13T00:00:00Z).");
-  if (now < start - PRE_START_H * 3600 || now > end + POST_END_H * 3600){
-    log("Outside the event window, so TempleOSRS isn't contacted.");
+  // Once a team has a Bingo, nothing after it counts: the event effectively ends there.
+  const prev = readJSON(path.join(DATA, "state.json"), null);
+  if (prev && prev.final){ log("Results are final, so TempleOSRS isn't contacted."); return; }
+  // After the first Bingo, keep checking this long for drops that happened before it but were
+  // synced late, then save the results as final and stop (config.json verify_hours).
+  const VERIFY_H = config.verify_hours ?? 3;
+  const bingoAt = prev && prev.bingo ? start + prev.bingo.h * 3600 : null;
+  const stopAt = bingoAt ? bingoAt + VERIFY_H * 3600 : end + POST_END_H * 3600;
+  if (now < start - PRE_START_H * 3600) return log("Before the event window, so TempleOSRS isn't contacted.");
+  if (now > stopAt){
+    if (prev && now >= start){ prev.final = true; writeJSON("state.json", prev); log("Results saved as final."); }
+    else log("Outside the event window, so TempleOSRS isn't contacted.");
     return;
   }
+  const until = bingoAt ? Math.min(end, bingoAt) : end;
   const live = now >= start;
   fs.mkdirSync(DATA, {recursive: true});
   log(live ? "Event running: checking for drops." : "Before the start: refreshing the baseline.");
@@ -98,12 +114,19 @@ async function main(){
   const history = updateHistory(readJSON(path.join(DATA, "history.json"), {baseline: {}, points: []}), members, live, now);
   const {counts, events} = updateDrops(
     readJSON(path.join(DATA, "counts.json"), {}), readJSON(path.join(DATA, "events.json"), []),
-    recent, clog, live, now, start, end);
+    recent, clog, live, now, start, until);
 
   writeJSON("history.json", history);
   writeJSON("counts.json", counts);
   writeJSON("events.json", events);
-  writeJSON("state.json", buildState(history, events, start, end, now, warnings));
+  let state = buildState(history, events, start, until, now, warnings);
+  // A Bingo seen for the first time (or an earlier one, from a late sync): cut off there.
+  if (state.bingo && start + state.bingo.h * 3600 < until) state = buildState(history, events, start, start + state.bingo.h * 3600, now, warnings);
+  if (state.bingo){
+    state.final_at = new Date((start + state.bingo.h * 3600 + VERIFY_H * 3600) * 1000).toISOString();
+    log(`Bingo! ${state.bingo.team} at ${state.bingo.h} h. Late drops are checked until ${state.final_at}.`);
+  }
+  writeJSON("state.json", state);
   log(`Done: ${events.length} drops counted so far.`);
 }
 
@@ -208,14 +231,15 @@ function buildState(history, events, start, end, now, warnings){
   const H = t => Math.round((t - start) / 36) / 100;   // hours since the start, 2 decimals
   const nowH = H(Math.min(now, end));
   const state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {};
-  const times = [0, ...history.points.map(p => H(p[0]))];
-  const snapshots = [replay(history, start), ...history.points.map(p => replay(history, p[0]))];
+  const points = history.points.filter(p => p[0] <= end);   // nothing after the end (or the Bingo)
+  const times = [0, ...points.map(p => H(p[0]))];
+  const snapshots = [replay(history, start), ...points.map(p => replay(history, p[0]))];
   const gain = (vals, rsn, acts) => acts.reduce((s, a) => s + Math.max(0, ((vals[rsn] || {})[a] || 0) - ((history.baseline[rsn] || {})[a] || 0)), 0);
 
   for (const team of TEAMS){
     state[team.id] = {};
     const mine = new Set(team.members);
-    const teamEvents = events.filter(e => mine.has(e.rsn));
+    const teamEvents = events.filter(e => mine.has(e.rsn) && e.t <= end);
 
     TILES.forEach((tile, i) => {
       const rows = TILE_ITEMS[i] || [];
@@ -276,8 +300,16 @@ function buildState(history, events, start, end, now, warnings){
       if (list.length) (drops[i] ||= {})[team.id] = list;
     });
   }
+  // The first team to complete a line, and when (a line is done when its last tile is).
+  let bingo = null;
+  for (const team of TEAMS) for (const line of LINES){
+    const t = state[team.id];
+    if (!line.every(i => t[i] && t[i].done)) continue;
+    const h = Math.max(...line.map(i => t[i].when));
+    if (!bingo || h < bingo.h) bingo = {team: team.id, h};
+  }
   return {updated: new Date(now * 1000).toISOString(), start: config.start, end: config.end,
-    now_h: Math.max(0, nowH), warnings, state, dry, drops, byPlayer, byAct};
+    now_h: Math.max(0, nowH), bingo, warnings, state, dry, drops, byPlayer, byAct};
 }
 
 export {main, updateHistory, updateDrops, buildState};
