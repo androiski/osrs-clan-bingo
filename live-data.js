@@ -124,7 +124,7 @@ function loadScript(src){
       : `${chosen.t.name} are ${ordinal(place)} so far`;
     const sub = chosen.first ? `First line completed @ ${dayLabel(hoursOf(chosen.first.when))}`
       : `${chosen.best} of 5 on their best line · ${plural(chosen.tiles, "tile")}`;
-    announce(isWinner ? "win" : "team", title, 0, "", sub);
+    announce(isWinner ? "win" : "team", `${teamIco(chosen.t, "tico-l")}${title}`, 0, "", sub);
     box.style.setProperty("--c", colorVar(chosen.t.id));
     box.insertAdjacentHTML("beforeend",
       `<p class="congrats">${isWinner ? `Congrats to ${names(chosen.t)}!` : "Player contributions"}</p>` +
