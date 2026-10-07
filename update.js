@@ -11,12 +11,7 @@
 //   counts.json   item counts at the start (the baseline repeat drops are measured from)
 //   history.json  KC/XP at the start, then every change seen during the event
 //   events.json   every drop counted, with player, item and time
-//   mod-entries.json  tiles mods marked by hand (a copy of the list kept by the Cloudflare
-//                 Worker in worker/; each one counts like a drop)
-//   state.json    what the site shows, rebuilt from the files above each run
-//
-// `node update.js --rebuild` skips TempleOSRS and just rebuilds state.json, e.g. right after a
-// mod adds or removes an entry (the Worker triggers this through GitHub).
+//   state.json    what the site shows, rebuilt from the three files above each run
 
 import fs from "node:fs";
 import path from "node:path";
@@ -86,16 +81,6 @@ async function main(){
   if (!(start < end)) throw new Error("config.json: start must be before end (ISO 8601, e.g. 2026-10-13T00:00:00Z).");
   // Once a team has a Bingo, nothing after it counts: the event effectively ends there.
   const prev = readJSON(path.join(DATA, "state.json"), null);
-  const rebuildOnly = process.argv.includes("--rebuild");
-  if (rebuildOnly){
-    if (!prev || now < start) return log("Nothing to rebuild before the event starts.");
-    const entries = await modEntries();
-    const state = finish(readJSON(path.join(DATA, "history.json"), {baseline: {}, points: []}),
-      readJSON(path.join(DATA, "events.json"), []), entries, start, end, now, prev.warnings || []);
-    if (prev.final) state.final = true;   // a late ruling doesn't reopen the event
-    writeJSON("state.json", state);
-    return log("Rebuilt the board with the latest mod entries.");
-  }
   if (prev && prev.final){ log("Results are final, so TempleOSRS isn't contacted."); return; }
   // After the first Bingo, keep checking this long for drops that happened before it but were
   // synced late, then save the results as final and stop (config.json verify_hours).
@@ -134,59 +119,15 @@ async function main(){
   writeJSON("history.json", history);
   writeJSON("counts.json", counts);
   writeJSON("events.json", events);
-  writeJSON("state.json", finish(history, events, live ? await modEntries() : [], start, end, now, warnings));
-  log(`Done: ${events.length} drops counted so far.`);
-}
-
-// Builds state.json: Temple's drops plus mod entries, cut off at the first Bingo.
-function finish(history, events, entries, start, end, now, warnings){
-  const all = [...events, ...manualEvents(entries)].sort((a, b) => a.t - b.t);
-  const voids = (entries || []).filter(e => e.action === "void");
-  let state = buildState(history, all, start, end, now, warnings, voids);
-  // Nothing after the first Bingo counts (it may be earlier than last run's, after a late sync
-  // or a mod entry; or gone, if a mod entry was removed).
-  if (state.bingo && start + state.bingo.h * 3600 < end) state = buildState(history, all, start, start + state.bingo.h * 3600, now, warnings, voids);
+  let state = buildState(history, events, start, until, now, warnings);
+  // A Bingo seen for the first time (or an earlier one, from a late sync): cut off there.
+  if (state.bingo && start + state.bingo.h * 3600 < until) state = buildState(history, events, start, start + state.bingo.h * 3600, now, warnings);
   if (state.bingo){
-    state.final_at = new Date((start + state.bingo.h * 3600 + (config.verify_hours ?? 3) * 3600) * 1000).toISOString();
+    state.final_at = new Date((start + state.bingo.h * 3600 + VERIFY_H * 3600) * 1000).toISOString();
     log(`Bingo! ${state.bingo.team} at ${state.bingo.h} h. Late drops are checked until ${state.final_at}.`);
   }
-  return state;
-}
-
-// ---- mod entries ---------------------------------------------------------------------
-
-// The list from the Worker (config.json mod_api), saved to data/mod-entries.json. If the
-// Worker can't be reached, the last saved copy is used.
-async function modEntries(){
-  const saved = readJSON(path.join(DATA, "mod-entries.json"), []);
-  if (!config.mod_api) return saved;
-  try {
-    const res = await fetch(`${config.mod_api.replace(/\/$/, "")}/entries`, {headers: {"Cache-Control": "no-cache"}});
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const list = await res.json();
-    if (!Array.isArray(list)) throw new Error("not a list");
-    writeJSON("mod-entries.json", list);
-    return list;
-  } catch (err){
-    log(`  ! Couldn't read mod entries (${err.message}); using the saved copy.`);
-    return saved;
-  }
-}
-
-// Each "done" entry becomes a drop ("manual"), or for a tile with no item (the XP tile) a straight
-// "done" ("manual-tile"). Entries that don't fit the board are skipped with a note in the log.
-function manualEvents(entries){
-  const out = [];
-  for (const e of entries || []){
-    if (e.action === "void") continue;   // handled in buildState
-    const p = teamOf(e.by), t = Math.floor(Date.parse(e.when) / 1000);
-    if (!p || p.team !== e.team || !TILES[e.tile] || !Number.isFinite(t)){ log(`  ! Mod entry ${e.id} doesn't match the board; skipped.`); continue; }
-    if (e.itemId != null){
-      if (!(TILE_ITEMS[e.tile] || []).some(r => r[1] === e.itemId)){ log(`  ! Mod entry ${e.id}: item isn't on that tile; skipped.`); continue; }
-      out.push({t, rsn: p.rsn, id: e.itemId, name: itemName.get(e.itemId), src: "manual", entry: e.id});
-    } else out.push({t, rsn: p.rsn, tile: e.tile, src: "manual-tile", entry: e.id});
-  }
-  return out;
+  writeJSON("state.json", state);
+  log(`Done: ${events.length} drops counted so far.`);
 }
 
 // ---- KC and XP -----------------------------------------------------------------------
@@ -286,8 +227,7 @@ function updateDrops(counts, events, recent, clog, live, now, start, end){
 
 // ---- what the site shows -------------------------------------------------------------
 
-// voids: mod entries that uncheck a completion (see worker/index.js).
-function buildState(history, events, start, end, now, warnings, voids = []){
+function buildState(history, events, start, end, now, warnings){
   const H = t => Math.round((t - start) / 36) / 100;   // hours since the start, 2 decimals
   const nowH = H(Math.min(now, end));
   const state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {};
@@ -304,10 +244,7 @@ function buildState(history, events, start, end, now, warnings, voids = []){
     TILES.forEach((tile, i) => {
       const rows = TILE_ITEMS[i] || [];
       const info = new Map(rows.map(r => [r[1], r]));
-      // A voided completion's drop doesn't count (it's still listed, as not counting).
-      const myVoids = voids.filter(v => v.team === team.id && v.tile === i);
-      const isVoid = e => myVoids.some(v => v.by === e.rsn && Math.abs(H(e.t) - v.h) < 0.02 && (v.itemId == null || v.itemId === e.id));
-      const all = teamEvents.filter(e => info.has(e.id)), evs = all.filter(e => !isVoid(e));
+      const evs = teamEvents.filter(e => info.has(e.id));
       const track = TRACK[i];
 
       // KC/XP over time, and each player's share.
@@ -333,7 +270,7 @@ function buildState(history, events, start, end, now, warnings, voids = []){
       if (tile.s === "xp"){
         const cross = series.find(p => p[1] >= tile.target);
         progress = series[series.length - 1][1];
-        if (cross && !myVoids.some(v => Math.abs(cross[0] - v.h) < 0.02)) done = {by: "Team", when: cross[0], item: `${Math.round(tile.target / 1000)}k reached`};
+        if (cross) done = {by: "Team", when: cross[0], item: `${Math.round(tile.target / 1000)}k reached`};
       } else if (rows.some(r => r[3])){
         // Barrows: four different pieces of one brother, from anyone on the team.
         const sets = {};
@@ -354,19 +291,12 @@ function buildState(history, events, start, end, now, warnings, voids = []){
           if (progress >= tile.target){ done = {by: e.rsn, when: H(e.t), item: r[0], id: e.id, ev: e}; break; }
         }
       }
-      // A mod marked the tile done without an item (the XP tile, or anything Temple can't show).
-      if (!done){
-        const m = teamEvents.find(e => e.src === "manual-tile" && e.tile === i && !isVoid(e));
-        if (m) done = {by: m.rsn, when: H(m.t), item: "Marked done by a mod", manual: true};
-      }
-      if (done && done.ev && done.ev.src === "manual") done.manual = true;
       if (done){ const {ev, ...d} = done; state[team.id][i] = {done: true, progress: tile.target, ...d}; }
       else if (progress) state[team.id][i] = {done: false, progress};
 
       // Every drop on this tile except the one that finished it.
-      const list = all.filter(e => !done || e !== done.ev).map(e => ({
-        h: H(e.t), name: e.name, id: e.id, by: e.rsn, kind: info.get(e.id)[2] && !isVoid(e) ? "progress" : "other",
-        ...(e.src === "manual" ? {manual: true} : {}), ...(isVoid(e) ? {voided: true} : {})}));
+      const list = evs.filter(e => !done || e !== done.ev).map(e => ({
+        h: H(e.t), name: e.name, id: e.id, by: e.rsn, kind: info.get(e.id)[2] ? "progress" : "other"}));
       if (list.length) (drops[i] ||= {})[team.id] = list;
     });
   }
