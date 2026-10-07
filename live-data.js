@@ -154,6 +154,7 @@ function announce(cls, title, ms, label, note){
     (note ? `<p class="when">${note}</p>` : "");
   if (ms) countdown(box.querySelector(".timer"), ms); else clearInterval(timerId);
   box.hidden = false;
+  renderStatus();   // fills in "last updated"
 }
 
 // ---- fireworks for the winner: any click stops them, a button starts them again ----
