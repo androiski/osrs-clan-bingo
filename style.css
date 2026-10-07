@@ -186,16 +186,19 @@ section.rosters h2,section.legend h2{font-family:var(--display);font-weight:400;
 .countdown.team .when{color:var(--ink)}
 .countdown.team .congrats{margin:14px 0 10px;font-family:var(--display);font-size:18px;color:var(--ink)}
 .roll .work{margin-top:4px;line-height:1.35}
-.roll .work i{display:flex;align-items:center;gap:5px;font-style:normal}
+.roll .work i{display:flex;align-items:center;gap:4px;font-style:normal;padding:2px 0;border-bottom:1px dotted rgba(255,255,255,.08)}
+.roll .work em{font-style:normal;flex:1;min-width:0}
+.roll .work .drops{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:3px;max-width:55%}
+.roll .work img.drop{width:20px;height:18px;border-radius:3px}
+.roll .work img.fin{outline:2px solid #f0d48a;outline-offset:1px;background:rgba(240,212,138,.15)}
+.roll .work img.other{opacity:.5}
 .roll .work img{width:18px;height:16px;object-fit:contain;image-rendering:pixelated;flex:none}
 .countdown.win .congrats{margin:14px 0 10px;font-family:var(--display);font-size:20px;color:#fff;text-shadow:1px 1px 0 #000}
-.roll{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;text-align:left}
+.roll{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;text-align:left}
 .roll > div{background:rgba(0,0,0,.28);border-radius:6px;padding:8px 10px}
 .roll .who{display:block;color:#fff;font-size:1rem}
 .roll span{display:block;font-size:.85rem;color:#e6dcc4}
 .roll span b{color:#fff}
-.roll .got{display:flex;flex-wrap:wrap;gap:2px;margin-top:4px}
-.roll .got img{width:24px;height:22px;object-fit:contain;image-rendering:pixelated}
 .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--edge);color:var(--muted);font-size:.9rem;text-align:center}
 .foot p{margin:4px 0}
 .foot a{color:var(--gold)}
