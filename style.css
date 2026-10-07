@@ -41,6 +41,7 @@ button,select{font:inherit;color:inherit}
 
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;border-bottom:1px solid var(--edge);padding-bottom:14px}
 h1{font-family:var(--display);font-weight:400;font-size:48px;line-height:1.1;text-shadow:var(--shadow);margin:0;color:var(--gold)}
+h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-rendering:pixelated;filter:drop-shadow(1px 1px 0 #000)}
 .sub{margin:4px 0 0;color:var(--muted);font-size:.95rem}
 .controls{display:flex;gap:8px;flex-wrap:wrap}
 .btn{background:var(--panel);border:1px solid var(--edge);border-radius:4px;padding:6px 12px;cursor:pointer}
