@@ -95,7 +95,7 @@ export function fireworks(color, iconUrls = []){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
         color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, hold, age: rand(-18, 0),
-        shadow: s.shadow || 0, solid: true});
+        shadow: s.shadow || 0, solid: true, cx, cy});
     }
     if (s.word){
       // A full burst as wide as the word: sparks coast about half the word's width.
@@ -177,13 +177,12 @@ export function fireworks(color, iconUrls = []){
         if (p.age < 0) continue;
         if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
         else if (p.age > 70 + p.hold){
-          // Disperse: each dot drifts its own way, barely at first and then exponentially faster,
-          // fading as it goes, so the shape stays recognisable before it breaks apart.
+          // Release: the shape expands outward from the centre of its explosion and falls, slowly
+          // at first and then exponentially faster, fading, so it stays recognisable for a moment.
           const t = p.age - 70 - p.hold;
           if (t > 100){ sparks.splice(i, 1); continue; }
-          if (p.dx === undefined){ const a = rand(0, Math.PI * 2), sp = rand(0.3, 1); p.dx = Math.cos(a) * sp; p.dy = Math.sin(a) * sp; }
-          const m = Math.exp(t / 20) - 1;
-          p.x = p.tx + p.dx * m; p.y = p.ty + p.dy * m + 0.004 * t * t;
+          const grow = 1 + 0.035 * (Math.exp(t / 22) - 1);
+          p.x = p.cx + (p.tx - p.cx) * grow; p.y = p.cy + (p.ty - p.cy) * grow + 0.01 * t * t;
           p.fade = Math.max(0, 1 - Math.pow(t / 100, 2));
         }
         if (p.solid){ solids.push(p); continue; }
