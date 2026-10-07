@@ -283,18 +283,19 @@ section.legend{margin-top:32px}
 .foot .demos a{text-decoration:none;color:var(--ink);font-size:.85rem;padding:4px 10px}
 .foot .demos a[aria-current="page"]{background:var(--gold);color:var(--bg);border-color:var(--gold)}
 
-/* Mod panel (mod.js): slides in from the right. */
-.modpanel{position:fixed;top:0;right:0;bottom:0;width:min(380px,100%);z-index:40;overflow:auto;background:var(--panel);border-left:1px solid var(--edge);box-shadow:-6px 0 24px rgba(0,0,0,.4);padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
-.modpanel .mhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.modpanel h3{font-family:var(--display);font-weight:400;color:var(--gold);margin:0;font-size:24px;text-shadow:var(--shadow)}
-.modpanel h4{margin:18px 0 6px;color:var(--gold)}
-.modpanel .note{color:var(--muted);font-size:.85rem;margin:6px 0}
+/* Mod entry (mod.js): a collapsible section at the bottom of the tile panel. */
+.modbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.modbox summary{cursor:pointer;color:var(--muted);font-size:.85rem}
+.modbox[open] summary{color:var(--gold)}
+.modbox .note{color:var(--muted);font-size:.85rem;margin:0}
+.modbox h4{margin:14px 0 4px;color:var(--gold);font-size:.9rem}
+.mbtns{display:flex;align-items:center;gap:14px}
 .mform{display:grid;gap:10px;margin-top:10px}
 .mform label{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
 .mform input,.mform select{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--edge);border-radius:4px;padding:6px 8px;min-width:0}
 .mform .btn{justify-self:start}
 .mmsg{margin:0;font-size:.85rem;color:var(--gold);min-height:1em}
-.modpanel .opt{color:var(--muted);font-size:.8rem}
+.modbox .opt{color:var(--muted);font-size:.8rem}
 .mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dotted var(--line);font-size:.88rem}
 .linkish{all:unset;cursor:pointer;color:var(--gold);text-decoration:underline}
 .modtag{font-size:.7rem;padding:0 4px;border:1px solid currentColor;border-radius:3px;opacity:.8;vertical-align:1px}
