@@ -326,7 +326,7 @@ function renderDry(){
     for (let k = 1; k < s.pts.length; k++) d += `H${x(s.pts[k][0])}V${y(s.pts[k][1])}`;
     const others = s.drops.filter(dr=>dr.kind !== "done")
       .map(dr=>marker(dr.kind, x(dr.h), y(valueAt(s.pts, dr.h)), ICON(dr.id),
-        `${got(dr.name, dr.by, dr.h)}${dr.kind === "other" ? " (doesn't count)" : ""}`)).join("");
+        `${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}`)).join("");
     let done = "";
     if (s.doneH != null){
       const src = tile.s === "xp" ? tr.icon : (s.e.id ? ICON(s.e.id) : null);
@@ -346,7 +346,7 @@ function renderDry(){
     const all = [...s.drops.filter(dr=>dr.kind !== "done"),
       ...(s.e && s.e.done && s.e.id ? [{name:s.e.item, id:s.e.id, by:s.e.by, h:hoursOf(s.e.when), kind:"done"}] : [])];
     const icons = m => all.filter(dr=>dr.by === m).sort((a,b)=>a.h-b.h).map(dr=>
-      `<img class="ico ${dr.kind}" src="${ICON(dr.id)}" alt="${dr.name}" title="${got(dr.name, dr.by, dr.h)}${dr.kind === "other" ? " (doesn't count)" : ""}">`).join("");
+      `<img class="ico ${dr.kind}" src="${ICON(dr.id)}" alt="${dr.name}" title="${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}">`).join("");
     const who = ((byPlayer[selected]||{})[s.t.id]||[]);
     const split = who.length ? `<tr class="who"><td colspan="3">${who.map(([m,v])=>`<span>${m} <b>${fmtN(v, tr.unit)}</b>${icons(m)}</span>`).join('<i>·</i>')}</td></tr>` : "";
     return `<tr class="team"><td><span class="sw" style="--c:${colorVar(s.t.id)}"></span> ${teamIco(s.t)}${s.t.name}</td>` +
@@ -496,5 +496,8 @@ export function start(){
   new ResizeObserver(()=>{ const w = document.getElementById("dry").clientWidth; if (w !== lastDryW){ lastDryW = w; renderDry(); } })
     .observe(document.getElementById("dry"));
 }
+
+// A team's entry for a tile (mod.js uses it to show what an Uncheck would undo).
+export const entryOf = (teamId, i) => (state[teamId] || {})[i] || null;
 
 export {render, ranking, stats, playerStats, teamIco, colorVar, dayLabel, hoursOf, whenKey, valueAt, LINES, ICON};
