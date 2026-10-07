@@ -175,7 +175,7 @@ function renderDetail(){
       let st;
       if (e && e.done){
         const dIco = e.id ? ICON(e.id) : tile.s === "xp" ? tIco : null;
-        st = `<div class="st ok">${dIco ? `<img class="ico" src="${dIco}" alt="">` : ""}${got(e.item || "Done", byNames(selected, t.id, e) || e.by, e.when)}${e.manual ? ` <span class="modtag" title="Entered by a mod from a screenshot">mod</span>` : ""}</div>${prog ? `<div class="st">${prog}</div>` : ""}`;
+        st = `<div class="st ok">${dIco ? `<img class="ico" src="${dIco}" alt="">` : ""}${got(e.item || "Done", byNames(selected, t.id, e) || e.by, e.when)}</div>${prog ? `<div class="st">${prog}</div>` : ""}`;
       }
       else if (prog) st = `<div class="st">${prog}</div>`;
       else if (tile.s === "xp" && e && e.progress) st = `<div class="st">${progressText(tile,e)}</div>`;
