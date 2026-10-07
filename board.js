@@ -1,6 +1,6 @@
 // Scoring and drawing: board, scores, tile panel, progress chart, rosters, theme.
 
-import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS, DRY} from "./data.js";
+import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS, DRY, CLOG_SECTION} from "./data.js";
 
 // The event data being shown (live or sample), set once by live-data.js through setData().
 let state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {}, NOW_H = 0;
@@ -146,21 +146,23 @@ function renderBoard(){
   board.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;render();});
 }
 
-// The tile panel's summary: what counts for the tile, and where it's tracked from.
+// The tile panel's summary: what counts (item icons, or the skill for XP tiles), and the
+// collection log section or hiscore it's tracked from.
 function tileSummary(i, tile, src){
   const tr = TRACK[i];
-  let counts;
-  if (tile.s === "xp") counts = `${trackIcons(tr)}${tile.n.replace(/ XP$/, "")} XP gained by the team`;
+  let first;
+  if (tile.s === "xp") first = `<span class="lbl">Hiscores</span><span class="ics">${trackIcons(tr)}${tile.n}</span>`;
   else {
     const rows = (TILE_ITEMS[i] || []).filter(r => r[2]), MAX = 10;
-    counts = rows.slice(0, MAX).map(r => `<img class="cico" src="${ICON(r[1])}" alt="${r[0]}" title="${r[0]}">`).join("") +
-      (rows.length > MAX ? `<span class="more">+${rows.length - MAX} more</span>` : "");
+    first = `<span class="lbl">Collection log</span><span class="ics">` +
+      rows.slice(0, MAX).map(r => `<img class="cico" src="${ICON(r[1])}" alt="${r[0]}" title="${r[0]}">`).join("") +
+      (rows.length > MAX ? `<span class="more">+${rows.length - MAX} more</span>` : "") + `</span>`;
   }
   // Skill stand-ins (e.g. Agility XP for the Sepulchre) aren't part of how the tile is
   // tracked, so they get no icon here.
-  const icons = tr && !tr.proxy ? trackIcons(tr) : "";   // the boss/skill, as icons only
-  return `<div class="sum"><p><span class="lbl">Counts</span><span class="ics">${counts}</span></p>` +
-    `<p><span class="lbl">Tracked by</span><span>${icons}${src.label}</span></p></div>`;
+  const icons = tr && !tr.proxy ? trackIcons(tr) : "";
+  return `<div class="sum"><p>${first}</p>` +
+    `<p><span class="lbl">Tracked by</span><span>${icons}${CLOG_SECTION[i] || src.label}</span></p></div>`;
 }
 
 function renderDetail(){

@@ -23,7 +23,7 @@ TEAMS = {
                       "47demonsand", "piinktaco", "The Biplane", "ll Grub ll"],
     "The Desert Dogs": ["duhmass", "ndru", "Mspartam", "789", "Sparge",
                         "Roof Sniffa", "Exviped", "Bhnr", "Halfmeatball"],
-    "The Bakery": ["tv milk", "rpwh", "Im Lablabi", "Cl0udsy", "Gpmorgnchase",
+    "The Bakery": ["tv milk", "rpwh", "Im Lablabi", "nimbis", "Gpmorgnchase",
                    "spotttt", "Dead Naseeph", "LootBuster42", "PlE"],
 }
 
