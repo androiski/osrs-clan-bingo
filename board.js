@@ -1,10 +1,38 @@
 // Scoring and drawing: board, scores, tile panel, progress chart, rosters, theme.
 
-import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS} from "./data.js";
+import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS, DRY} from "./data.js";
 
 // The event data being shown (live or sample), set once by live-data.js through setData().
-let state = {}, dry = {}, drops = {}, byPlayer = {}, NOW_H = 0;
-export function setData(d){ ({state, dry, drops, byPlayer} = d); NOW_H = d.nowH; }
+let state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {}, NOW_H = 0;
+export function setData(d){ ({state, dry, drops, byPlayer} = d); byAct = d.byAct || {}; NOW_H = d.nowH; }
+
+// How dry a team is on a tile, from its KC on each tracked boss and the drop rates in DRY.
+// rate: drops' worth of KC (1 = average); chance: probability of having had no luck this long.
+// Without a per-boss split (the sample data), all KC is counted against the first boss.
+function dryness(i, teamId, kc){
+  const d = DRY[i], tr = TRACK[i];
+  if (!d || !kc) return null;
+  const split = (byAct[i] || {})[teamId];
+  const total = split ? Object.values(split).reduce((a, b) => a + b, 0) || 1 : 1;
+  const kcOf = act => split ? kc * (split[act] || 0) / total : (act === tr.acts[0] ? kc : 0);
+  if (d.barrows){   // a full set of any one brother: 4 specific pieces, 6 brothers
+    const piece = 1 - Math.pow(1 - d.barrows, kc), set = Math.pow(piece, 4);
+    return {chance: Math.pow(1 - set, 6), rate: null, approx: true};
+  }
+  let alone = 0, count = 0;
+  for (const [act, r] of Object.entries(d.rates)){ alone += kcOf(act) * (r.alone || 0); count += kcOf(act) * (r.count || 0); }
+  const n = d.target || 1;
+  let short = 1;   // chance of fewer than n counted drops (Poisson)
+  if (count > 0){ short = 0; let term = Math.exp(-count); for (let j = 0; j < n; j++){ short += term; term *= count / (j + 1); } }
+  return {chance: Math.exp(-alone) * short, rate: alone + count / n, approx: !!d.approx};
+}
+// e.g. "1.5× rate · 78% would have it by now" (the share of teams that'd have been luckier)
+const fmtDry = x => {
+  if (!x) return "";
+  const pct = (1 - x.chance) * 100, p = pct < 1 ? "<1%" : pct > 99 ? ">99%" : `${Math.round(pct)}%`;
+  const rate = x.rate == null ? "" : `${x.rate < 0.1 ? "<0.1" : x.rate.toFixed(1)}× rate · `;
+  return `${x.approx ? "≈ " : ""}${rate}${p} would have it by now`;
+};
 
 function tileIcon(i){
   if (TILES[i].s === "xp") return TRACK[i].icon;
@@ -13,9 +41,13 @@ function tileIcon(i){
   return row ? ICON(row[1]) : null;
 }
 const tileFace = (i, tile) => { const src = tileIcon(i);
-  return `${src ? `<img class="tico" src="${src}" alt="" loading="lazy">` : ""}<span class="tname">${tile.n}</span>`; };
+  return `${src ? `<img class="tico" src="${src}" alt="" loading="lazy">` : ""}<span class="tname"><span class="full">${tile.n}</span><span class="short">${tile.short || tile.n}</span></span>`; };
 
 let view = "all", selected = 12;
+// Icon for a tracked boss (its pet) or skill, and the distinct icons for a tile's tracking.
+const actIcon = act => { const ic = ACT_ICON[act]; return typeof ic === "number" ? ICON(ic) : ic; };
+const trackIcons = tr => [...new Set(tr.acts.map(actIcon).filter(Boolean))]
+  .map(src => `<img class="aico" src="${src}" alt="">`).join("");
 // A team's icon (chompy bird, greyhound, cake), sized by the class.
 const teamIco = (t, cls = "tico-s") => t.icon ? `<img class="${cls}" src="${ICON(t.icon)}" alt="">` : "";
 const colorVar = id => `var(--${id})`;
@@ -114,6 +146,21 @@ function renderBoard(){
   board.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;render();});
 }
 
+// The tile panel's summary: what counts for the tile, and where it's tracked from.
+function tileSummary(i, tile, src){
+  const tr = TRACK[i];
+  let counts;
+  if (tile.s === "xp") counts = `${trackIcons(tr)}${tile.n.replace(/ XP$/, "")} XP gained by the team`;
+  else {
+    const rows = (TILE_ITEMS[i] || []).filter(r => r[2]), MAX = 10;
+    counts = rows.slice(0, MAX).map(r => `<img class="cico" src="${ICON(r[1])}" alt="${r[0]}" title="${r[0]}">`).join("") +
+      (rows.length > MAX ? `<span class="more">+${rows.length - MAX} more</span>` : "");
+  }
+  const progress = tr && tile.s !== "xp" ? ` · progress from ${trackIcons(tr)}${tr.short || tr.label || tr.acts.map(a => ACT_NAMES[a] || a).join(" + ")}${tr.unit === "KC" && !tr.label ? " KC" : ""}` : "";
+  return `<div class="sum"><p><span class="lbl">Counts</span><span class="ics">${counts}</span></p>` +
+    `<p><span class="lbl">Tracked by</span><span>${src.label}${progress}</span></p></div>`;
+}
+
 function renderDetail(){
   const el = document.getElementById("detail");
   const tile = TILES[selected], src = SOURCES[tile.s];
@@ -140,7 +187,7 @@ function renderDetail(){
     return `<div class="pl"><span>${tile.count ? tile.count + " " : ""}${pd.length}/${tile.target || pd.length}</span>${pd.map(pIco).join("")}</div>`;
   }
 
-  el.innerHTML = `<h3>${tIco ? `<img class="hico" src="${tIco}" alt="">` : ""}<span>${tile.n}</span></h3><p class="how">${src.label}</p>` +
+  el.innerHTML = `<h3>${tIco ? `<img class="hico" src="${tIco}" alt="">` : ""}<span>${tile.n}</span></h3>${tileSummary(selected, tile, src)}` +
     (tile.rule ? `<p class="rule">${tile.rule}</p>` : "") +
     TEAMS.map(t=>{
       const e = (state[t.id]||{})[selected];
@@ -289,7 +336,7 @@ function renderDry(){
     const status = s.doneH != null
       ? (tile.s === "xp" ? `<img class="ico" src="${tr.icon}" alt="">${got(`${fmtN(tile.target, "XP")} reached`, null, s.doneH)}`
         : `${s.e.id ? `<img class="ico" src="${ICON(s.e.id)}" alt="">` : ""}${got(s.e.item || "Done", s.e.by, s.e.when)} (${fmtN(s.doneV, tr.unit)} ${tr.unit})`)
-      : "-";
+      : (fmtDry(dryness(selected, s.t.id, s.total)) || "-");
     // Each player's gain, with icons for every drop they got here (the finishing one included).
     const all = [...s.drops.filter(dr=>dr.kind !== "done"),
       ...(s.e && s.e.done && s.e.id ? [{name:s.e.item, id:s.e.id, by:s.e.by, h:hoursOf(s.e.when), kind:"done"}] : [])];
@@ -302,7 +349,7 @@ function renderDry(){
 
 
   el.innerHTML = `<h3>Progress</h3>
-    <p class="dsub">${tr.label || actText + (tr.unit === "KC" ? " KC" : "")}${tr.proxy ? `. ${tr.proxy}` : ""}</p>
+    <p class="dsub">${trackIcons(tr)}${tr.label || actText + (tr.unit === "KC" ? " KC" : "")}${tr.proxy ? `. ${tr.proxy}` : ""}</p>
     <div class="chart">
       <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${tr.unit} gained over time for each team on ${tile.n}">
         <g class="grid">${grid}</g><g class="axis">${axis}</g>${tgt}
@@ -312,7 +359,11 @@ function renderDry(){
       </svg>
       <div class="tip" hidden></div>
     </div>
-    <table><thead><tr><th>Team</th><th class="n">${tr.unit} gained</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+    <table><thead><tr><th>Team</th><th class="n">${tr.unit} gained</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>` +
+    (DRY[selected] ? `<p class="drynote">` + (DRY[selected].barrows
+        ? `How many teams would have a full set of one brother after this many chests (rough).`
+        : `× rate: how many drops' worth of ${tr.unit} the team has put in (1× is average). "Would have it by now": the share of teams that would have finished the tile with this much ${tr.unit}.`) +
+      (DRY[selected].approx ? ` ≈ marks a rough estimate: raid drop chances depend on points, team size and invocations.` : "") + `</p>` : "");
 
   const svg = el.querySelector("svg"), cross = el.querySelector(".cross"), tip = el.querySelector(".tip");
   const move = ev => {

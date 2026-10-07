@@ -13,32 +13,33 @@ export const SOURCES = {
   xp:     {mark:"XP", label:"Hiscores XP", detail:"Team total gained during the event, from TempleOSRS hiscores. Players must be updated on Temple before the start (Auto-Update does this when you log out)."}
 };
 
+// n: full tile name; short: shorter name used on phones, where tiles are small.
 export const TILES = [
   {n:"Ring of Endurance", s:"clog"},
-  {n:"1 Enhanced or 3 Armor Seeds", s:"qty", target:3, count:"Armour seeds", alone:["Enhanced crystal weapon seed"], rule:"Seeds can come from different players on the team."},
+  {n:"1 Enhanced or 3 Armor Seeds", short:"Crystal Seeds", s:"qty", target:3, count:"Armour seeds", alone:["Enhanced crystal weapon seed"], rule:"Seeds can come from different players on the team."},
   {n:"Dragonhunter Wand", s:"clog"},
   {n:"Any Pet", s:"clog", rule:"Every pet counts, including skilling pets and the chompy chick."},
-  {n:"Any ToA Purple (no LB/Fang)", s:"clog"},
+  {n:"Any ToA Purple (no LB/Fang)", short:"ToA Purple", s:"clog"},
   {n:"3 Venator Shards", s:"qty", target:3, count:"Shards", rule:"Shards can come from different players on the team."},
-  {n:"Any Maggot King Unique", s:"clog", rule:"Crimson kisten, Elder venator fang or the Maggot marquess pet."},
-  {n:"Any Virtus Piece", s:"clog"},
+  {n:"Any Maggot King Unique", short:"Maggot King Unique", s:"clog", rule:"Crimson kisten, Elder venator fang or the Maggot marquess pet."},
+  {n:"Any Virtus Piece", short:"Virtus Piece", s:"clog"},
   {n:"Inky Paint", s:"clog"},
-  {n:"Any Voidwaker Piece", s:"clog"},
-  {n:"Any ToB Purple (no Avernic)", s:"clog"},
-  {n:"Araxxor Fang or 3 Hally Pieces", s:"qty", target:3, count:"Hally pieces", alone:["Araxyte fang"], countIcon:29796 /* Noxious halberd */, rule:"Pieces can come from different players on the team."},
-  {n:"500,000 Runecraft XP", s:"xp", target:500000},
-  {n:"1 Full Barrows Set", s:"qty", target:4, rule:"All 4 pieces of one brother's set. Pieces can come from different players on the team."},
+  {n:"Any Voidwaker Piece", short:"Voidwaker Piece", s:"clog"},
+  {n:"Any ToB Purple (no Avernic)", short:"ToB Purple", s:"clog"},
+  {n:"Araxxor Fang or 3 Hally Pieces", short:"Fang / 3 Hally", s:"qty", target:3, count:"Hally pieces", alone:["Araxyte fang"], countIcon:29796 /* Noxious halberd */, rule:"Pieces can come from different players on the team."},
+  {n:"500,000 Runecraft XP", short:"500k RC XP", s:"xp", target:500000},
+  {n:"1 Full Barrows Set", short:"Barrows Set", s:"qty", target:4, rule:"All 4 pieces of one brother's set. Pieces can come from different players on the team."},
   {n:"Pharaoh's Sceptre", s:"clog"},
-  {n:"1 Tanz Fang", s:"clog"},
+  {n:"1 Tanz Fang", short:"Tanz Fang", s:"clog"},
   {n:"Golden Tench", s:"clog"},
   {n:"Dragon Limbs", s:"clog"},
-  {n:"Any PNM Unique", s:"clog"},
-  {n:"Horn or Oathplate Piece", s:"clog", rule:"Soulflame horn, Oathplate helm, chest or legs. Oathplate shards don't count."},
+  {n:"Any PNM Unique", short:"PNM Unique", s:"clog"},
+  {n:"Horn or Oathplate Piece", short:"Horn / Oathplate", s:"clog", rule:"Soulflame horn, Oathplate helm, chest or legs. Oathplate shards don't count."},
   {n:"Crystal Tool Seed", s:"clog"},
-  {n:"Any Doom Unique (no pet)", s:"clog", rule:"Avernic treads, Eye of Ayak, Mokhaiotl cloth or waystone. Dom and Demon tear don't count."},
-  {n:"Any CoX Purple (no prayer scroll)", s:"clog"},
-  {n:"A Zenyte", s:"clog"},
-  {n:"Any Cerb Crystal", s:"clog"}
+  {n:"Any Doom Unique (no pet)", short:"Doom Unique", s:"clog", rule:"Avernic treads, Eye of Ayak, Mokhaiotl cloth or waystone. Dom and Demon tear don't count."},
+  {n:"Any CoX Purple (no prayer scroll)", short:"CoX Purple", s:"clog"},
+  {n:"A Zenyte", short:"Zenyte", s:"clog"},
+  {n:"Any Cerb Crystal", short:"Cerb Crystal", s:"clog"}
 ];
 
 // The icon shown on each board tile, by clog item name (looked up in TILE_ITEMS).
@@ -88,6 +89,30 @@ export const ACT_ICON = {"Zulrah":12921,"The Gauntlet":23757,"The Corrupted Gaun
   "Yama":30888,"Zalcano":23760,"Doom of Mokhaiotl":31130,"Chambers of Xeric":20851,
   "Chambers of Xeric Challenge Mode":20851,"Cerberus":13247,"Barrows Chests":4716,
   "Agility":SKILL_ICON("agility"),"Thieving":SKILL_ICON("thieving"),"Fishing":SKILL_ICON("fishing"),"Runecraft":SKILL_ICON("runecraft")};
+
+// Drop rates for the dryness figures on the Progress table, per kill (or per raid/chest)
+// for each tracked boss: "alone" = items that finish the tile by themselves, "count" = items
+// that count toward a target (e.g. 3 shards). From OSRS Wiki drop tables (Oct 2026).
+// Raids are rough per-player estimates (they depend on points, team size and invocations).
+// Yama (contracts) and Doom (rates change with delve level) have no simple rate, so no figure.
+export const DRY = {
+  1:  {target: 3, rates: {"The Gauntlet": {alone: 1/2000, count: 1/120}, "The Corrupted Gauntlet": {alone: 1/400, count: 1/50}}},
+  2:  {rates: {"Hueycoatl": {alone: 1/105}}},
+  4:  {approx: true, rates: {"Tombs of Amascut": {alone: 1/75}, "Tombs of Amascut Expert": {alone: 1/40}}},
+  5:  {target: 3, rates: {"Phantom Muspah": {count: 1/100}}},
+  6:  {rates: {"Maggot King": {alone: 1/520 + 1/340 + 1/3500}}},
+  7:  {rates: {"Duke Sucellus": {alone: 3/2160}, "The Leviathan": {alone: 3/2304}, "Vardorvis": {alone: 3/3264}, "The Whisperer": {alone: 3/1536}}},
+  9:  {rates: {"Callisto": {alone: 1/360}, "Venenatis": {alone: 1/360}, "Vetion": {alone: 1/360},
+               "Artio": {alone: 1/912}, "Spindel": {alone: 1/912}, "Calvarion": {alone: 1/912}}},
+  10: {approx: true, rates: {"Theatre of Blood": {alone: 1/63}, "Theatre of Blood Challenge Mode": {alone: 1/55}}},
+  11: {target: 3, rates: {"Araxxor": {alone: 1/600, count: 1/200}}},
+  13: {barrows: 7/2448},   // each piece, per chest (7 rolls at 1/2448); a set is 4 pieces of one of 6 brothers
+  15: {rates: {"Zulrah": {alone: 1/1024}}},
+  18: {rates: {"Phosanis Nightmare": {alone: 69/35000 + 3/700 + 31/35000 + 3/1600}}},
+  20: {rates: {"Zalcano": {alone: 39/8000}}},
+  22: {approx: true, rates: {"Chambers of Xeric": {alone: 1/69}, "Chambers of Xeric Challenge Mode": {alone: 1/55}}},
+  24: {rates: {"Cerberus": {alone: 3/520}}}
+};
 
 // For each tile: [item name, item ID, counts toward the tile (1) or not (0), Barrows brother].
 // Built from TempleOSRS collection log categories.
