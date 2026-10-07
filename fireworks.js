@@ -98,7 +98,11 @@ export function fireworks(color, iconUrls = []){
         // Words grow outward as one crisp shape; items drift in spark by spark.
         grow: !!s.grow, cx, cy, ox: px * scale, oy: py * scale, age: s.grow ? 0 : rand(-18, 0)});
     }
-    for (let i = 0; i < 40; i++) spark(x, y, rand(0, Math.PI * 2), rand(2, 5), {size: 2});
+    if (s.grow){
+      // A full burst as wide as the word: sparks coast about half the word's width.
+      const reach = s.w * scale / 2 / 55;   // with drag 0.982 a spark travels ~55x its starting speed
+      for (let i = 0; i < 260; i++) spark(cx, cy, rand(0, Math.PI * 2), reach * rand(0.55, 1.1), {size: rand(2.5, 4), gravity: 0.03});
+    } else for (let i = 0; i < 40; i++) spark(x, y, rand(0, Math.PI * 2), rand(2, 5), {size: 2});
   }
 
   function burst(x, y){
@@ -171,10 +175,11 @@ export function fireworks(color, iconUrls = []){
         p.age += dt;
         // Drift out from the burst and ease into place over about a second, fading in.
         if (p.age < 0) continue;
-        if (p.grow && p.age < 70){ const e = 1 - Math.pow(1 - Math.min(1, p.age / 55), 3); p.x = p.cx + p.ox * e; p.y = p.cy + p.oy * e; }
+        // Words pop out fast as one crisp shape; items drift in spark by spark.
+        if (p.grow && p.age < 70){ const e = 1 - Math.pow(1 - Math.min(1, p.age / 18), 3); p.x = p.cx + p.ox * e; p.y = p.cy + p.oy * e; }
         else if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
         else if (p.age > 70 + p.hold){ p.shape = false; p.vx = rand(-0.5, 0.5); p.vy = rand(-0.6, 0.2); p.gravity = 0.035; p.decay = rand(0.012, 0.02); }
-        ctx.globalAlpha = 0.8 * Math.min(1, p.age / (p.grow ? 10 : 45)); ctx.fillStyle = p.color;
+        ctx.globalAlpha = 0.8 * Math.min(1, p.age / (p.grow ? 4 : 45)); ctx.fillStyle = p.color;
         ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
         continue;
       }
