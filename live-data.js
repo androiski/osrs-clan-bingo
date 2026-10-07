@@ -83,7 +83,7 @@ function loadScript(src){
       announce("win", `${winner.t.name} ${Date.now() > endMs ? "won" : "has won"}!`, 0, "",
         `First line completed @ ${dayLabel(hoursOf(winner.first.when))}`);
       box.style.setProperty("--c", colorVar(winner.t.id));
-      fireworks([getComputedStyle(document.documentElement).getPropertyValue(`--${winner.t.id}`).trim(), "#f0d48a", "#ffffff"]);
+      fireworks(getComputedStyle(document.documentElement).getPropertyValue(`--${winner.t.id}`).trim());
     } else if (Date.now() <= endMs){
       announce("go", "The Bingo Has Started!", endMs, "Time until the bingo ends",
         `Ends <b>${when(endMs)}</b> (your time). First team to complete a line wins.`);
