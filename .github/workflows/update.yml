@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write    # to switch these workflows off once the results are final
 
 concurrency:
   group: update-board
@@ -44,4 +45,16 @@ jobs:
             git commit -m "Update board data"
             git pull --rebase
             git push
+          fi
+
+      # After a Bingo (plus verify_hours for late drops) the results are final: turn off this
+      # job and the roster check so nothing keeps running. Re-enable them from the Actions tab.
+      - name: Stop once the results are final
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -f data/state.json ] && node -e "process.exit(require('./data/state.json').final ? 0 : 1)"; then
+            gh workflow disable update.yml --repo "$GITHUB_REPOSITORY"
+            gh workflow disable roster.yml --repo "$GITHUB_REPOSITORY"
+            echo "Results are final: both scheduled workflows are now off."
           fi
