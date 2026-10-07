@@ -48,6 +48,11 @@ Every 30 minutes (`.github/workflows/update.yml`) it makes 3 read-only requests:
 - Someone who first syncs mid-event gets a fresh baseline, so their old log isn't counted.
   Repeat drops noticed after the end are logged for organisers, not counted.
 - Outside the event window it doesn't contact TempleOSRS at all.
+- **A Bingo ends it.** Once a team completes a line, nothing after that moment counts. The
+  job keeps checking for `verify_hours` (config.json, default 3) to catch drops that
+  happened before the Bingo but were synced late, then saves the results as final and
+  switches off both scheduled workflows (re-enable them from the Actions tab if needed).
+  The roster check stops as soon as there's a Bingo.
 
 It writes, to `data/`:
 
