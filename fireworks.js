@@ -95,7 +95,7 @@ export function fireworks(color, iconUrls = []){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, sx: x, sy: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
         color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-18, 0),
-        shadow: s.shadow || 0, solid: true});
+        shadow: s.shadow || 0, solid: true, cx, cy});
     }
     if (s.word){
       // A full burst as wide as the word: sparks coast about half the word's width.
@@ -179,11 +179,14 @@ export function fireworks(color, iconUrls = []){
         if (p.age < 0) continue;
         const t = Math.max(0, p.age - 70);
         if (t > 170){ sparks.splice(i, 1); continue; }
-        if (p.fall === undefined) p.fall = rand(0.8, 1.25);
+        if (p.fall === undefined){ p.fall = rand(0.8, 1.25); p.side = rand(-1, 1); }
         const ease = 1 - Math.pow(1 - Math.min(1, p.age / 70), 3);
         const drop = 2.6 * p.fall * (Math.exp(t / 38) - 1 - t / 38);
-        p.x = p.sx + (p.tx - p.sx) * ease;
-        p.y = p.sy + (p.ty - p.sy) * ease + drop;
+        // While falling, spread outward from the shape's centre like ordinary sparks: starts from
+        // zero, picks up, then levels off (as if slowed by drag), with a little randomness.
+        const spread = t * t / (t * t + 60 * 60);
+        p.x = p.sx + (p.tx - p.sx) * ease + ((p.tx - p.cx) * 0.4 + p.side * 30) * spread;
+        p.y = p.sy + (p.ty - p.sy) * ease + (p.ty - p.cy) * 0.25 * spread + drop;
         p.fade = 1 - Math.pow(Math.max(0, t - 70) / 100, 1.5);
         if (p.solid){ solids.push(p); continue; }
         // Items fade in over ~0.75 s.
