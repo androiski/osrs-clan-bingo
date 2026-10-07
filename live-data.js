@@ -140,8 +140,11 @@ const fireworksControl = () => !fireworksArgs || reduceMotion ? ""
 const plural = (n, w) => `<b>${n}</b> ${w}${n === 1 ? "" : "s"}`;
 const playerCards = team => `<div class="roll">${playerStats(team).map(p => `<div><b class="who">${p.name}</b>` +
   `<span>${plural(p.tiles, "tile")} · ${plural(p.drops, "drop")}</span>` +
-  (p.work.length ? `<span class="work">${p.work.slice(0, 4).map(w => `<i>${w.icon ? `<img src="${w.icon}" alt="">` : ""}${w.text}</i>`).join("")}</span>` : "") +
-  (p.icons.length ? `<span class="got">${p.icons.map(i => `<img src="${i.src}" alt="${i.name}" title="${i.name}">`).join("")}</span>` : "") +
+  (p.parts.length ? `<span class="work">${p.parts.map(x => `<i title="${x.tile}"><img src="${x.icon}" alt="">` +
+    `<em>${x.label}${x.amount ? ` <b>${x.amount}</b>` : ""}</em>` +
+    (x.items.length ? `<span class="drops">` : "") + x.items.map(it => `<img class="drop${it.finished ? " fin" : ""}${it.counts ? "" : " other"}" src="${it.src}" alt="${it.name}" ` +
+      `title="${it.name}${it.finished ? " (finished the tile)" : it.counts ? "" : " (doesn't count)"}">`).join("") +
+    (x.items.length ? `</span>` : "") + `</i>`).join("")}</span>` : "") +
   `</div>`).join("")}</div>`;
 const names = team => team.members.length > 1 ? team.members.slice(0, -1).join(", ") + " and " + team.members.at(-1) : team.members[0];
 

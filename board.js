@@ -366,27 +366,40 @@ themeBtn.onclick = () => {
 };
 darkQuery.addEventListener("change", renderThemeBtn);
 
-// Each player's bingo stats: tiles they finished (with icons), drops they got, and what
-// they put into each tracked boss or skill (e.g. "Zulrah 52 KC"), biggest share of the
-// team's effort first. Players best first.
+// Each player's bingo stats, tile by tile: what they put in (KC/XP on that tile's boss or
+// skill) and what they got there (every drop, the finishing one marked). The KC shows even
+// when they also got the drop. Tiles they finished come first, then by share of the team's
+// effort. Players best first.
 function playerStats(team){
   const t = state[team.id] || {};
   return team.members.map(m => {
-    const finished = Object.entries(t).filter(([, e]) => e.done && e.by === m);
-    let dropsGot = finished.length;
-    for (const byTeam of Object.values(drops)) dropsGot += ((byTeam || {})[team.id] || []).filter(d => d.by === m).length;
-    const work = [];
-    for (const [i, tr] of Object.entries(TRACK)){
-      const rows = ((byPlayer[i] || {})[team.id]) || [], row = rows.find(r => r[0] === m);
-      if (!row || !row[1]) continue;
-      const teamTotal = rows.reduce((s, r) => s + r[1], 0) || 1;
-      const name = tr.short || (ACT_NAMES[tr.acts[0]] || tr.acts[0]).replace(/ XP$/, "");
-      const ic = ACT_ICON[tr.acts[0]];
-      work.push({text: `${name} ${fmtN(row[1], tr.unit)} ${tr.unit}`, icon: typeof ic === "number" ? ICON(ic) : ic, share: row[1] / teamTotal});
-    }
-    work.sort((a, b) => b.share - a.share);
-    const icons = finished.map(([i, e]) => ({src: e.id ? ICON(e.id) : tileIcon(+i), name: TILES[i].n}));
-    return {name: m, tiles: finished.length, drops: dropsGot, work, icons, effort: work.reduce((s, w) => s + w.share, 0)};
+    const parts = [];
+    let dropsGot = 0, effort = 0;
+    TILES.forEach((tile, i) => {
+      const e = t[i], tr = TRACK[i];
+      const items = ((drops[i] || {})[team.id] || []).filter(d => d.by === m)
+        .map(d => ({src: ICON(d.id), name: d.name, counts: d.kind !== "other", finished: false}));
+      const finished = !!(e && e.done && e.by === m);
+      if (finished) items.unshift({src: e.id ? ICON(e.id) : tileIcon(i), name: e.item || tile.n, counts: true, finished: true});
+      dropsGot += items.length;
+      let amount = "", share = 0;
+      if (tr){
+        const rows = ((byPlayer[i] || {})[team.id]) || [], row = rows.find(r => r[0] === m);
+        if (row && row[1]){
+          amount = `${fmtN(row[1], tr.unit)} ${tr.unit}`;
+          share = row[1] / (rows.reduce((sum, r) => sum + r[1], 0) || 1);
+        }
+      }
+      if (!amount && !items.length) return;
+      effort += share;
+      const ic = tr && ACT_ICON[tr.acts[0]];
+      const label = tr ? (tr.short || (ACT_NAMES[tr.acts[0]] || tr.acts[0]).replace(/ XP$/, "")) : tile.n;
+      parts.push({tile: tile.n, label, amount, items, finished, share,
+        icon: ic ? (typeof ic === "number" ? ICON(ic) : ic) : tileIcon(i)});
+    });
+    parts.sort((a, b) => b.finished - a.finished || b.items.length - a.items.length || b.share - a.share);
+    const icons = parts.filter(x => x.finished).map(x => ({src: x.items[0].src, name: x.tile}));
+    return {name: m, tiles: icons.length, drops: dropsGot, parts, icons, effort};
   }).sort((a, b) => b.tiles - a.tiles || b.drops - a.drops || b.effort - a.effort);
 }
 

@@ -48,6 +48,11 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
         <div class="board" id="board" role="group" aria-label="Bingo tiles"></div>
       </div>
       <section class="dry" id="dry" aria-live="polite"></section>
+      <section class="legend">
+        <h2>How each tile gets verified</h2>
+        <p class="note">The small mark in each tile's corner shows which source would confirm it.</p>
+        <div class="lgrid" id="legend"></div>
+      </section>
     </div>
     <aside class="detail" id="detail" aria-live="polite"></aside>
   </div>
@@ -73,11 +78,6 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
     <div class="rgrid" id="rosters"></div>
   </section>
 
-  <section class="legend">
-    <h2>How each tile gets verified</h2>
-    <p class="note">The small mark in each tile's corner shows which source would confirm it.</p>
-    <div class="lgrid" id="legend"></div>
-  </section>
 
   <footer class="foot" id="foot">
     <p>Made by androiski for JCW's clan, Runecraft.</p>
