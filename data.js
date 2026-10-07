@@ -8,9 +8,9 @@ export const TEAMS = [
 ];
 
 export const SOURCES = {
-  clog:   {mark:"Log", label:"Collection log", detail:"Read from TempleOSRS. First-time drops show up on their own. For a repeat drop, you should open that collection log page again."},
-  qty:    {mark:"Log ×", label:"Collection log count", detail:"Counted from how much your collection log count has gone up since the start. You should open the item's collection log page after every drop."},
-  xp:     {mark:"XP", label:"Hiscores XP", detail:"Team total gained during the event, from TempleOSRS hiscores. Players should be updated on Temple before the start."}
+  clog:   {mark:"Log", label:"Collection log", detail:"Read from TempleOSRS. First-time drops show up on their own. For a repeat drop, open that collection log page again."},
+  qty:    {mark:"Log ×", label:"Collection log count", detail:"Counted from how much your collection log count has gone up since the start. Open the item's collection log page after every drop."},
+  xp:     {mark:"XP", label:"Hiscores XP", detail:"Team total gained during the event, from TempleOSRS hiscores. Players must be updated on Temple before the start."}
 };
 
 export const TILES = [
