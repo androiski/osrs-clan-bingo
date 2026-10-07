@@ -65,7 +65,16 @@ h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-r
 .viewbar .btn[data-team]{border-left:4px solid var(--c)}
 
 .main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
-@media (max-width:900px){.main{grid-template-columns:1fr}}
+@media (max-width:900px){
+  .main{grid-template-columns:1fr}
+  /* One column on phones: put the tile panel right under the board, before the progress
+     chart and the verification notes, instead of at the very bottom. */
+  .leftcol{display:contents}
+  .boardframe{order:1}
+  aside.detail{order:2;position:static}
+  .dry{order:3;margin-top:0}
+  section.legend{order:4;margin-top:12px}
+}
 .leftcol{min-width:0}
 
 .dry{background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:14px 16px;margin-top:16px}

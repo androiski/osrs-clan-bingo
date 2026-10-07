@@ -1,14 +1,15 @@
 """Check every bingo player on TempleOSRS.
 
-Reports whether each RSN has a Temple profile and whether the player has
-synced their collection log, and when the log last synced.
+Reports whether each RSN has a Temple profile and whether the player has synced
+their collection log (and when it last synced).
 
 Prints the results and writes roster-status.js next to this script, which
 index.html loads to show each player's Temple status on the Teams list.
 
 Run: python check_temple_roster.py   (needs: pip install requests)
 Temple asks for gentle request rates, so this waits between lookups
-(26 players takes about 3 minutes).
+(27 players takes about 5 minutes). GitHub Actions runs it every hour
+(.github/workflows/roster.yml); it does nothing once the event in config.json is over.
 """
 import json
 import time
@@ -19,15 +20,15 @@ import requests
 
 TEAMS = {
     "Thompy Thiccs": ["yaint thiccy", "Cenaras", "BIS Ben", "chmsst", "Wildhero",
-                      "47demonsand", "piinktaco", "The Biplane", "ll grub ll"],
-    "The Desert Dogs": ["duhmass", "ndru", "mSpartam", "789", "Sparge",
-                        "roof sniffa", "Exviped", "bhnr", "halfmeatball"],
-    "The Bakery": ["tv milk", "rpwh", "im lablabi", "cl0udsy", "gpmorgnchase",
-                   "spotttt", "dead naseeph", "Lootbuster42", "PlE"],
+                      "47demonsand", "piinktaco", "The Biplane", "ll Grub ll"],
+    "The Desert Dogs": ["duhmass", "ndru", "Mspartam", "789", "Sparge",
+                        "Roof Sniffa", "Exviped", "Bhnr", "Halfmeatball"],
+    "The Bakery": ["tv milk", "rpwh", "Im Lablabi", "Cl0udsy", "Gpmorgnchase",
+                   "spotttt", "Dead Naseeph", "LootBuster42", "PlE"],
 }
 
 URL = "https://templeosrs.com/api/player_info.php"
-DELAY_SECONDS = 7
+DELAY_SECONDS = 12
 OUT = Path(__file__).with_name("roster-status.js")
 
 
@@ -53,6 +54,12 @@ def describe(s):
             "missing": "NO PROFILE (update them on templeosrs.com)",
             "error": f"ERROR ({s.get('error')})"}[s["status"]]
 
+
+# Nothing to do once the event is over (keeps the hourly job quiet afterwards).
+end = (json.loads(Path(__file__).with_name("config.json").read_text()) or {}).get("end")
+if end and datetime.now(timezone.utc) > datetime.fromisoformat(end.replace("Z", "+00:00")):
+    print("The event has ended, so the roster isn't checked any more.")
+    raise SystemExit(0)
 
 results = {}
 for team, players in TEAMS.items():

@@ -2,15 +2,15 @@
 // Shared by the site and the update job (update.js).
 
 export const TEAMS = [
-  {id:"tt", name:"Thompy Thiccs", icon:13071, members:["yaint thiccy","Cenaras","BIS Ben","chmsst","Wildhero","47demonsand","piinktaco","The Biplane","ll grub ll"]},
-  {id:"dd", name:"The Desert Dogs", icon:34459, members:["duhmass","ndru","mSpartam","789","Sparge","roof sniffa","Exviped","bhnr","halfmeatball"]},
-  {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","im lablabi","cl0udsy","gpmorgnchase","spotttt","dead naseeph","Lootbuster42","PlE"]}
+  {id:"tt", name:"Thompy Thiccs", icon:13071, members:["yaint thiccy","Cenaras","BIS Ben","chmsst","Wildhero","47demonsand","piinktaco","The Biplane","ll Grub ll"]},
+  {id:"dd", name:"The Desert Dogs", icon:34459, members:["duhmass","ndru","Mspartam","789","Sparge","Roof Sniffa","Exviped","Bhnr","Halfmeatball"]},
+  {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","Im Lablabi","Cl0udsy","Gpmorgnchase","spotttt","Dead Naseeph","LootBuster42","PlE"]}
 ];
 
 export const SOURCES = {
-  clog:   {mark:"Log", label:"Collection log", detail:"Read from TempleOSRS. First-time drops show up on their own. For a repeat drop, open that collection log page again."},
-  qty:    {mark:"Log ×", label:"Collection log count", detail:"Counted from how much your collection log count has gone up since the start. Open the item's collection log page after every drop."},
-  xp:     {mark:"XP", label:"Hiscores XP", detail:"Team total gained during the event, from TempleOSRS hiscores. Players must be updated on Temple before the start."}
+  clog:   {mark:"Log", label:"Collection log", detail:"Read from TempleOSRS. First-time drops show up on their own with Automatically sync Collection Log on. For a repeat drop, open that collection log page again."},
+  qty:    {mark:"Log ×", label:"Collection log count", detail:"Counted from how much the team's collection log counts have gone up since the start. First-time drops show up on their own; for a repeat drop, open the item's collection log page again."},
+  xp:     {mark:"XP", label:"Hiscores XP", detail:"Team total gained during the event, from TempleOSRS hiscores. Players must be updated on Temple before the start (Auto-Update does this when you log out)."}
 };
 
 export const TILES = [

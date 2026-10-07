@@ -22,11 +22,11 @@ function sample(){
     },
     dd:{
       1:d("ndru","Day 1, 23:02","Enhanced crystal weapon seed",{id:25859}),
-      6:d("mSpartam","Day 2, 20:10","Elder venator fang",{id:33634}),
+      6:d("Mspartam","Day 2, 20:10","Elder venator fang",{id:33634}),
       16:d("Sparge","Day 3, 15:44","Golden tench",{id:22840}),
-      18:d("roof sniffa","Day 4, 02:31","Inquisitor's mace",{id:24417}),
+      18:d("Roof Sniffa","Day 4, 02:31","Inquisitor's mace",{id:24417}),
       21:d("Exviped","Day 4, 21:55","Eye of Ayak",{id:31115}),
-      24:d("bhnr","Day 5, 18:03","Primordial crystal",{id:13231}),
+      24:d("Bhnr","Day 5, 18:03","Primordial crystal",{id:13231}),
       3:d("Sparge","Day 4, 08:20","Heron",{id:13320}),
       20:d("789","Day 2, 19:45","Crystal tool seed",{id:23953}),
       5:p(1,"halfmeatball 1"),
@@ -36,10 +36,10 @@ function sample(){
     bk:{
       3:d("tv milk","Day 2, 12:12","Chompy chick",{id:13071}),
       13:d("rpwh","Day 3, 20:40","Verac's set",{id:4755,progress:4}),
-      14:d("cl0udsy","Day 1, 16:25","Pharaoh's sceptre",{id:26945}),
+      14:d("Cl0udsy","Day 1, 16:25","Pharaoh's sceptre",{id:26945}),
       17:d("spotttt","Day 4, 13:13","Dragon limbs",{id:21918}),
-      22:d("gpmorgnchase","Day 5, 00:50","Twisted buckler",{id:21000}),
-      23:d("Lootbuster42","Day 3, 09:37","Zenyte shard",{id:19529}),
+      22:d("Gpmorgnchase","Day 5, 00:50","Twisted buckler",{id:21000}),
+      23:d("LootBuster42","Day 3, 09:37","Zenyte shard",{id:19529}),
       20:d("rpwh","Day 5, 10:02","Crystal tool seed",{id:23953}),
       1:p(2,"im lablabi: 2 armour seeds"),
       12:p(188000)
@@ -93,11 +93,11 @@ function sampleDrops(){
   const prog = (tile, name, by, h) => ({h, name, id: it(tile, name)[1], by, kind:"progress"});
   const out = {
     5:{tt:[prog(5,"Venator shard","BIS Ben",H(1,21,10)), prog(5,"Venator shard","Wildhero",H(2,18,35))],
-       dd:[prog(5,"Venator shard","halfmeatball",H(4,13,5))]},
+       dd:[prog(5,"Venator shard","Halfmeatball",H(4,13,5))]},
     11:{dd:[prog(11,"Noxious point","duhmass",H(3,4,50))]},
-    1:{bk:[prog(1,"Crystal armour seed","im lablabi",H(2,9,15)), prog(1,"Crystal armour seed","im lablabi",H(4,22,40))]},
+    1:{bk:[prog(1,"Crystal armour seed","Im Lablabi",H(2,9,15)), prog(1,"Crystal armour seed","Im Lablabi",H(4,22,40))]},
     13:{bk:[prog(13,"Verac's helm","rpwh",H(1,20,5)), prog(13,"Karil's coif","tv milk",H(2,1,30)), prog(13,"Verac's brassard","rpwh",H(2,15,0)),
-            prog(13,"Verac's plateskirt","rpwh",H(3,11,25)), prog(13,"Ahrim's staff","cl0udsy",H(4,6,10))],
+            prog(13,"Verac's plateskirt","rpwh",H(3,11,25)), prog(13,"Ahrim's staff","Cl0udsy",H(4,6,10))],
         tt:[prog(13,"Dharok's helm","Wildhero",H(2,13,40)), prog(13,"Torag's hammers","Cenaras",H(3,2,15)), prog(13,"Dharok's greataxe","Wildhero",H(4,19,0))]}
   };
   // A few drops that don't count, from the same boss, for each team that's been there.
