@@ -4,8 +4,8 @@
 //
 // Bursts are spheres, willows, crackles, and item shapes: sparks fly out, form the pixel
 // shape of one of the given item icons, hold it for a moment, then fall away.
-// Every so often there's a finale volley.
-function fireworks(color, iconUrls = []){
+// Every 15-20 seconds there's a small finale volley.
+export function fireworks(color, iconUrls = []){
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const canvas = document.createElement("canvas");
   canvas.setAttribute("aria-hidden", "true");
@@ -53,7 +53,7 @@ function fireworks(color, iconUrls = []){
 
   const rockets = [], sparks = [], flashes = [];
   const t0 = performance.now();
-  let nextLaunch = 0, nextFinale = t0 + rand(9000, 12000), last = t0, running = true;
+  let nextLaunch = 0, nextFinale = t0 + rand(15000, 20000), last = t0, running = true;
 
   function launch(x = W * rand(0.1, 0.9)){
     rockets.push({x, y: H + 10, vx: rand(-0.6, 0.6), vy: -rand(H / 70, H / 52), top: H * rand(0.12, 0.42),
@@ -108,15 +108,15 @@ function fireworks(color, iconUrls = []){
     ctx.clearRect(0, 0, W, H);
     ctx.globalCompositeOperation = "lighter";   // overlapping light adds up, like real fireworks
 
-    const opening = t - t0 < 5000;
+    // A lively first few seconds, then an unhurried show with a small finale now and then.
+    const opening = t - t0 < 4000;
     if (running && t > nextLaunch){
       launch();
-      if (opening && Math.random() < 0.5) launch();
-      nextLaunch = t + (opening ? rand(120, 300) : rand(350, 800));
+      nextLaunch = t + (opening ? rand(350, 650) : rand(1100, 2000));
     }
     if (running && t > nextFinale){
-      for (let i = 0; i < 7; i++) setTimeout(() => running && launch(W * (0.1 + 0.8 * i / 6)), i * 90);
-      nextFinale = t + rand(9000, 13000);
+      for (let i = 0; i < 4; i++) setTimeout(() => running && launch(W * (0.2 + 0.6 * i / 3)), i * 200);
+      nextFinale = t + rand(15000, 20000);
     }
 
     for (let i = flashes.length - 1; i >= 0; i--){
@@ -166,7 +166,7 @@ function fireworks(color, iconUrls = []){
     else { removeEventListener("resize", size); canvas.remove(); }
   }
 
-  for (let i = 0; i < 5; i++) setTimeout(() => running && launch(W * (0.15 + 0.7 * i / 4)), i * 140);   // opening volley
+  for (let i = 0; i < 3; i++) setTimeout(() => running && launch(W * (0.25 + 0.5 * i / 2)), i * 250);   // opening volley
   requestAnimationFrame(frame);
 
   // Stop launching; what's in the air fades out quickly, then the canvas is removed.

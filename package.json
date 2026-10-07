@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "description": "Runecraft Clan Bingo 2026 - the .js files are ES modules (site and update job share data.js)",
+  "type": "module"
+}

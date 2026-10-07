@@ -1,18 +1,19 @@
 // Teams, tiles, rules and the TempleOSRS item/hiscore lists behind each tile.
+// Shared by the site and the update job (update.js).
 
-const TEAMS = [
+export const TEAMS = [
   {id:"tt", name:"Thompy Thiccs", icon:13071, members:["yaint thiccy","Cenaras","BIS Ben","chmsst","Wildhero","47demonsand","piinktaco","The Biplane","ll grub ll"]},
   {id:"dd", name:"The Desert Dogs", icon:34459, members:["duhmass","ndru","mSpartam","789","Sparge","roof sniffa","Exviped","bhnr","halfmeatball"]},
   {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","im lablabi","cl0udsy","gpmorgnchase","spotttt","dead naseeph","Lootbuster42"]}
 ];
 
-const SOURCES = {
+export const SOURCES = {
   clog:   {mark:"Log", label:"Collection log", detail:"Read from TempleOSRS. First-time drops show up on their own. For a repeat drop, open that collection log page again."},
   qty:    {mark:"Log ×", label:"Collection log count", detail:"Counted from how much your collection log count has gone up since the start. Open the item's collection log page after every drop."},
   xp:     {mark:"XP", label:"Hiscores XP", detail:"Team total gained during the event, from TempleOSRS hiscores. Players must be updated on Temple before the start."}
 };
 
-const TILES = [
+export const TILES = [
   {n:"Ring of Endurance", s:"clog"},
   {n:"1 Enhanced or 3 Armor Seeds", s:"qty", target:3, count:"Armour seeds", alone:["Enhanced crystal weapon seed"], rule:"Seeds can come from different players on the team."},
   {n:"Dragonhunter Wand", s:"clog"},
@@ -41,7 +42,7 @@ const TILES = [
 ];
 
 // The icon shown on each board tile, by clog item name (looked up in TILE_ITEMS).
-const TILE_ICON = {0:"Ring of endurance",1:"Enhanced crystal weapon seed",2:"Dragon hunter wand",3:34485 /* Shiba (adult, tan): a pet that doesn't count */,
+export const TILE_ICON = {0:"Ring of endurance",1:"Enhanced crystal weapon seed",2:"Dragon hunter wand",3:34485 /* Shiba (adult, tan): a pet that doesn't count */,
   4:"Tumeken's shadow",5:"Venator shard",6:"Elder venator fang",7:"Virtus mask",8:"Inky paint",9:"Voidwaker hilt",
   10:"Scythe of Vitur",11:"Araxyte fang",13:"Dharok's helm",14:"Pharaoh's sceptre",15:"Tanzanite fang",
   16:"Golden tench",17:"Dragon limbs",18:"Inquisitor's great helm",19:"Soulflame horn",20:"Crystal tool seed",
@@ -49,7 +50,7 @@ const TILE_ICON = {0:"Ring of endurance",1:"Enhanced crystal weapon seed",2:"Dra
 
 // What to chart under the board for each tile: TempleOSRS hiscore fields summed
 // across the team. Tiles left out have no hiscore, so they can't be tracked.
-const TRACK = {
+export const TRACK = {
   14:{unit:"XP", acts:["Thieving"], proxy:"Includes all Thieving, since Pyramid Plunder isn't on the hiscores."},
   16:{unit:"XP", acts:["Fishing"], proxy:"Includes all Fishing, since aerial fishing isn't on the hiscores."},
   0:{unit:"XP", acts:["Agility"], proxy:"Includes all Agility, since the Sepulchre isn't on the hiscores."},
@@ -72,14 +73,14 @@ const TRACK = {
   22:{unit:"KC", acts:["Chambers of Xeric","Chambers of Xeric Challenge Mode"], short:"CoX"},
   24:{unit:"KC", acts:["Cerberus"]}
 };
-const ACT_NAMES = {"Tombs of Amascut":"ToA","Theatre of Blood":"ToB","Chambers of Xeric":"CoX","Agility":"Agility XP","Thieving":"Thieving XP","Fishing":"Fishing XP","Runecraft":"Runecraft XP","The Corrupted Gauntlet":"Corrupted Gauntlet","Tombs of Amascut Expert":"ToA Expert",
+export const ACT_NAMES = {"Tombs of Amascut":"ToA","Theatre of Blood":"ToB","Chambers of Xeric":"CoX","Agility":"Agility XP","Thieving":"Thieving XP","Fishing":"Fishing XP","Runecraft":"Runecraft XP","The Corrupted Gauntlet":"Corrupted Gauntlet","Tombs of Amascut Expert":"ToA Expert",
   "Theatre of Blood Challenge Mode":"ToB Hard Mode","Chambers of Xeric Challenge Mode":"CoX CM",
   "Phosanis Nightmare":"Phosani's Nightmare","Vetion":"Vet'ion"};
 
 // Icon for each tracked boss (its pet, by item ID; Barrows has no pet so it uses a
 // Barrows helm) or skill (RuneLite's skill icon). Used on the player cards.
-const SKILL_ICON = s => `https://cdn.jsdelivr.net/gh/runelite/runelite@runelite-parent-1.13.1/runelite-client/src/main/resources/skill_icons_small/${s}.png`;
-const ACT_ICON = {"Zulrah":12921,"The Gauntlet":23757,"The Corrupted Gauntlet":23757,"Hueycoatl":30152,
+export const SKILL_ICON = s => `https://cdn.jsdelivr.net/gh/runelite/runelite@runelite-parent-1.13.1/runelite-client/src/main/resources/skill_icons_small/${s}.png`;
+export const ACT_ICON = {"Zulrah":12921,"The Gauntlet":23757,"The Corrupted Gauntlet":23757,"Hueycoatl":30152,
   "Tombs of Amascut":27352,"Tombs of Amascut Expert":27352,"Phantom Muspah":27590,"Maggot King":33642,
   "Duke Sucellus":28250,"The Leviathan":28252,"Vardorvis":28248,"The Whisperer":28246,
   "Callisto":13178,"Artio":13178,"Venenatis":13177,"Spindel":13177,"Vetion":13179,"Calvarion":13179,
@@ -90,7 +91,7 @@ const ACT_ICON = {"Zulrah":12921,"The Gauntlet":23757,"The Corrupted Gauntlet":2
 
 // For each tile: [item name, item ID, counts toward the tile (1) or not (0), Barrows brother].
 // Built from TempleOSRS collection log categories.
-const TILE_ITEMS = {
+export const TILE_ITEMS = {
   0:[["Ring of endurance",24844,1],["Hallowed mark",24711,0],["Hallowed token",24719,0],["Hallowed grapple",24721,0],["Hallowed focus",24723,0],["Hallowed symbol",24725,0],["Hallowed hammer",24727,0],["Hallowed ring",24731,0],["Dark dye",24729,0],["Dark acorn",24733,0],["Strange old lockpick (full)",24740,0],["Mysterious page",24763,0]],
   1:[["Enhanced crystal weapon seed",25859,1],["Crystal armour seed",23956,1],["Youngllef",23757,0],["Crystal weapon seed",4207,0],["Gauntlet cape",23859,0]],
   2:[["Dragon hunter wand",30070,1],["Huberte",30152,0],["Tome of Earth (empty)",30066,0],["Soiled page",30068,0],["Hueycoatl hide",30085,0],["Huasca seed",30088,0]],
@@ -116,6 +117,3 @@ const TILE_ITEMS = {
   23:[["Zenyte shard",19529,1],["Light frame",19586,0],["Heavy frame",19589,0],["Ballista limbs",19592,0],["Monkey tail",19610,0],["Ballista spring",19601,0]],
   24:[["Eternal crystal",13227,1],["Pegasian crystal",13229,1],["Primordial crystal",13231,1],["Hellpuppy",13247,0],["Jar of Souls",13245,0],["Smouldering stone",13233,0],["Key master teleport",13249,0]]
 };
-
-// Lets the update job (update.js, run by Node) read the same lists the site uses.
-if (typeof module !== "undefined") module.exports = {TEAMS, TILES, TRACK, TILE_ITEMS};

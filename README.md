@@ -58,7 +58,8 @@ Every run is a commit, so git history is the audit trail.
 
 ## Files
 
-- `index.html`, `style.css`, `board.js` - the site (plain HTML/CSS/JS, no build step)
+- `index.html`, `style.css`, `board.js`, `fireworks.js` - the site (plain HTML/CSS/JS as ES modules,
+  no build step). `live-data.js` is the entry point
 - `data.js` - teams, tiles, rules, which drops count and which hiscores each tile charts.
   Shared by the site and `update.js`
 - `live-data.js` - loads `data/state.json`; falls back to `sample-data.js` (made-up data)
@@ -70,6 +71,7 @@ Every run is a commit, so git history is the audit trail.
 
 ## Running it
 
-- Preview: `python -m http.server`, then open http://localhost:8000
+- Preview: `python -m http.server`, then open http://localhost:8000 (the scripts are ES modules,
+  so opening index.html straight from disk won't work)
 - Run the job by hand: `node update.js` (Node 20+), or "Run workflow" in the Actions tab
 - Scheduled runs are skipped while the repo is private
