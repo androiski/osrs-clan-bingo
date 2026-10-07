@@ -33,6 +33,7 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
     <ol>
       <li><b>Before the event starts:</b> you should install the TempleOSRS RuneLite plugin and turn on <b>Automatically sync Collection Log</b> and <b>Auto-Update</b> in its settings, then sync/open your collection log in game by clicking through every page.</li>
       <li><b>During the event:</b> if you get a bingo drop you already had in your log, you should open that page of your collection log again, since repeat drops only reach the board once you do.</li>
+      <li><b>For every bingo drop:</b> you should screenshot it with the Clan Events plugin on and submit it to the mods, since screenshots are the primary verification for tiles.</li>
     </ol>
     <a href="#rules">Rules and info</a>
   </div>
@@ -48,6 +49,7 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
         <div class="board" id="board" role="group" aria-label="Bingo tiles"></div>
       </div>
       <section class="dry" id="dry" aria-live="polite"></section>
+      <section class="dry timeline" id="timeline" hidden></section>
       <section class="legend">
         <h2>How each tile gets verified</h2>
         <p class="note">The small mark in each tile's corner shows which source would confirm it.</p>
@@ -67,7 +69,7 @@ try { const t = localStorage.getItem("bingo-theme"); if (t === "dark" || t === "
       <div><b>Repeat drops</b>If you already had the item, the board only sees your count go up. Open that item's collection log page after the drop so Temple picks up the new count. If you're unsure, open it anyway.</div>
       <div><b>Drop times</b>Each tile shows when the board first saw the drop, not the exact minute it happened. If two teams finish a line close together, organisers decide the winner by hand.</div>
       <div><b>KC and XP</b>Progress charts and the Runecraft tile use your TempleOSRS stats, which Auto-Update refreshes when you log out. On long grinds, log out now and then.</div>
-      <div><b>Screenshots, just in case</b>Keep the clan event plugin on and screenshot every bingo drop. If the board misses one, organisers can check it.</div>
+      <div><b>Screenshots</b>Screenshot every bingo drop with the Clan Events plugin on and submit it to the mods. Screenshots are the primary verification; the board tracks progress live.</div>
       <div><b>No Temple profile, no points</b>If Temple can't find your RSN, nothing you get will count. Check the Teams list.</div>
     </div>
   </section>
