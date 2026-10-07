@@ -206,7 +206,7 @@ function renderResults(){
   if (!chosen){
     if (ended) announce("", "The bingo has ended", 0, "", "No team completed a line.");
     else announce("go", "The Bingo Has Started!", endMs, "Time until the bingo ends",
-      `Ends <b>${when(endMs)}</b> (your time). First team to complete a line wins.<br>` +
+      `Ends <b>${when(endMs)}</b>. First team to complete a line wins.<br>` +
       `Last updated <b data-since></b>`);
     return;
   }
@@ -228,7 +228,7 @@ start();
 
 if (startMs > Date.now()){
   announce("", "Bingo starts in", startMs, "Time until the bingo starts",
-    `<b>${when(startMs)}</b> (your time). ${mode === "live" ? "Drops count from then." : "The board goes live then."}`);
+    `<b>${when(startMs)}</b>`);
 } else if (mode !== "preview"){
   const top = ranking()[0];
   if (top && top.first){
