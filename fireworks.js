@@ -82,7 +82,10 @@ export function fireworks(color, iconUrls = []){
     g.font = font; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.fillText(word, 4, h / 2);
     const step = Math.max(3, Math.round(fontPx / 30)), d = g.getImageData(0, 0, w, h).data, px = [];
     for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step)
-      if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, pick([pale, pale, light, base])]);
+      // A little sparse and scattered, like sparks rather than solid letters, but still
+      // readable: skip ~15% of the dots, nudge the rest off the grid, and vary their size.
+      if (d[(y * w + x) * 4 + 3] > 128 && Math.random() < 0.85)
+        px.push([x - w / 2 + rand(-0.22, 0.22) * step, y - h / 2 + rand(-0.22, 0.22) * step, pick([pale, pale, light, base]), rand(0.6, 1.05)]);
     return {px, w, h, scale: 1, size: step * 0.95, hold: 150, grow: true};
   }
 
@@ -91,10 +94,10 @@ export function fireworks(color, iconUrls = []){
     const cx = Math.min(Math.max(x, s.w * scale / 2 + 12), W - s.w * scale / 2 - 12);
     const cy = Math.max(y, s.h * scale / 2 + 12);
     const hold = s.hold || rand(110, 150), size = s.size || scale * 0.9;
-    for (const [px, py, col] of s.px){
+    for (const [px, py, col, k = 1] of s.px){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
-        color: col, size, shape: true, tx: cx + px * scale, ty: cy + py * scale, hold,
+        color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, hold,
         // Words grow outward as one crisp shape; items drift in spark by spark.
         grow: !!s.grow, cx, cy, ox: px * scale, oy: py * scale, age: s.grow ? 0 : rand(-18, 0)});
     }
@@ -180,7 +183,8 @@ export function fireworks(color, iconUrls = []){
         else if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
         else if (p.age > 70 + p.hold){ p.shape = false; p.vx = rand(-0.5, 0.5); p.vy = rand(-0.6, 0.2); p.gravity = 0.035; p.decay = rand(0.012, 0.02); }
         // Words fade in slowly out of the explosion (eased, ~1.2 s); items fade in over ~0.75 s.
-        ctx.globalAlpha = 0.8 * (p.grow ? Math.pow(Math.min(1, p.age / 75), 1.6) : Math.min(1, p.age / 45));
+        ctx.globalAlpha = 0.8 * (p.grow ? Math.pow(Math.min(1, p.age / 75), 1.6) * (0.75 + 0.25 * Math.random())   // twinkle
+                                        : Math.min(1, p.age / 45));
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
         continue;
