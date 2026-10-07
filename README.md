@@ -27,6 +27,8 @@ is static and just loads that file.
 In the TempleOSRS RuneLite plugin, turn on **Automatically sync Collection Log** and
 **Auto-Update**, then open their collection log and click through every page before the
 start. During the event, after a drop they already had, they open that log page again.
+Every bingo drop is also screenshotted with the Clan Events plugin and submitted to the
+mods: screenshots are the primary verification, and the board tracks progress live.
 
 ### The update job (`update.js`)
 
@@ -55,6 +57,26 @@ It writes, to `data/`:
 - `state.json` - what the site shows, rebuilt from the three above
 
 Every run is a commit, so git history is the audit trail.
+
+### When tiles were completed
+
+The site's Timeline lists every completed tile in order. How exact each time is depends on
+how the drop reached TempleOSRS:
+
+| How it shows up | Time recorded | Accuracy |
+|---|---|---|
+| Item new to the player's collection log | TempleOSRS's timestamp from the recent-items feed | Exact, with Automatically sync Collection Log on |
+| Repeat drop (player already had it) | The run (every 30 min) that first saw the count go up | Up to 30 min late, plus however long the player takes to reopen that log page |
+| XP tiles | The first run where the team's gain passes the target | Only as fresh as each player's last TempleOSRS update (Auto-Update runs on logout), so it can be hours late |
+| Count tiles (3 shards, seeds, hally pieces) and Barrows | The drop that finished it, by the rules above | Same as that drop |
+
+Progress (KC/XP) is measured from the baseline taken in the 3 hours before the start. The
+chart gets a point whenever a run sees a team's total change, so each point is really "the
+first run after that player's last TempleOSRS update". A player who first syncs their log
+during the event only counts drops from then on.
+
+So first-time drops are exact, while repeat drops and XP are rounded up to the next run.
+Close finishes are checked by hand against screenshots.
 
 ## Files
 

@@ -115,6 +115,22 @@ h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-r
 .dry table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.9rem}
 .dry th{text-align:left;color:var(--muted);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line)}
 .dry td{padding:5px 6px;border-bottom:1px dotted var(--line)}
+.timeline ol{list-style:none;margin:6px 0 0;padding:0;font-size:.9rem}
+.timeline li{border-bottom:1px dotted var(--line)}
+.timeline li button{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:4.6em minmax(0,auto) 1fr auto;align-items:center;gap:10px;padding:5px 6px}
+.timeline li button:hover,.timeline li button[aria-pressed="true"]{background:color-mix(in srgb,var(--tile) 70%,transparent)}
+.timeline li button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.timeline .when{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.timeline .who{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.timeline .who .tico-s{margin:0}
+.timeline .what{min-width:0}
+.timeline .by{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.timeline .btag{font-family:var(--display);color:#ff0;text-shadow:1px 1px 0 #000;margin-left:4px}
+@media (max-width:600px){
+  .timeline li button{grid-template-columns:4.2em auto 1fr;row-gap:2px}
+  .timeline .tname{display:none}
+  .timeline .by{grid-column:3}
+}
 .dry td.n{text-align:right;font-variant-numeric:tabular-nums}
 .dry th.n{text-align:right}
 .dry .none{color:var(--muted);margin:6px 0 0}

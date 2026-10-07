@@ -366,8 +366,38 @@ let afterRender = null;
 export const onRender = fn => { afterRender = fn; };
 export const getView = () => view;
 
+// Every completed tile in the order it was done (for the chosen team, or all teams), with the
+// tile that finished a team's first line marked Bingo!. Clicking one selects that tile.
+function renderTimeline(){
+  const el = document.getElementById("timeline");
+  if (!el) return;   // an old cached index.html without the section
+  const list = [];
+  for (const t of TEAMS){
+    if (view !== "all" && view !== t.id) continue;
+    const first = stats(t.id).first;
+    let bingo = first ? whenKey(first.when) : null;
+    const done = TILES.map((_, i)=>({t, i, e:(state[t.id]||{})[i]}))
+      .filter(x=>x.e && x.e.done && whenKey(x.e.when) !== Infinity)
+      .map(x=>({...x, k:whenKey(x.e.when)})).sort((a,b)=>a.k-b.k);
+    for (const x of done){ if (x.k === bingo){ x.bingo = true; bingo = null; } list.push(x); }
+  }
+  el.hidden = !list.length;
+  if (!list.length){ el.innerHTML = ""; return; }
+  list.sort((a,b)=>a.k-b.k);
+  el.innerHTML = `<h3>Timeline</h3><p class="dsub">Tiles in the order they were completed, in hours from the start.</p><ol>` +
+    list.map(({t, i, e, bingo})=>{
+      const tile = TILES[i], src = e.id ? ICON(e.id) : tileIcon(i);
+      return `<li><button type="button" data-i="${i}" aria-pressed="${selected===i}" title="${e.item ? e.item : tile.n}">` +
+        `<span class="when">${dayLabel(hoursOf(e.when))}</span>` +
+        `<span class="who"><span class="sw" style="--c:${colorVar(t.id)}"></span>${teamIco(t)}${view === "all" ? `<span class="tname">${t.name}</span>` : ""}</span>` +
+        `<span class="what">${src ? `<img class="ico" src="${src}" alt="">` : ""}${tile.n}${bingo ? ` <span class="btag">Bingo!</span>` : ""}</span>` +
+        `<span class="by">${e.by && e.by !== "Team" ? e.by : ""}</span></button></li>`;
+    }).join("") + `</ol>`;
+  el.querySelectorAll("button[data-i]").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;render();});
+}
+
 function render(){
-  renderScores(); renderViewbar(); renderBoard(); renderDetail(); renderDry();
+  renderScores(); renderViewbar(); renderBoard(); renderDetail(); renderDry(); renderTimeline();
   if (afterRender) afterRender();
 }
 
