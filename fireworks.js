@@ -22,7 +22,7 @@ export function fireworks(color, iconUrls = []){
     const v = parseInt(hex.slice(i, i + 2), 16);
     return Math.round(k >= 0 ? v + (255 - v) * k : v * (1 + k)).toString(16).padStart(2, "0");
   }).join("");
-  const base = color, dark = shade(color, -0.45), light = shade(color, 0.4), pale = shade(color, 0.75);
+  const base = color, light = shade(color, 0.4), pale = shade(color, 0.75);
   const shades = [base, base, light, pale];
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -43,8 +43,7 @@ export function fireworks(color, iconUrls = []){
         for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++){
           const o = (y * c.width + x) * 4;
           if (d[o + 3] < 120) continue;
-          const lum = (0.3 * d[o] + 0.59 * d[o + 1] + 0.11 * d[o + 2]) / 255;
-          px.push([x - c.width / 2, y - c.height / 2, lum < 0.15 ? dark : lum < 0.45 ? base : lum < 0.7 ? light : pale]);
+          px.push([x - c.width / 2, y - c.height / 2, `rgb(${d[o]},${d[o + 1]},${d[o + 2]})`]);   // the icon's own colours
         }
         if (px.length > 20) shapes.push({px, w: c.width, h: c.height});
       } catch {}   // pixels unreadable: just skip this shape
@@ -96,7 +95,7 @@ export function fireworks(color, iconUrls = []){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
         color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, hold, age: rand(-18, 0),
-        shadow: s.shadow || 0});
+        shadow: s.shadow || 0, solid: true});
     }
     if (s.word){
       // A full burst as wide as the word: sparks coast about half the word's width.
@@ -167,7 +166,7 @@ export function fireworks(color, iconUrls = []){
     }
 
     ctx.lineCap = "square";
-    const words = [];   // word dots are drawn last, solid, with a shadow (see below)
+    const solids = [];   // shape dots (items, BINGO!) are drawn last, solid, so colours stay true
     for (let i = sparks.length - 1; i >= 0; i--){
       const p = sparks[i];
       p.px = p.x; p.py = p.y;
@@ -178,7 +177,7 @@ export function fireworks(color, iconUrls = []){
         if (p.age < 0) continue;
         if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
         else if (p.age > 70 + p.hold){ p.shape = false; p.vx = rand(-0.5, 0.5); p.vy = rand(-0.6, 0.2); p.gravity = 0.035; p.decay = rand(0.012, 0.02); }
-        if (p.shadow){ words.push(p); continue; }
+        if (p.solid){ solids.push(p); continue; }
         // Items fade in over ~0.75 s.
         ctx.globalAlpha = 0.8 * Math.min(1, p.age / 45);
         ctx.fillStyle = p.color;
@@ -194,10 +193,12 @@ export function fireworks(color, iconUrls = []){
       ctx.beginPath(); ctx.moveTo(p.px - p.vx * 2, p.py - p.vy * 2); ctx.lineTo(p.x, p.y); ctx.stroke();
       ctx.fillStyle = p.color; ctx.fillRect(p.x - p.size / 2 - 0.5, p.y - p.size / 2 - 0.5, p.size + 1, p.size + 1);
     }
-    // The BINGO word looks like OSRS chat text: exact yellow with a black drop shadow, so it's
-    // drawn normally (not glowing) with every shadow under every dot.
+    // Shape dots are drawn normally (not glowing) so their colours stay true: items in their own
+    // icon colours, and BINGO! like OSRS chat text, exact yellow with a black drop shadow under
+    // every dot.
     ctx.globalCompositeOperation = "source-over";
-    for (const pass of ["shadow", "dot"]) for (const p of words){
+    for (const pass of ["shadow", "dot"]) for (const p of solids){
+      if (pass === "shadow" && !p.shadow) continue;
       ctx.globalAlpha = Math.min(1, p.age / 45);
       ctx.fillStyle = pass === "shadow" ? "#000" : p.color;
       const off = pass === "shadow" ? p.shadow : 0;
