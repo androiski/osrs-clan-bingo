@@ -83,8 +83,8 @@ export function fireworks(color, iconUrls = []){
     const step = Math.max(3, Math.round(fontPx / 30)), d = g.getImageData(0, 0, w, h).data, px = [];
     for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step)
       // OSRS chat yellow, whatever the team's colour.
-      if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, pick(["#ffff00", "#ffff00", "#ffff00", "#ffee55"])]);
-    return {px, w, h, scale: 1, size: step * 0.8, hold: 90, word: true};
+      if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, "#ffff00"]);
+    return {px, w, h, scale: 1, size: step * 0.8, hold: 90, word: true, shadow: step * 0.55};
   }
 
   function shapeBurst(x, y, s = pick(shapes)){
@@ -95,7 +95,8 @@ export function fireworks(color, iconUrls = []){
     for (const [px, py, col, k = 1] of s.px){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
-        color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, hold, age: rand(-18, 0)});
+        color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, hold, age: rand(-18, 0),
+        shadow: s.shadow || 0});
     }
     if (s.word){
       // A full burst as wide as the word: sparks coast about half the word's width.
@@ -166,6 +167,7 @@ export function fireworks(color, iconUrls = []){
     }
 
     ctx.lineCap = "square";
+    const words = [];   // word dots are drawn last, solid, with a shadow (see below)
     for (let i = sparks.length - 1; i >= 0; i--){
       const p = sparks[i];
       p.px = p.x; p.py = p.y;
@@ -176,7 +178,8 @@ export function fireworks(color, iconUrls = []){
         if (p.age < 0) continue;
         if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
         else if (p.age > 70 + p.hold){ p.shape = false; p.vx = rand(-0.5, 0.5); p.vy = rand(-0.6, 0.2); p.gravity = 0.035; p.decay = rand(0.012, 0.02); }
-        // Words fade in slowly out of the explosion (eased, ~1.2 s); items fade in over ~0.75 s.
+        if (p.shadow){ words.push(p); continue; }
+        // Items fade in over ~0.75 s.
         ctx.globalAlpha = 0.8 * Math.min(1, p.age / 45);
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
@@ -191,8 +194,16 @@ export function fireworks(color, iconUrls = []){
       ctx.beginPath(); ctx.moveTo(p.px - p.vx * 2, p.py - p.vy * 2); ctx.lineTo(p.x, p.y); ctx.stroke();
       ctx.fillStyle = p.color; ctx.fillRect(p.x - p.size / 2 - 0.5, p.y - p.size / 2 - 0.5, p.size + 1, p.size + 1);
     }
-    ctx.globalAlpha = 1;
+    // The BINGO word looks like OSRS chat text: exact yellow with a black drop shadow, so it's
+    // drawn normally (not glowing) with every shadow under every dot.
     ctx.globalCompositeOperation = "source-over";
+    for (const pass of ["shadow", "dot"]) for (const p of words){
+      ctx.globalAlpha = Math.min(1, p.age / 45);
+      ctx.fillStyle = pass === "shadow" ? "#000" : p.color;
+      const off = pass === "shadow" ? p.shadow : 0;
+      ctx.fillRect(p.x - p.size / 2 + off, p.y - p.size / 2 + off, p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
     if (running || rockets.length || sparks.length || flashes.length) requestAnimationFrame(frame);
     else { removeEventListener("resize", size); canvas.remove(); }
   }
