@@ -65,8 +65,8 @@ function renderScores(){
       <h2>${teamIco(r.t, "tico-m")}${r.t.name}</h2>
       ${r.first
         ? `<div class="bingo">Bingo! Line completed @ ${dayLabel(hoursOf(r.first.when))}</div>`
-        : `<div class="nums"><span><b>${r.best}</b>of 5 on their best line</span><span><b>${r.tiles}</b>tiles</span></div>
-      <div class="bar"><i style="width:${r.best/5*100}%"></i></div>`}
+        : `<div class="nums"><span><b>${r.tiles}</b>${r.tiles === 1 ? "tile" : "tiles"}</span></div>
+      <div class="bar" title="${r.best} of 5 on their best line"><i style="width:${r.best/5*100}%"></i></div>`}
     </div>`).join("");
 }
 
