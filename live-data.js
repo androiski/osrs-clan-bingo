@@ -132,6 +132,23 @@ function loadScript(src){
       (stopFireworks ? `<p class="hint">Click anywhere to stop the fireworks.</p>` : ""));
   };
 
+  if (mode === "preview"){
+    // The preview shouldn't show anyone winning: break any finished line in the sample
+    // data by taking away its last tile.
+    for (const team of TEAMS){
+      const t = state[team.id] || {};
+      for (const line of LINES) if (line.every(i => t[i] && t[i].done)){
+        const last = line.reduce((a, i) => whenKey(t[i].when) > whenKey(t[a].when) ? i : a);
+        t[last] = {done: false, progress: 0};
+      }
+    }
+  }
+  if (mode === "preview" || Date.now() < startMs){
+    // Before the start, show the Teams list (who has synced their log) right under the
+    // "open your collection log" notice.
+    document.querySelector(".callout").after(document.querySelector("section.rosters"));
+  }
+
   start();
 
   if (startMs > Date.now()){
