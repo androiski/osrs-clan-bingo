@@ -58,8 +58,8 @@ function makeWinner(data, id){
 const foot = document.getElementById("foot");
 if (foot){
   const link = (href, label, current) => `<a class="btn" href="./${href}" aria-current="${current ? "page" : "false"}">${label}</a>`;
-  const modeLinks = [["", "Real page"], ...Object.keys(MODES).map(m => [m, m[0].toUpperCase() + m.slice(1)])]
-    .map(([m, label]) => link(m ? `?demo=${m}` : "", label, (mode || "") === m && !winnerId)).join(" ");
+  const modeLinks = [["", "Real page"], ["?demo=preview", "Preview"], ["?demo=started", "Start/Ongoing"], ["?demo=ended", "Ended"]]
+    .map(([href, label]) => link(href, label, (mode || "") === (href.split("=")[1] || "") && !winnerId)).join(" ");
   const winLinks = TEAMS.map(t => link(`?demo=won&team=${t.id}`, `${t.name} wins`, mode === "won" && winnerId === t.id)).join(" ");
   foot.insertAdjacentHTML("afterbegin", `<p class="demos"><span>Demo:</span> ${modeLinks}</p><p class="demos"><span>Winner:</span> ${winLinks}</p>`);
 }
