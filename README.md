@@ -75,3 +75,11 @@ Every run is a commit, so git history is the audit trail.
   so opening index.html straight from disk won't work)
 - Run the job by hand: `node update.js` (Node 20+), or "Run workflow" in the Actions tab
 - Scheduled runs are skipped while the repo is private
+
+## Ideas for later
+
+- **RuneProfile** (runeprofile.com, RuneLite plugin + unofficial API) as an extra check on
+  drop timing. Skipped for the 2026 event: it has the same blind spot as Temple for repeat
+  drops (players still have to open the log page) and would mean asking everyone to install
+  a second plugin. Worth a look if close finishes keep coming down to timing - first confirm
+  what its API returns (per-drop timestamps for repeats? item counts?).
