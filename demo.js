@@ -9,7 +9,7 @@
 import {TEAMS, TILES, TILE_ITEMS} from "./data.js";
 import {LINES, whenKey} from "./board.js";
 
-const MODES = {preview: "before the bingo starts", started: "while the bingo is running",
+const MODES = {preview: "before the bingo starts", started: "during the bingo",
   won: "once a team has won", ended: "after the bingo has ended"};
 const params = new URLSearchParams(location.search);
 export const mode = MODES[params.get("demo")] ? params.get("demo") : null;
@@ -17,8 +17,8 @@ const winnerId = TEAMS.some(t => t.id === params.get("team")) ? params.get("team
 
 export const banner = () => {
   const team = winnerId && TEAMS.find(t => t.id === winnerId);
-  const what = team ? (mode === "ended" ? `after the bingo has ended with ${team.name} winning` : `when ${team.name} win`) : MODES[mode];
-  return `<h2>Demo</h2><p>This is how the page looks ${what}, using sample data. <a href="./">Back to the real page</a></p>`;
+  const what = team ? (mode === "ended" ? `after the bingo, with ${team.name} winning,` : `when ${team.name} win`) : MODES[mode];
+  return `<h2>Demo</h2><p>This is how the page is expected to look ${what} using fake data. <a href="./">Back to the real page</a></p>`;
 };
 
 // Place the sample event in time around now. data is the sample-data.js export.
