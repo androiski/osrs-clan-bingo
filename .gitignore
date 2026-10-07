@@ -3,3 +3,7 @@
 __pycache__/
 *.pyc
 .env
+
+# Full-size banner originals (web-sized copies live in images/web/)
+images/*.png
+images/*.jpg
