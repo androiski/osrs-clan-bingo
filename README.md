@@ -1,4 +1,4 @@
-# OSRS Clan Bingo 2026
+# Runecrafting Clan Bingo 2026
 
 Live board for the clan bingo: 3 teams, a 5x5 board, tracked from TempleOSRS.
 The first team to complete a row, column or diagonal wins.
