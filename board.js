@@ -172,7 +172,7 @@ function renderDetail(){
       let st;
       if (e && e.done){
         const dIco = e.id ? ICON(e.id) : tile.s === "xp" ? tIco : null;
-        st = `<div class="st ok">${dIco ? `<img class="ico" src="${dIco}" alt="">` : ""}${got(e.item || "Done", e.by, e.when)}</div>${prog ? `<div class="st">${prog}</div>` : ""}`;
+        st = `<div class="st ok">${dIco ? `<img class="ico" src="${dIco}" alt="">` : ""}${got(e.item || "Done", byNames(selected, t.id, e) || e.by, e.when)}</div>${prog ? `<div class="st">${prog}</div>` : ""}`;
       }
       else if (prog) st = `<div class="st">${prog}</div>`;
       else if (tile.s === "xp" && e && e.progress) st = `<div class="st">${progressText(tile,e)}</div>`;
@@ -218,6 +218,23 @@ function renderLegend(){
 }
 
 const got = (item, by, when) => `${item}${by && by !== "Team" ? ` - ${by}` : ""} @ ${dayLabel(typeof when === "number" ? when : hoursOf(when))}`;
+// Who got a tile: the finisher, plus anyone whose drops it needed. Count tiles take the drops
+// that made up the target; Barrows only the pieces of the set that was finished. XP tiles
+// are a team effort, so nobody is named.
+function helpers(i, tid, e){
+  const tile = TILES[i];
+  if (!e || !e.done || !e.by || e.by === "Team") return [];
+  if (!tile.target || tile.s === "xp" || (tile.alone || []).includes(e.item)) return [e.by];
+  const doneH = hoursOf(e.when), rows = TILE_ITEMS[i] || [];
+  let pd = ((drops[i] || {})[tid] || []).filter(d => d.kind === "progress" && d.h <= doneH).sort((a, b) => a.h - b.h);
+  if (rows.some(r => r[3])){
+    const brother = (e.item || "").replace(/'s set$/, ""), seen = new Set();
+    pd = pd.filter(d => (rows.find(r => r[0] === d.name) || [])[3] === brother && !seen.has(d.name) && seen.add(d.name));
+  } else pd = pd.slice(0, tile.target - 1);
+  return [...new Set([...pd.map(d => d.by), e.by])];
+}
+const byNames = (i, tid, e) => helpers(i, tid, e).join(", ");
+
 const hoursOf = when => { const k = whenKey(when); return k === Infinity ? null : k/60 - 24; };
 const dayLabel = h => { const total = Math.round(h*60), hh = Math.floor(total/60), mm = total % 60;
   return mm ? `${hh}h ${mm}m` : `${hh}h`; };
@@ -244,7 +261,7 @@ function renderDry(){
     const rows = TEAMS.map(t=>{
       const e = (state[t.id]||{})[selected];
       const cell = e && e.done
-        ? `${e.id ? `<img class="ico" src="${ICON(e.id)}" alt="">` : ""}${got(e.item || "Done", e.by, e.when)}`
+        ? `${e.id ? `<img class="ico" src="${ICON(e.id)}" alt="">` : ""}${got(e.item || "Done", byNames(selected, t.id, e) || e.by, e.when)}`
         : `<span class="muted">-</span>`;
       return `<tr><td><span class="sw" style="--c:${colorVar(t.id)}"></span> ${t.name}</td><td>${cell}</td></tr>`;
     }).join("");
@@ -302,7 +319,7 @@ function renderDry(){
     let done = "";
     if (s.doneH != null){
       const src = tile.s === "xp" ? tr.icon : (s.e.id ? ICON(s.e.id) : null);
-      const label = tile.s === "xp" ? got(`${fmtN(tile.target, "XP")} reached`, null, s.doneH) : got(s.e.item, s.e.by, s.e.when);
+      const label = tile.s === "xp" ? got(`${fmtN(tile.target, "XP")} reached`, null, s.doneH) : got(s.e.item, byNames(selected, s.t.id, s.e) || s.e.by, s.e.when);
       done = marker("done", x(s.doneH), y(s.doneV), src, label);
     }
     return `<g class="series" style="--c:${colorVar(s.t.id)}"><path d="${d}"/>${others}${done}</g>`;
@@ -313,7 +330,7 @@ function renderDry(){
     const gotIt = s.doneH == null ? ""
       : tile.s === "xp" ? `<img class="ico" src="${tr.icon}" alt="" title="${fmtN(tile.target, "XP")} reached">${dayLabel(s.doneH)}`
       : `${s.e.id ? `<img class="ico" src="${ICON(s.e.id)}" alt="${s.e.item}" title="${s.e.item} (${fmtN(s.doneV, tr.unit)} ${tr.unit})">` : ""}` +
-        `${s.e.by && s.e.by !== "Team" ? `${s.e.by} · ` : ""}${dayLabel(hoursOf(s.e.when))}`;
+        `${byNames(selected, s.t.id, s.e) ? `${byNames(selected, s.t.id, s.e)} · ` : ""}${dayLabel(hoursOf(s.e.when))}`;
     // Each player's gain, with icons for every drop they got here (the finishing one included).
     const all = [...s.drops.filter(dr=>dr.kind !== "done"),
       ...(s.e && s.e.done && s.e.id ? [{name:s.e.item, id:s.e.id, by:s.e.by, h:hoursOf(s.e.when), kind:"done"}] : [])];
@@ -391,7 +408,7 @@ function renderTimeline(){
         `<span class="when">${dayLabel(hoursOf(e.when))}</span>` +
         `<span class="who"><span class="sw" style="--c:${colorVar(t.id)}"></span>${teamIco(t)}${view === "all" ? `<span class="tname">${t.name}</span>` : ""}</span>` +
         `<span class="what">${src ? `<img class="ico" src="${src}" alt="">` : ""}${tile.n}${bingo ? ` <span class="btag">Bingo!</span>` : ""}</span>` +
-        `<span class="by">${e.by && e.by !== "Team" ? e.by : ""}</span></button></li>`;
+        `<span class="by">${byNames(i, t.id, e)}</span></button></li>`;
     }).join("") + `</ol>`;
   el.querySelectorAll("button[data-i]").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;render();});
 }
@@ -434,8 +451,10 @@ function playerStats(team){
       const e = t[i], tr = TRACK[i];
       const items = ((drops[i] || {})[team.id] || []).filter(d => d.by === m)
         .map(d => ({src: ICON(d.id), name: d.name, counts: d.kind !== "other", finished: false}));
-      const finished = !!(e && e.done && e.by === m);
-      if (finished) items.unshift({src: e.id ? ICON(e.id) : tileIcon(i), name: e.item || tile.n, counts: true, finished: true});
+      // A tile counts for everyone who helped get it (see helpers); the finishing item shows
+      // only on the player who got it.
+      const finished = helpers(i, team.id, e).includes(m);
+      if (finished && e.by === m) items.unshift({src: e.id ? ICON(e.id) : tileIcon(i), name: e.item || tile.n, counts: true, finished: true});
       dropsGot += items.length;
       let amount = "", share = 0;
       if (tr){
@@ -449,11 +468,11 @@ function playerStats(team){
       effort += share;
       const ic = tr && ACT_ICON[tr.acts[0]];
       const label = tr ? (tr.short || (ACT_NAMES[tr.acts[0]] || tr.acts[0]).replace(/ XP$/, "")) : tile.n;
-      parts.push({tile: tile.n, label, amount, items, finished, share,
+      parts.push({tile: tile.n, label, amount, items, finished, share, done: finished ? (e.id ? ICON(e.id) : tileIcon(i)) : null,
         icon: ic ? (typeof ic === "number" ? ICON(ic) : ic) : tileIcon(i)});
     });
     parts.sort((a, b) => b.finished - a.finished || b.items.length - a.items.length || b.share - a.share);
-    const icons = parts.filter(x => x.finished).map(x => ({src: x.items[0].src, name: x.tile}));
+    const icons = parts.filter(x => x.finished).map(x => ({src: x.done, name: x.tile}));
     return {name: m, tiles: icons.length, drops: dropsGot, parts, icons, effort};
   }).sort((a, b) => b.tiles - a.tiles || b.drops - a.drops || b.effort - a.effort);
 }
