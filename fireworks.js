@@ -70,14 +70,17 @@ export function fireworks(color, iconUrls = []){
 
   // A word spelled out in sparks, in the RuneScape font (already loaded by the page).
   function wordShape(word){
-    const fontPx = Math.round(Math.min(W * 0.32, H * 0.45, 300));
-    const font = `${fontPx}px "RuneScape Bold", Georgia, serif`;
     const c = document.createElement("canvas"), g = c.getContext("2d");
+    let fontPx = Math.round(Math.min(W * 0.48, H * 0.6, 460));
+    g.font = `${fontPx}px "RuneScape Bold", Georgia, serif`;
+    const fit = W * 0.94 / g.measureText(word).width;   // keep the whole word on screen
+    if (fit < 1) fontPx = Math.floor(fontPx * fit);
+    const font = `${fontPx}px "RuneScape Bold", Georgia, serif`;
     g.font = font;
     const w = Math.ceil(g.measureText(word).width) + 8, h = Math.ceil(fontPx * 1.15);
     c.width = w; c.height = h;
     g.font = font; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.fillText(word, 4, h / 2);
-    const step = Math.max(3, Math.round(fontPx / 26)), d = g.getImageData(0, 0, w, h).data, px = [];
+    const step = Math.max(3, Math.round(fontPx / 30)), d = g.getImageData(0, 0, w, h).data, px = [];
     for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step)
       if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, pick([pale, pale, light, base])]);
     return {px, w, h, scale: 1, size: step * 0.95, hold: 150};
@@ -91,7 +94,7 @@ export function fireworks(color, iconUrls = []){
     for (const [px, py, col] of s.px){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
-        color: col, size, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-4, 0), hold});
+        color: col, size, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-18, 0), hold});
     }
     for (let i = 0; i < 40; i++) spark(x, y, rand(0, Math.PI * 2), rand(2, 5), {size: 2});
   }
@@ -164,9 +167,11 @@ export function fireworks(color, iconUrls = []){
       if (p.shape){
         // Fly to its place in the item's shape, hold, then drop like a normal spark.
         p.age += dt;
-        if (p.age < 32){ const k = 1 - Math.pow(0.86, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
-        else if (p.age > 32 + p.hold){ p.shape = false; p.vx = rand(-0.5, 0.5); p.vy = rand(-0.6, 0.2); p.gravity = 0.035; p.decay = rand(0.012, 0.02); }
-        ctx.globalAlpha = 0.75; ctx.fillStyle = p.color;
+        // Drift out from the burst and ease into place over about a second, fading in.
+        if (p.age < 0) continue;
+        if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
+        else if (p.age > 70 + p.hold){ p.shape = false; p.vx = rand(-0.5, 0.5); p.vy = rand(-0.6, 0.2); p.gravity = 0.035; p.decay = rand(0.012, 0.02); }
+        ctx.globalAlpha = 0.8 * Math.min(1, p.age / 45); ctx.fillStyle = p.color;
         ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
         continue;
       }
