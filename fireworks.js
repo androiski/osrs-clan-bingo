@@ -83,7 +83,7 @@ export function fireworks(color, iconUrls = []){
     const step = Math.max(3, Math.round(fontPx / 30)), d = g.getImageData(0, 0, w, h).data, px = [];
     for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step)
       if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, pick([pale, pale, light, base])]);
-    return {px, w, h, scale: 1, size: step * 0.62, hold: 150, word: true};
+    return {px, w, h, scale: 1, size: step * 0.8, hold: 90, word: true};
   }
 
   function shapeBurst(x, y, s = pick(shapes)){
