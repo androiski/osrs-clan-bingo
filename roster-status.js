@@ -1,5 +1,5 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-06 22:42 UTC",
+ "checked": "2026-10-07 05:35 UTC",
  "players": {
   "yaint thiccy": {
    "status": "unsynced"
@@ -26,7 +26,7 @@ window.ROSTER_STATUS = {
    "status": "synced",
    "log_last_changed": "2026-08-29 21:23:31"
   },
-  "ll grub ll": {
+  "ll Grub ll": {
    "status": "synced",
    "log_last_changed": "2026-04-12 02:05:28"
   },
@@ -38,7 +38,7 @@ window.ROSTER_STATUS = {
    "status": "synced",
    "log_last_changed": "2026-10-06 22:03:59"
   },
-  "mSpartam": {
+  "Mspartam": {
    "status": "unsynced"
   },
   "789": {
@@ -49,18 +49,19 @@ window.ROSTER_STATUS = {
    "status": "synced",
    "log_last_changed": "2026-07-25 11:59:26"
   },
-  "roof sniffa": {
-   "status": "unsynced"
+  "Roof Sniffa": {
+   "status": "synced",
+   "log_last_changed": "2026-10-07 04:53:10"
   },
   "Exviped": {
    "status": "synced",
    "log_last_changed": "2026-10-04 23:02:49"
   },
-  "bhnr": {
+  "Bhnr": {
    "status": "synced",
    "log_last_changed": "2026-09-11 17:32:10"
   },
-  "halfmeatball": {
+  "Halfmeatball": {
    "status": "unsynced"
   },
   "tv milk": {
@@ -70,24 +71,24 @@ window.ROSTER_STATUS = {
    "status": "synced",
    "log_last_changed": "2026-10-01 12:25:33"
   },
-  "im lablabi": {
+  "Im Lablabi": {
    "status": "unsynced"
   },
-  "cl0udsy": {
+  "Cl0udsy": {
    "status": "unsynced"
   },
-  "gpmorgnchase": {
+  "Gpmorgnchase": {
    "status": "unsynced"
   },
   "spotttt": {
    "status": "synced",
    "log_last_changed": "2026-07-28 03:35:13"
   },
-  "dead naseeph": {
+  "Dead Naseeph": {
    "status": "synced",
    "log_last_changed": "2026-09-29 19:13:11"
   },
-  "Lootbuster42": {
+  "LootBuster42": {
    "status": "synced",
    "log_last_changed": "2026-10-02 04:34:26"
   },

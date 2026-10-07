@@ -1,0 +1,46 @@
+# Every hour: check each player's TempleOSRS profile and collection log sync, and save
+# roster-status.js for the Teams list. One request per player, spaced out for Temple.
+# check_temple_roster.py stops by itself once the event in config.json has ended.
+name: Update roster sync status
+
+on:
+  schedule:
+    - cron: "23 * * * *"   # off the hour, and away from the board update at :07 and :37
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-board      # same group as the board update, so their saves never collide
+  cancel-in-progress: false
+
+jobs:
+  roster:
+    if: ${{ !github.event.repository.private || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check every player on TempleOSRS
+        run: |
+          pip install --quiet requests
+          python check_temple_roster.py
+
+      - name: Save the new status
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add roster-status.js
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "Update roster sync status"
+            git pull --rebase
+            git push
+          fi
