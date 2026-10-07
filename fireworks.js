@@ -175,11 +175,13 @@ export function fireworks(color, iconUrls = []){
         p.age += dt;
         // Drift out from the burst and ease into place over about a second, fading in.
         if (p.age < 0) continue;
-        // Words pop out fast as one crisp shape; items drift in spark by spark.
-        if (p.grow && p.age < 70){ const e = 1 - Math.pow(1 - Math.min(1, p.age / 18), 3); p.x = p.cx + p.ox * e; p.y = p.cy + p.oy * e; }
+        // Words grow out as one crisp shape; items drift in spark by spark.
+        if (p.grow && p.age < 70){ const e = 1 - Math.pow(1 - Math.min(1, p.age / 32), 3); p.x = p.cx + p.ox * e; p.y = p.cy + p.oy * e; }
         else if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
         else if (p.age > 70 + p.hold){ p.shape = false; p.vx = rand(-0.5, 0.5); p.vy = rand(-0.6, 0.2); p.gravity = 0.035; p.decay = rand(0.012, 0.02); }
-        ctx.globalAlpha = 0.8 * Math.min(1, p.age / (p.grow ? 4 : 45)); ctx.fillStyle = p.color;
+        // Words fade in slowly out of the explosion (eased, ~1.2 s); items fade in over ~0.75 s.
+        ctx.globalAlpha = 0.8 * (p.grow ? Math.pow(Math.min(1, p.age / 75), 1.6) : Math.min(1, p.age / 45));
+        ctx.fillStyle = p.color;
         ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
         continue;
       }
