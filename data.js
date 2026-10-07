@@ -97,7 +97,7 @@ export const ACT_ICON = {"Zulrah":12921,"The Gauntlet":23757,"The Corrupted Gaun
   "Chambers of Xeric Challenge Mode":20851,"Cerberus":13247,"Barrows Chests":4716,
   "Agility":SKILL_ICON("agility"),"Thieving":SKILL_ICON("thieving"),"Fishing":SKILL_ICON("fishing"),"Runecraft":SKILL_ICON("runecraft")};
 
-// Drop rates for the dryness figures on the Progress table, per kill (or per raid/chest)
+// Drop rates for the Luck column (kept on the `luck` branch; not shown on main), per kill (or per raid/chest)
 // for each tracked boss: "alone" = items that finish the tile by themselves, "count" = items
 // that count toward a target (e.g. 3 shards). From OSRS Wiki drop tables (Oct 2026).
 // Raids are rough per-player estimates (they depend on points, team size and invocations).

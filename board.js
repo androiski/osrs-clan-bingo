@@ -1,42 +1,10 @@
 // Scoring and drawing: board, scores, tile panel, progress chart, rosters, theme.
 
-import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS, DRY, CLOG_SECTION} from "./data.js";
+import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS, CLOG_SECTION} from "./data.js";
 
 // The event data being shown (live or sample), set once by live-data.js through setData().
 let state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {}, NOW_H = 0;
 export function setData(d){ ({state, dry, drops, byPlayer} = d); byAct = d.byAct || {}; NOW_H = d.nowH; }
-
-// How dry a team is on a tile, from its KC on each tracked boss and the drop rates in DRY.
-// rate: drops' worth of KC (1 = average); chance: probability of having had no luck this long.
-// Without a per-boss split (the sample data), all KC is counted against the first boss.
-function dryness(i, teamId, kc){
-  const d = DRY[i], tr = TRACK[i];
-  if (!d || !kc) return null;
-  const split = (byAct[i] || {})[teamId];
-  const total = split ? Object.values(split).reduce((a, b) => a + b, 0) || 1 : 1;
-  const kcOf = act => split ? kc * (split[act] || 0) / total : (act === tr.acts[0] ? kc : 0);
-  if (d.barrows){   // a full set of any one brother: 4 specific pieces, 6 brothers
-    const piece = 1 - Math.pow(1 - d.barrows, kc), set = Math.pow(piece, 4);
-    return {chance: Math.pow(1 - set, 6), rate: null, approx: true};
-  }
-  let alone = 0, count = 0;
-  for (const [act, r] of Object.entries(d.rates)){ alone += kcOf(act) * (r.alone || 0); count += kcOf(act) * (r.count || 0); }
-  const n = d.target || 1;
-  let short = 1;   // chance of fewer than n counted drops (Poisson)
-  if (count > 0){ short = 0; let term = Math.exp(-count); for (let j = 0; j < n; j++){ short += term; term *= count / (j + 1); } }
-  return {chance: Math.exp(-alone) * short, rate: alone + count / n, approx: !!d.approx};
-}
-// Luck, like the Collection Log Luck plugin: the share of teams that would also still be
-// waiting after this much KC (for a team that got it, the KC it took). Low means dry, e.g.
-// "76%" or "8% · very dry"; details on hover.
-const fmtDry = (x, done) => {
-  if (!x) return "";
-  const luck = x.chance * 100, l = luck < 1 ? "<1%" : luck > 99 ? ">99%" : `${Math.round(luck)}%`;
-  const word = luck < 10 ? "very dry" : luck < 25 ? "dry" : "";
-  const rate = x.rate == null ? "" : `${x.rate < 0.1 ? "<0.1" : x.rate.toFixed(1)}× the drop rate, `;
-  const long = `${rate}${Math.round(100 - luck)}% of teams would have it ${done ? "by then" : "by now"}${x.approx ? " (rough estimate)" : ""}`;
-  return `<span class="luck${word ? ` ${word === "dry" ? "warn" : "bad"}` : ""}" title="${long}">${x.approx ? "≈ " : ""}${l}${word ? ` · ${word}` : ""}</span>`;
-};
 
 function tileIcon(i){
   if (TILES[i].s === "xp") return TRACK[i].icon;
@@ -340,23 +308,21 @@ function renderDry(){
     return `<g class="series" style="--c:${colorVar(s.t.id)}"><path d="${d}"/>${others}${done}</g>`;
   }).join("");
 
-  const hasDry = !!DRY[selected];
   const rows = series.map(s=>{
     // Status: the item's icon (its name on hover), who got it and when.
     const gotIt = s.doneH == null ? ""
       : tile.s === "xp" ? `<img class="ico" src="${tr.icon}" alt="" title="${fmtN(tile.target, "XP")} reached">${dayLabel(s.doneH)}`
       : `${s.e.id ? `<img class="ico" src="${ICON(s.e.id)}" alt="${s.e.item}" title="${s.e.item} (${fmtN(s.doneV, tr.unit)} ${tr.unit})">` : ""}` +
         `${s.e.by && s.e.by !== "Team" ? `${s.e.by} · ` : ""}${dayLabel(hoursOf(s.e.when))}`;
-    const dryCell = fmtDry(dryness(selected, s.t.id, s.doneH == null ? s.total : s.doneV), s.doneH != null);
     // Each player's gain, with icons for every drop they got here (the finishing one included).
     const all = [...s.drops.filter(dr=>dr.kind !== "done"),
       ...(s.e && s.e.done && s.e.id ? [{name:s.e.item, id:s.e.id, by:s.e.by, h:hoursOf(s.e.when), kind:"done"}] : [])];
     const icons = m => all.filter(dr=>dr.by === m).sort((a,b)=>a.h-b.h).map(dr=>
       `<img class="ico ${dr.kind}" src="${ICON(dr.id)}" alt="${dr.name}" title="${got(dr.name, dr.by, dr.h)}${dr.kind === "other" ? " (doesn't count)" : ""}">`).join("");
     const who = ((byPlayer[selected]||{})[s.t.id]||[]);
-    const split = who.length ? `<tr class="who"><td colspan="${hasDry ? 4 : 3}">${who.map(([m,v])=>`<span>${m} <b>${fmtN(v, tr.unit)}</b>${icons(m)}</span>`).join('<i>·</i>')}</td></tr>` : "";
+    const split = who.length ? `<tr class="who"><td colspan="3">${who.map(([m,v])=>`<span>${m} <b>${fmtN(v, tr.unit)}</b>${icons(m)}</span>`).join('<i>·</i>')}</td></tr>` : "";
     return `<tr class="team"><td><span class="sw" style="--c:${colorVar(s.t.id)}"></span> ${teamIco(s.t)}${s.t.name}</td>` +
-      `<td class="n">${fmtN(s.total, tr.unit)}</td>${hasDry ? `<td class="dryc">${dryCell || "-"}</td>` : ""}<td>${gotIt || "-"}</td></tr>${split}`;
+      `<td class="n">${fmtN(s.total, tr.unit)}</td><td>${gotIt || "-"}</td></tr>${split}`;
   }).join("");
 
 
@@ -371,10 +337,7 @@ function renderDry(){
       </svg>
       <div class="tip" hidden></div>
     </div>
-    <table><thead><tr><th>Team</th><th class="n">${tr.unit}</th>${hasDry ? `<th>Luck</th>` : ""}<th>Status</th></tr></thead><tbody>${rows}</tbody></table>` +
-    (hasDry ? `<p class="drynote">Luck: share of teams still waiting at this ` +
-      (DRY[selected].barrows ? `many chests, or the chests it took, for a full set (rough).` : `${tr.unit}, or the ${tr.unit} it took. Lower is drier.`) +
-      (DRY[selected].approx ? ` ≈ = rough estimate.` : "") + `</p>` : "");
+    <table><thead><tr><th>Team</th><th class="n">${tr.unit}</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
 
   const svg = el.querySelector("svg"), cross = el.querySelector(".cross"), tip = el.querySelector(".tip");
   const move = ev => {
