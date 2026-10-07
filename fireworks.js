@@ -2,7 +2,7 @@
 // returned stop() is called; browsers pause them while the tab isn't visible. Skipped
 // (returns nothing) for people who've asked their device to reduce motion.
 //
-// The first rocket spells out BINGO!. After that, bursts are spheres, willows, crackles, and
+// The first rocket spells out Bingo!. After that, bursts are spheres, willows, crackles, and
 // item shapes: sparks fly out, form the pixel shape of one of the given item icons, hold
 // it for about two seconds, then fall away.
 // Every 15-20 seconds there's a small finale volley.
@@ -53,7 +53,7 @@ export function fireworks(color, iconUrls = []){
 
   const rockets = [], sparks = [], flashes = [];
   const t0 = performance.now();
-  let nextLaunch = t0 + 2600, nextFinale = t0 + rand(15000, 20000), last = t0, running = true;   // the BINGO rocket goes up alone first
+  let nextLaunch = t0 + 2600, nextFinale = t0 + rand(15000, 20000), last = t0, running = true;   // the Bingo! rocket goes up alone first
 
   function launch(x = W * rand(0.1, 0.9)){
     rockets.push({x, y: H + 10, vx: rand(-0.6, 0.6), vy: -rand(H / 70, H / 52), top: H * rand(0.12, 0.42),
@@ -166,7 +166,7 @@ export function fireworks(color, iconUrls = []){
     }
 
     ctx.lineCap = "square";
-    const solids = [];   // shape dots (items, BINGO!) are drawn last, solid, so colours stay true
+    const solids = [];   // shape dots (items, Bingo!) are drawn last, solid, so colours stay true
     for (let i = sparks.length - 1; i >= 0; i--){
       const p = sparks[i];
       p.px = p.x; p.py = p.y;
@@ -194,7 +194,7 @@ export function fireworks(color, iconUrls = []){
       ctx.fillStyle = p.color; ctx.fillRect(p.x - p.size / 2 - 0.5, p.y - p.size / 2 - 0.5, p.size + 1, p.size + 1);
     }
     // Shape dots are drawn normally (not glowing) so their colours stay true: items in their own
-    // icon colours, and BINGO! like OSRS chat text, exact yellow with a black drop shadow under
+    // icon colours, and Bingo! like OSRS chat text, exact yellow with a black drop shadow under
     // every dot.
     ctx.globalCompositeOperation = "source-over";
     for (const pass of ["shadow", "dot"]) for (const p of solids){
@@ -209,10 +209,10 @@ export function fireworks(color, iconUrls = []){
     else { removeEventListener("resize", size); canvas.remove(); }
   }
 
-  // Opening: one rocket up the middle that spells BINGO!, then a small volley.
+  // Opening: one rocket up the middle that spells Bingo!, then a small volley.
   document.fonts.load('48px "RuneScape Bold"').catch(() => {}).finally(() => {
     if (!running) return;
-    rockets.push({x: W / 2, y: H + 10, vx: 0, vy: -H / 55, top: H * 0.3, color: pale, trail: [], shape: wordShape("BINGO!")});
+    rockets.push({x: W / 2, y: H + 10, vx: 0, vy: -H / 55, top: H * 0.3, color: pale, trail: [], shape: wordShape("Bingo!")});
     for (let i = 0; i < 3; i++) setTimeout(() => running && launch(W * (0.2 + 0.6 * i / 2)), 1800 + i * 300);
   });
   requestAnimationFrame(frame);
