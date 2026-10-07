@@ -64,7 +64,7 @@ export function fireworks(color, iconUrls = []){
     if (sparks.length >= MAX_SPARKS) return;
     sparks.push({x, y, px: x, py: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
       life: 1, decay: o.decay ?? rand(0.007, 0.012), gravity: o.gravity ?? 0.05, drag: o.drag ?? 0.982,
-      color: o.color ?? pick(shades), size: o.size ?? 3, crackle: o.crackle || false});
+      color: o.color ?? pick(shades), size: o.size ?? 3.8, crackle: o.crackle || false});
   }
 
   // A word spelled out in sparks, in the RuneScape font (already loaded by the page).
@@ -100,8 +100,8 @@ export function fireworks(color, iconUrls = []){
     if (s.word){
       // A full burst as wide as the word: sparks coast about half the word's width.
       const reach = s.w * scale / 2 / 55;   // with drag 0.982 a spark travels ~55x its starting speed
-      for (let i = 0; i < 260; i++) spark(cx, cy, rand(0, Math.PI * 2), reach * rand(0.55, 1.1), {size: rand(2.5, 4), gravity: 0.03});
-    } else for (let i = 0; i < 40; i++) spark(x, y, rand(0, Math.PI * 2), rand(2, 5), {size: 2});
+      for (let i = 0; i < 260; i++) spark(cx, cy, rand(0, Math.PI * 2), reach * rand(0.55, 1.1), {size: rand(3.2, 5), gravity: 0.03});
+    } else for (let i = 0; i < 40; i++) spark(x, y, rand(0, Math.PI * 2), rand(2, 5), {size: 2.5});
   }
 
   function burst(x, y){
@@ -113,7 +113,7 @@ export function fireworks(color, iconUrls = []){
       for (let i = 0; i < n; i++) spark(x, y, rand(0, Math.PI * 2), speed * Math.sqrt(Math.random()) * 1.15);
     } else if (kind === "willow"){
       for (let i = 0; i < n; i++) spark(x, y, rand(0, Math.PI * 2), speed * rand(0.4, 0.9),
-        {color: pick([light, pale]), decay: rand(0.004, 0.006), gravity: 0.035, drag: 0.975, size: 2});
+        {color: pick([light, pale]), decay: rand(0.004, 0.006), gravity: 0.035, drag: 0.975, size: 2.5});
     } else {
       for (let i = 0; i < n * 0.8; i++) spark(x, y, rand(0, Math.PI * 2), speed * rand(0.5, 1), {crackle: true, decay: rand(0.012, 0.018)});
     }
@@ -122,7 +122,7 @@ export function fireworks(color, iconUrls = []){
   // Crackle sparks pop into a little cloud of glitter when they fade.
   function crackle(p){
     for (let i = 0; i < 6; i++) spark(p.x, p.y, rand(0, Math.PI * 2), rand(0.5, 2),
-      {color: pale, decay: rand(0.03, 0.05), gravity: 0.02, size: 2});
+      {color: pale, decay: rand(0.03, 0.05), gravity: 0.02, size: 2.5});
   }
 
   function frame(t){
@@ -156,8 +156,8 @@ export function fireworks(color, iconUrls = []){
       const r = rockets[i];
       r.trail.push([r.x, r.y]); if (r.trail.length > Math.round(10 / Math.max(dt, 0.25))) r.trail.shift();
       r.x += (r.vx + Math.sin(t / 60 + i) * 0.3) * dt; r.y += r.vy * dt; r.vy *= Math.pow(0.982, dt);
-      r.trail.forEach(([x, y], k) => { ctx.globalAlpha = (k + 1) / r.trail.length * 0.7; ctx.fillStyle = r.color; ctx.fillRect(x - 1.5, y - 1.5, 3, 3); });
-      ctx.globalAlpha = 1; ctx.fillStyle = pale; ctx.fillRect(r.x - 2, r.y - 2, 4, 4);
+      r.trail.forEach(([x, y], k) => { ctx.globalAlpha = (k + 1) / r.trail.length * 0.7; ctx.fillStyle = r.color; ctx.fillRect(x - 2, y - 2, 4, 4); });
+      ctx.globalAlpha = 1; ctx.fillStyle = pale; ctx.fillRect(r.x - 2.5, r.y - 2.5, 5, 5);
       if (r.y <= r.top || r.vy > -1.2){
         if (r.shape){ flashes.push({x: r.x, y: r.y, r: 160, life: 1}); shapeBurst(r.x, r.y, r.shape); }
         else burst(r.x, r.y);
@@ -176,7 +176,16 @@ export function fireworks(color, iconUrls = []){
         // Drift out from the burst and ease into place over about a second, fading in.
         if (p.age < 0) continue;
         if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
-        else if (p.age > 70 + p.hold){ p.shape = false; p.vx = rand(-0.5, 0.5); p.vy = rand(-0.6, 0.2); p.gravity = 0.035; p.decay = rand(0.012, 0.02); }
+        else if (p.age > 70 + p.hold){
+          // Disperse: each dot drifts its own way, barely at first and then exponentially faster,
+          // fading as it goes, so the shape stays recognisable before it breaks apart.
+          const t = p.age - 70 - p.hold;
+          if (t > 100){ sparks.splice(i, 1); continue; }
+          if (p.dx === undefined){ const a = rand(0, Math.PI * 2), sp = rand(0.3, 1); p.dx = Math.cos(a) * sp; p.dy = Math.sin(a) * sp; }
+          const m = Math.exp(t / 20) - 1;
+          p.x = p.tx + p.dx * m; p.y = p.ty + p.dy * m + 0.004 * t * t;
+          p.fade = Math.max(0, 1 - Math.pow(t / 100, 2));
+        }
         if (p.solid){ solids.push(p); continue; }
         // Items fade in over ~0.75 s.
         ctx.globalAlpha = 0.8 * Math.min(1, p.age / 45);
@@ -189,7 +198,7 @@ export function fireworks(color, iconUrls = []){
       p.x += p.vx * dt; p.y += p.vy * dt; p.life -= p.decay * dt;
       if (p.life <= 0){ if (p.crackle) crackle(p); sparks.splice(i, 1); continue; }
       const a = p.life * (0.75 + 0.25 * Math.random());   // a little twinkle
-      ctx.globalAlpha = a; ctx.strokeStyle = p.color; ctx.lineWidth = Math.min(p.size, 4);
+      ctx.globalAlpha = a; ctx.strokeStyle = p.color; ctx.lineWidth = Math.min(p.size, 5);
       ctx.beginPath(); ctx.moveTo(p.px - p.vx * 2, p.py - p.vy * 2); ctx.lineTo(p.x, p.y); ctx.stroke();
       ctx.fillStyle = p.color; ctx.fillRect(p.x - p.size / 2 - 0.5, p.y - p.size / 2 - 0.5, p.size + 1, p.size + 1);
     }
@@ -199,7 +208,7 @@ export function fireworks(color, iconUrls = []){
     ctx.globalCompositeOperation = "source-over";
     for (const pass of ["shadow", "dot"]) for (const p of solids){
       if (pass === "shadow" && !p.shadow) continue;
-      ctx.globalAlpha = Math.min(1, p.age / 45);
+      ctx.globalAlpha = Math.min(1, p.age / 45) * (p.fade ?? 1);
       ctx.fillStyle = pass === "shadow" ? "#000" : p.color;
       const off = pass === "shadow" ? p.shadow : 0;
       ctx.fillRect(p.x - p.size / 2 + off, p.y - p.size / 2 + off, p.size, p.size);
