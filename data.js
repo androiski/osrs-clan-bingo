@@ -4,7 +4,7 @@
 export const TEAMS = [
   {id:"tt", name:"Thompy Thiccs", icon:13071, members:["yaint thiccy","Cenaras","BIS Ben","chmsst","Wildhero","47demonsand","piinktaco","The Biplane","ll grub ll"]},
   {id:"dd", name:"The Desert Dogs", icon:34459, members:["duhmass","ndru","mSpartam","789","Sparge","roof sniffa","Exviped","bhnr","halfmeatball"]},
-  {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","im lablabi","cl0udsy","gpmorgnchase","spotttt","dead naseeph","Lootbuster42"]}
+  {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","im lablabi","cl0udsy","gpmorgnchase","spotttt","dead naseeph","Lootbuster42","PlE"]}
 ];
 
 export const SOURCES = {
