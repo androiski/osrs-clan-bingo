@@ -2,7 +2,7 @@
 // returned stop() is called; browsers pause them while the tab isn't visible. Skipped
 // (returns nothing) for people who've asked their device to reduce motion.
 //
-// The first rocket spells out Bingo!. After that, bursts are spheres, willows, crackles, and
+// The opening six rockets spell out Bingo!, one letter each. After that, bursts are spheres, willows, crackles, and
 // item shapes: sparks fly out, form the pixel shape of one of the given item icons, then
 // fall, slowly at first and then faster, fading as they go.
 // Every 15-20 seconds there's a small finale volley.
@@ -79,17 +79,26 @@ export function fireworks(color, iconUrls = []){
     const w = Math.ceil(g.measureText(word).width) + 8, h = Math.ceil(fontPx * 1.15);
     c.width = w; c.height = h;
     g.font = font; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.fillText(word, 4, h / 2);
-    const step = Math.max(3, Math.round(fontPx / 30)), d = g.getImageData(0, 0, w, h).data, px = [];
+    const step = Math.max(3, Math.round(fontPx / 30)), d = g.getImageData(0, 0, w, h).data;
+    // Where each letter starts, so each rocket can carry one letter.
+    const edges = [...word].map((_, k) => 4 + g.measureText(word.slice(0, k)).width);
+    const letters = [...word].map(() => []);
     for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step)
       // OSRS chat yellow, whatever the team's colour.
-      if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, "#ffff00"]);
-    return {px, w, h, scale: 1, size: step * 0.8, word: true, shadow: step * 0.55};
+      if (d[(y * w + x) * 4 + 3] > 128){
+        let k = edges.length - 1; while (k > 0 && x < edges[k]) k--;
+        letters[k].push([x - w / 2, y - h / 2, "#ffff00"]);
+      }
+    return letters.filter(l => l.length).map(px => {
+      const xs = px.map(q => q[0]), lw = Math.max(...xs) - Math.min(...xs) + step;
+      return {px, w, h, lw, mid: (Math.max(...xs) + Math.min(...xs)) / 2, scale: 1, size: step * 0.8, word: true, shadow: step * 0.55};
+    });
   }
 
   function shapeBurst(x, y, s = pick(shapes)){
     const scale = s.scale || Math.max(3, Math.min(9, Math.min(W, H) * 0.26 / Math.max(s.w, s.h)));
-    const cx = Math.min(Math.max(x, s.w * scale / 2 + 12), W - s.w * scale / 2 - 12);
-    const cy = Math.max(y, s.h * scale / 2 + 12);
+    // A letter of Bingo! lands at its place in the word, centred on the screen.
+    const [cx, cy] = s.at || [Math.min(Math.max(x, s.w * scale / 2 + 12), W - s.w * scale / 2 - 12), Math.max(y, s.h * scale / 2 + 12)];
     const size = s.size || scale * 0.9;
     for (const [px, py, col, k = 1] of s.px){
       if (sparks.length >= MAX_SPARKS) break;
@@ -98,9 +107,9 @@ export function fireworks(color, iconUrls = []){
         shadow: s.shadow || 0, solid: true, cx, cy});
     }
     if (s.word){
-      // A full burst as wide as the word: sparks coast about half the word's width.
-      const reach = s.w * scale / 2 / 55;   // with drag 0.982 a spark travels ~55x its starting speed
-      for (let i = 0; i < 260; i++) spark(cx, cy, rand(0, Math.PI * 2), reach * rand(0.55, 1.1), {size: rand(3.2, 5), gravity: 0.03});
+      // A burst about as wide as the letter: sparks coast roughly the letter's width.
+      const reach = Math.max(s.lw, 40) / 55;   // with drag 0.982 a spark travels ~55x its starting speed
+      for (let i = 0; i < 70; i++) spark(x, y, rand(0, Math.PI * 2), reach * rand(0.55, 1.1), {size: rand(3.2, 5), gravity: 0.03});
     } else for (let i = 0; i < 40; i++) spark(x, y, rand(0, Math.PI * 2), rand(2, 5), {size: 2.5});
   }
 
@@ -155,7 +164,7 @@ export function fireworks(color, iconUrls = []){
     for (let i = rockets.length - 1; i >= 0; i--){
       const r = rockets[i];
       r.trail.push([r.x, r.y]); if (r.trail.length > Math.round(10 / Math.max(dt, 0.25))) r.trail.shift();
-      r.x += (r.vx + Math.sin(t / 60 + i) * 0.3) * dt; r.y += r.vy * dt; r.vy *= Math.pow(0.982, dt);
+      r.x += (r.vx + (r.steady ? 0 : Math.sin(t / 60 + i) * 0.3)) * dt; r.y += r.vy * dt; r.vy *= Math.pow(0.982, dt);
       r.trail.forEach(([x, y], k) => { ctx.globalAlpha = (k + 1) / r.trail.length * 0.7; ctx.fillStyle = r.color; ctx.fillRect(x - 2, y - 2, 4, 4); });
       ctx.globalAlpha = 1; ctx.fillStyle = pale; ctx.fillRect(r.x - 2.5, r.y - 2.5, 5, 5);
       if (r.y <= r.top || r.vy > -1.2){
@@ -172,19 +181,19 @@ export function fireworks(color, iconUrls = []){
       p.px = p.x; p.py = p.y;
       if (p.shape){
         // One smooth path, worked out from the dot's age so there are no jumps: glide out from
-        // the burst and come to rest exactly in place (~1.2 s), then fall from rest, slowly and
-        // then exponentially faster, each dot at a slightly different speed so the shape droops
-        // like a firework, fading at the end.
+        // the burst into place (~1.2 s). The fall starts before the glide ends, so the dots
+        // never stop: they drift down, then drop exponentially faster, each at a slightly
+        // different speed so the shape droops like a firework, fading at the end.
         p.age += dt;
         if (p.age < 0) continue;
-        const t = Math.max(0, p.age - 70);
+        const t = Math.max(0, p.age - 50);
         if (t > 170){ sparks.splice(i, 1); continue; }
         if (p.fall === undefined){ p.fall = rand(0.8, 1.25); p.side = rand(-1, 1); }
         const ease = 1 - Math.pow(1 - Math.min(1, p.age / 70), 3);
-        const drop = 2.6 * p.fall * (Math.exp(t / 38) - 1 - t / 38);
-        // While falling, spread outward from the shape's centre like ordinary sparks: starts from
-        // zero, picks up, then levels off (as if slowed by drag), with a little randomness.
-        const spread = t * t / (t * t + 60 * 60);
+        const drop = p.fall * (0.25 * t + 2.6 * (Math.exp(t / 38) - 1 - t / 38));
+        // While falling, spread outward from the shape's centre like ordinary sparks, fastest at
+        // first and then levelling off (as if slowed by drag), with a little randomness.
+        const spread = 1 - Math.exp(-t / 80);
         p.x = p.sx + (p.tx - p.sx) * ease + ((p.tx - p.cx) * 0.4 + p.side * 30) * spread;
         p.y = p.sy + (p.ty - p.sy) * ease + (p.ty - p.cy) * 0.25 * spread + drop;
         p.fade = 1 - Math.pow(Math.max(0, t - 70) / 100, 1.5);
@@ -220,10 +229,13 @@ export function fireworks(color, iconUrls = []){
     else { removeEventListener("resize", size); canvas.remove(); }
   }
 
-  // Opening: one rocket up the middle that spells Bingo!, then a small volley.
+  // Opening: six rockets, one per letter, that spell Bingo! across the middle, then a small volley.
   document.fonts.load('48px "RuneScape Bold"').catch(() => {}).finally(() => {
     if (!running) return;
-    rockets.push({x: W / 2, y: H + 10, vx: 0, vy: -H / 55, top: H * 0.3, color: pale, trail: [], shape: wordShape("Bingo!")});
+    const at = [W / 2, H * 0.32];
+    // All six go up together and burst at the same moment, so the word appears at once.
+    for (const s of wordShape("Bingo!")) rockets.push({x: at[0] + s.mid, y: H + 10, vx: 0, vy: -H / 55,
+      top: at[1], color: pale, trail: [], shape: {...s, at}, steady: true});
     for (let i = 0; i < 3; i++) setTimeout(() => running && launch(W * (0.2 + 0.6 * i / 2)), 1800 + i * 300);
   });
   requestAnimationFrame(frame);

@@ -98,7 +98,9 @@ h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-r
 .dry .muted{color:var(--muted)}
 .dry tr.team td{border-bottom:0;padding-bottom:2px}
 .dry tr.who td{padding:0 6px 8px 22px;font-size:.78rem;color:var(--muted);opacity:.85}
-.dry td.dryc{white-space:nowrap;color:var(--muted)}
+.dry td.dryc{white-space:nowrap}
+.dry .luck.warn{color:var(--warn)}
+.dry .luck.bad{color:var(--bad)}
 .dry tr.team td{vertical-align:middle}
 .dry tr.who span{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .dry tr.who i{font-style:normal;margin:0 7px;opacity:.6}

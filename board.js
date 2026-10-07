@@ -26,14 +26,15 @@ function dryness(i, teamId, kc){
   if (count > 0){ short = 0; let term = Math.exp(-count); for (let j = 0; j < n; j++){ short += term; term *= count / (j + 1); } }
   return {chance: Math.exp(-alone) * short, rate: alone + count / n, approx: !!d.approx};
 }
-// e.g. "1.5× rate · 78% would have it by now" (the share of teams that'd have been luckier)
-// Compact dryness for the Progress table, e.g. "0.3× · 24%", with the long form on hover.
+// Luck, like the Collection Log Luck plugin: the share of teams that would also still be
+// waiting after this much KC. Low means dry, e.g. "76%" or "8% · very dry"; details on hover.
 const fmtDry = x => {
   if (!x) return "";
-  const pct = (1 - x.chance) * 100, p = pct < 1 ? "<1%" : pct > 99 ? ">99%" : `${Math.round(pct)}%`;
-  const rate = x.rate == null ? "" : `${x.rate < 0.1 ? "<0.1" : x.rate.toFixed(1)}×`;
-  const long = `${rate ? `${rate} drop rate, ` : ""}${p} would have it by now${x.approx ? " (rough estimate)" : ""}`;
-  return `<span title="${long}">${x.approx ? "≈ " : ""}${[rate, p].filter(Boolean).join(" · ")}</span>`;
+  const luck = x.chance * 100, l = luck < 1 ? "<1%" : luck > 99 ? ">99%" : `${Math.round(luck)}%`;
+  const word = luck < 10 ? "very dry" : luck < 25 ? "dry" : "";
+  const rate = x.rate == null ? "" : `${x.rate < 0.1 ? "<0.1" : x.rate.toFixed(1)}× the drop rate, `;
+  const long = `${rate}${Math.round(100 - luck)}% of teams would have it by now${x.approx ? " (rough estimate)" : ""}`;
+  return `<span class="luck${word ? ` ${word === "dry" ? "warn" : "bad"}` : ""}" title="${long}">${x.approx ? "≈ " : ""}${l}${word ? ` · ${word}` : ""}</span>`;
 };
 
 function tileIcon(i){
@@ -369,10 +370,9 @@ function renderDry(){
       </svg>
       <div class="tip" hidden></div>
     </div>
-    <table><thead><tr><th>Team</th><th class="n">${tr.unit}</th>${hasDry ? `<th>Dry</th>` : ""}<th>Got it</th></tr></thead><tbody>${rows}</tbody></table>` +
-    (hasDry ? `<p class="drynote">Dry: ` + (DRY[selected].barrows
-        ? `% = share of teams who'd have a full set of one brother after this many chests (rough).`
-        : `× = drops' worth of ${tr.unit} (1× is average) · % = share of teams who'd have it by now.`) +
+    <table><thead><tr><th>Team</th><th class="n">${tr.unit}</th>${hasDry ? `<th>Luck</th>` : ""}<th>Got it</th></tr></thead><tbody>${rows}</tbody></table>` +
+    (hasDry ? `<p class="drynote">Luck: share of teams that would still be waiting after this many ` +
+      (DRY[selected].barrows ? `chests for a full set (rough).` : `${tr.unit}. Lower is drier.`) +
       (DRY[selected].approx ? ` ≈ = rough estimate.` : "") + `</p>` : "");
 
   const svg = el.querySelector("svg"), cross = el.querySelector(".cross"), tip = el.querySelector(".tip");
