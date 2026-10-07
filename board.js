@@ -182,13 +182,7 @@ function renderDetail(){
       else st = `<div class="st empty">-</div>`;
       return `<div class="trow" style="--c:${colorVar(t.id)}"><div class="tn">${teamIco(t)}${t.name}</div>${st}</div>`;
     }).join("");
-  if (afterDetail) afterDetail(el, selected);
 }
-
-// mod.js adds its entry form to the bottom of the tile panel through this.
-let afterDetail = null;
-let started = false;
-export const onDetail = fn => { afterDetail = fn; if (started) renderDetail(); };
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function rosterChip(s){
@@ -490,7 +484,6 @@ function playerStats(team){
 
 // Called by live-data.js once the event data has loaded.
 export function start(){
-  started = true;
   renderThemeBtn(); renderRosters(); renderLegend(); render();
   let lastDryW = 0;
   new ResizeObserver(()=>{ const w = document.getElementById("dry").clientWidth; if (w !== lastDryW){ lastDryW = w; renderDry(); } })
