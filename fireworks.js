@@ -1,6 +1,9 @@
 // Fireworks over the page in one colour (plus lighter shades of it). They keep going;
 // browsers pause them while the tab isn't visible. Skipped for people who've asked
 // their device to reduce motion.
+//
+// Bursts come in a few kinds (sphere, ring, double ring, willow, crackle), sparks leave
+// short glowing streaks, and every so often there's a finale volley.
 function fireworks(color){
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const canvas = document.createElement("canvas");
@@ -9,49 +12,113 @@ function fireworks(color){
   document.body.appendChild(canvas);
   const ctx = canvas.getContext("2d");
   const dpr = Math.min(2, devicePixelRatio || 1);
-  const size = () => { canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  let W = 0, H = 0;
+  const size = () => { W = innerWidth; H = innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
   size(); addEventListener("resize", size);
 
   const lighten = (hex, k) => "#" + [1, 3, 5].map(i => {
     const v = parseInt(hex.slice(i, i + 2), 16);
     return Math.round(v + (255 - v) * k).toString(16).padStart(2, "0");
   }).join("");
-  const colors = [color, color, lighten(color, 0.35), lighten(color, 0.65)];
-  const sparks = [], rockets = [];
-  const busyUntil = performance.now() + 5000;   // a big opening, then a steady show
-  let nextLaunch = 0;
+  const base = color, light = lighten(color, 0.4), pale = lighten(color, 0.75);
+  const shades = [base, base, light, pale];
+  const rand = (a, b) => a + Math.random() * (b - a);
   const pick = a => a[Math.floor(Math.random() * a.length)];
+  const MAX_SPARKS = 3000;
 
-  function launch(){
-    rockets.push({x: innerWidth * (0.15 + Math.random() * 0.7), y: innerHeight, vy: -(innerHeight / 60) * (0.75 + Math.random() * 0.3),
-      top: innerHeight * (0.12 + Math.random() * 0.3), color: pick(colors)});
+  const rockets = [], sparks = [], flashes = [];
+  const t0 = performance.now();
+  let nextLaunch = 0, nextFinale = t0 + rand(9000, 12000), last = t0;
+
+  function launch(x = W * rand(0.1, 0.9)){
+    rockets.push({x, y: H + 10, vx: rand(-0.6, 0.6), vy: -rand(H / 70, H / 52), top: H * rand(0.1, 0.42),
+      color: pick(shades), trail: []});
   }
-  function burst(r){
-    const n = 100 + Math.floor(Math.random() * 50), speed = 3 + Math.random() * 3;
-    for (let i = 0; i < n; i++){
-      const a = (i / n) * Math.PI * 2, s = speed * (0.6 + Math.random() * 0.5);
-      sparks.push({x: r.x, y: r.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, color: Math.random() < 0.8 ? r.color : pick(colors)});
+
+  function spark(x, y, angle, speed, o = {}){
+    if (sparks.length >= MAX_SPARKS) return;
+    sparks.push({x, y, px: x, py: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      life: 1, decay: o.decay ?? rand(0.007, 0.012), gravity: o.gravity ?? 0.05, drag: o.drag ?? 0.982,
+      color: o.color ?? pick(shades), size: o.size ?? 3, crackle: o.crackle || false});
+  }
+
+  function burst(x, y){
+    flashes.push({x, y, r: rand(60, 110), life: 1});
+    const kind = pick(["sphere", "sphere", "ring", "double", "willow", "crackle"]);
+    const n = Math.floor(rand(120, 180)), speed = rand(3.5, 6.5);
+    if (kind === "sphere"){
+      for (let i = 0; i < n; i++) spark(x, y, rand(0, Math.PI * 2), speed * Math.sqrt(Math.random()) * 1.15);
+    } else if (kind === "ring" || kind === "double"){
+      for (let i = 0; i < n; i++) spark(x, y, (i / n) * Math.PI * 2, speed, {color: base, gravity: 0.03});
+      if (kind === "double") for (let i = 0; i < n * 0.6; i++) spark(x, y, (i / (n * 0.6)) * Math.PI * 2, speed * 0.55, {color: pale, gravity: 0.03});
+    } else if (kind === "willow"){
+      for (let i = 0; i < n; i++) spark(x, y, rand(0, Math.PI * 2), speed * rand(0.4, 0.9),
+        {color: pick([light, pale]), decay: rand(0.004, 0.006), gravity: 0.035, drag: 0.975, size: 2});
+    } else {
+      for (let i = 0; i < n * 0.8; i++) spark(x, y, rand(0, Math.PI * 2), speed * rand(0.5, 1), {crackle: true, decay: rand(0.012, 0.018)});
     }
   }
+
+  // Crackle sparks pop into a little cloud of glitter when they fade.
+  function crackle(p){
+    for (let i = 0; i < 6; i++) spark(p.x, p.y, rand(0, Math.PI * 2), rand(0.5, 2),
+      {color: pale, decay: rand(0.03, 0.05), gravity: 0.02, size: 2});
+  }
+
   function frame(t){
-    ctx.clearRect(0, 0, innerWidth, innerHeight);
-    if (t > nextLaunch){ launch(); nextLaunch = t + (t < busyUntil ? 180 + Math.random() * 320 : 500 + Math.random() * 900); }
+    // Movement is per 60th of a second, so it looks the same on 60 Hz and 240 Hz screens.
+    const dt = Math.min(3, (t - last) / (1000 / 60)); last = t;
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";   // overlapping light adds up, like real fireworks
+
+    const opening = t - t0 < 5000;
+    if (t > nextLaunch){
+      launch();
+      if (opening && Math.random() < 0.5) launch();
+      nextLaunch = t + (opening ? rand(120, 300) : rand(350, 800));
+    }
+    if (t > nextFinale){
+      for (let i = 0; i < 7; i++) setTimeout(() => launch(W * (0.1 + 0.8 * i / 6)), i * 90);
+      nextFinale = t + rand(9000, 13000);
+    }
+
+    for (let i = flashes.length - 1; i >= 0; i--){
+      const f = flashes[i];
+      const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+      g.addColorStop(0, pale); g.addColorStop(1, "transparent");
+      ctx.globalAlpha = f.life * 0.35; ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
+      f.life -= 0.08 * dt;
+      if (f.life <= 0) flashes.splice(i, 1);
+    }
+
     for (let i = rockets.length - 1; i >= 0; i--){
       const r = rockets[i];
-      r.y += r.vy; r.vy *= 0.985;
-      ctx.fillStyle = r.color; ctx.fillRect(r.x - 1.5, r.y, 3, 8);
-      if (r.y <= r.top || r.vy > -1){ burst(r); rockets.splice(i, 1); }
+      r.trail.push([r.x, r.y]); if (r.trail.length > Math.round(10 / Math.max(dt, 0.25))) r.trail.shift();
+      r.x += (r.vx + Math.sin(t / 60 + i) * 0.3) * dt; r.y += r.vy * dt; r.vy *= Math.pow(0.982, dt);
+      r.trail.forEach(([x, y], k) => { ctx.globalAlpha = (k + 1) / r.trail.length * 0.7; ctx.fillStyle = r.color; ctx.fillRect(x - 1.5, y - 1.5, 3, 3); });
+      ctx.globalAlpha = 1; ctx.fillStyle = pale; ctx.fillRect(r.x - 2, r.y - 2, 4, 4);
+      if (r.y <= r.top || r.vy > -1.2){ burst(r.x, r.y); rockets.splice(i, 1); }
     }
+
+    ctx.lineCap = "square";
     for (let i = sparks.length - 1; i >= 0; i--){
       const p = sparks[i];
-      p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.vx *= 0.985; p.vy *= 0.985; p.life -= 0.009;
-      if (p.life <= 0){ sparks.splice(i, 1); continue; }
-      ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
-      ctx.fillRect(p.x - 3, p.y - 3, 6, 6);   // square sparks, in keeping with the pixel fonts
+      p.px = p.x; p.py = p.y;
+      const drag = Math.pow(p.drag, dt);
+      p.vx *= drag; p.vy = p.vy * drag + p.gravity * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= p.decay * dt;
+      if (p.life <= 0){ if (p.crackle) crackle(p); sparks.splice(i, 1); continue; }
+      const a = p.life * (0.75 + 0.25 * Math.random());   // a little twinkle
+      ctx.globalAlpha = a; ctx.strokeStyle = p.color; ctx.lineWidth = p.size;
+      ctx.beginPath(); ctx.moveTo(p.px - p.vx * 2, p.py - p.vy * 2); ctx.lineTo(p.x, p.y); ctx.stroke();
+      ctx.fillStyle = p.color; ctx.fillRect(p.x - p.size / 2 - 0.5, p.y - p.size / 2 - 0.5, p.size + 1, p.size + 1);
     }
     ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
     requestAnimationFrame(frame);
   }
-  launch(); launch(); launch();   // open with a volley
+
+  for (let i = 0; i < 5; i++) setTimeout(() => launch(W * (0.15 + 0.7 * i / 4)), i * 140);   // opening volley
   requestAnimationFrame(frame);
 }
