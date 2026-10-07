@@ -19,10 +19,10 @@ function loadScript(src){
     } catch {}
   }
 
+  const when = ms => new Date(ms).toLocaleString(undefined, {weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZoneName: "short"});
   if (live){
     Object.assign(window, {state: live.state, dry: live.dry, drops: live.drops, byPlayer: live.byPlayer, NOW_H: live.now_h});
     const startMs = Date.parse(live.start), endMs = Date.parse(live.end);
-    const when = ms => new Date(ms).toLocaleString(undefined, {weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit"});
     const mins = Math.max(0, Math.round((Date.now() - Date.parse(live.updated)) / 60000));
     const updated = mins < 1 ? "just now" : mins < 90 ? `${mins} min ago` : `${Math.round(mins / 60)} h ago`;
     status.textContent = Date.now() < startMs ? `Starts ${when(startMs)}`
@@ -30,7 +30,10 @@ function loadScript(src){
       : `Updated ${updated} · refreshes every 30 minutes`;
   } else {
     await loadScript("sample-data.js");
-    status.textContent = "Sample data. The event hasn't started yet.";
+    let starts = "";
+    try { const cfg = await (await fetch("config.json", {cache: "no-cache"})).json();
+      if (cfg.start) starts = ` Starts ${when(Date.parse(cfg.start))}.`; } catch {}
+    status.textContent = `Sample data.${starts}`;
   }
   start();
 })();

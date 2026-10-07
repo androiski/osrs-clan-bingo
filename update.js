@@ -45,7 +45,7 @@ async function temple(url){
   const wait = lastRequest + GAP_MS - Date.now();
   if (wait > 0) await sleep(wait);
   lastRequest = Date.now();
-  const res = await fetch(url, {headers: {"User-Agent": "osrs-clan-bingo board (github.com/androiski/osrs-clan-bingo)"}});
+  const res = await fetch(url, {headers: {"User-Agent": "runecrafting-clan-bingo board (github.com/androiski/runecrafting-clan-bingo)"}});
   if (!res.ok) throw new Error(`TempleOSRS ${res.status} for ${url}`);
   const body = await res.json();
   if (body.error) throw new Error(`TempleOSRS error for ${url}: ${JSON.stringify(body.error)}`);
