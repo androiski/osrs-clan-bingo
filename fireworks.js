@@ -2,7 +2,7 @@
 // returned stop() is called; browsers pause them while the tab isn't visible. Skipped
 // (returns nothing) for people who've asked their device to reduce motion.
 //
-// The first rocket spells out BINGO. After that, bursts are spheres, willows, crackles, and
+// The first rocket spells out BINGO!. After that, bursts are spheres, willows, crackles, and
 // item shapes: sparks fly out, form the pixel shape of one of the given item icons, hold
 // it for about two seconds, then fall away.
 // Every 15-20 seconds there's a small finale volley.
@@ -208,10 +208,10 @@ export function fireworks(color, iconUrls = []){
     else { removeEventListener("resize", size); canvas.remove(); }
   }
 
-  // Opening: one rocket up the middle that spells BINGO, then a small volley.
+  // Opening: one rocket up the middle that spells BINGO!, then a small volley.
   document.fonts.load('48px "RuneScape Bold"').catch(() => {}).finally(() => {
     if (!running) return;
-    rockets.push({x: W / 2, y: H + 10, vx: 0, vy: -H / 55, top: H * 0.3, color: pale, trail: [], shape: wordShape("BINGO")});
+    rockets.push({x: W / 2, y: H + 10, vx: 0, vy: -H / 55, top: H * 0.3, color: pale, trail: [], shape: wordShape("BINGO!")});
     for (let i = 0; i < 3; i++) setTimeout(() => running && launch(W * (0.2 + 0.6 * i / 2)), 1800 + i * 300);
   });
   requestAnimationFrame(frame);
