@@ -7,7 +7,7 @@
 //   &team=tt|dd|bk with won/ended picks which team wins (default: whoever the sample has)
 
 import {TEAMS, TILES, TILE_ITEMS} from "./data.js";
-import {LINES, whenKey} from "./board.js";
+import {LINES, whenKey, hoursOf} from "./board.js";
 
 const MODES = {preview: "before the bingo starts", started: "during the bingo",
   won: "once a team has won", ended: "after the bingo has ended"};
@@ -23,13 +23,46 @@ export const banner = () => {
 
 // Place the sample event in time around now. data is the sample-data.js export.
 export function prepare(data){
-  const now = Date.now(), startMs = now - data.nowH * 3600e3;
-  const endMs = mode === "ended" ? now - 3600e3 : startMs + (data.nowH + 30) * 3600e3;
-  if (mode === "started")   // nobody has a line yet: keep progress, take away completions
+  const now = Date.now();
+  if (mode === "started"){   // nobody has a line yet: keep progress, take away completions
     for (const team of Object.values(data.state)) for (const [i, e] of Object.entries(team))
       if (e.done) team[i] = {done: false, progress: TILES[i].s === "xp" ? e.progress : 0};
-  if (winnerId && (mode === "won" || mode === "ended")) makeWinner(data, winnerId);
-  return {startMs, endMs, updatedMs: now - 4 * 60e3};
+    const startMs = now - data.nowH * 3600e3;
+    return {startMs, endMs: startMs + (data.nowH + 30) * 3600e3, updatedMs: now - 4 * 60e3};
+  }
+  if (winnerId) makeWinner(data, winnerId);
+  // Like the real thing: tracking stops at the Bingo, and the results are final VERIFY_H later.
+  // "won" is mid-check (1 h after the Bingo); "ended" is after the results are final.
+  const b = cutAtBingo(data);
+  const since = mode === "ended" ? VERIFY_H + 2 : 1;
+  const startMs = now - (b + since) * 3600e3;
+  return {startMs, endMs: startMs + Math.max(72, b + 24) * 3600e3, updatedMs: now - 4 * 60e3,
+    finalMs: startMs + (b + VERIFY_H) * 3600e3};
+}
+
+const VERIFY_H = 3;   // config.json verify_hours
+
+// Drop everything after the first Bingo: later completions, drops and chart points. Returns
+// the Bingo's hour.
+function cutAtBingo(data){
+  let b = Infinity;
+  for (const t of Object.values(data.state)) for (const line of LINES)
+    if (line.every(i => t[i] && t[i].done)) b = Math.min(b, Math.max(...line.map(i => hoursOf(t[i].when))));
+  if (b === Infinity) return data.nowH;
+  for (const byTeam of Object.values(data.drops)) for (const id of Object.keys(byTeam))
+    byTeam[id] = byTeam[id].filter(d => d.h <= b);
+  for (const byTeam of Object.values(data.dry)) for (const [id, pts] of Object.entries(byTeam)){
+    const kept = pts.filter(p => p[0] <= b);
+    if (kept.length) kept.push([b, kept[kept.length - 1][1]]);
+    byTeam[id] = kept;
+  }
+  for (const [id, t] of Object.entries(data.state)) for (const [i, e] of Object.entries(t)){
+    if (!e.done || hoursOf(e.when) <= b) continue;
+    const pts = (data.dry[i] || {})[id];   // XP tiles keep what they had at the Bingo
+    t[i] = {done: false, progress: TILES[i].s === "xp" && pts && pts.length ? pts[pts.length - 1][1] : 0};
+  }
+  data.nowH = b;
+  return b;
 }
 
 // Rearrange the sample so `id` is the only team with a full line: break everyone's finished
