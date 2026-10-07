@@ -42,10 +42,15 @@ function stats(tid){
   return {tiles, best, first};
 }
 
-function renderScores(){
-  const ranked = TEAMS.map(t=>({t, ...stats(t.id)}))
+// Teams in finishing order: first line soonest, then closest to a line, then most tiles.
+function ranking(){
+  return TEAMS.map(t=>({t, ...stats(t.id)}))
     .sort((a,b)=> (a.first ? whenKey(a.first.when) : Infinity) - (b.first ? whenKey(b.first.when) : Infinity)
       || b.best-a.best || b.tiles-a.tiles);
+}
+
+function renderScores(){
+  const ranked = ranking();
   document.getElementById("scores").innerHTML = ranked.map((r,i)=>`
     <div class="score${r.first?" won":""}" style="--c:${colorVar(r.t.id)}">
       <span class="rank">#${i+1}</span>
@@ -322,7 +327,10 @@ function renderDry(){
 }
 
 
-function render(){ renderScores(); renderViewbar(); renderBoard(); renderDetail(); renderDry(); }
+function render(){
+  renderScores(); renderViewbar(); renderBoard(); renderDetail(); renderDry();
+  if (window.renderResults) renderResults();   // the box under the title follows the chosen team
+}
 
 
 const themeBtn = document.getElementById("themeBtn");
@@ -344,22 +352,28 @@ themeBtn.onclick = () => {
 };
 darkQuery.addEventListener("change", renderThemeBtn);
 
-// Each player's bingo stats: tiles they finished (with icons), drops they got,
-// and kill count on tracked bosses. Best first.
+// Each player's bingo stats: tiles they finished (with icons), drops they got, and what
+// they put into each tracked boss or skill (e.g. "Zulrah 52 KC"), biggest share of the
+// team's effort first. Players best first.
 function playerStats(team){
   const t = state[team.id] || {};
   return team.members.map(m => {
     const finished = Object.entries(t).filter(([, e]) => e.done && e.by === m);
-    let dropsGot = finished.length, kc = 0;
-    for (const [i, byTeam] of Object.entries(drops)) dropsGot += ((byTeam || {})[team.id] || []).filter(d => d.by === m).length;
+    let dropsGot = finished.length;
+    for (const byTeam of Object.values(drops)) dropsGot += ((byTeam || {})[team.id] || []).filter(d => d.by === m).length;
+    const work = [];
     for (const [i, tr] of Object.entries(TRACK)){
-      if (tr.unit !== "KC") continue;
-      const row = (((byPlayer[i] || {})[team.id]) || []).find(r => r[0] === m);
-      if (row) kc += row[1];
+      const rows = ((byPlayer[i] || {})[team.id]) || [], row = rows.find(r => r[0] === m);
+      if (!row || !row[1]) continue;
+      const teamTotal = rows.reduce((s, r) => s + r[1], 0) || 1;
+      const name = tr.short || (ACT_NAMES[tr.acts[0]] || tr.acts[0]).replace(/ XP$/, "");
+      const ic = ACT_ICON[tr.acts[0]];
+      work.push({text: `${name} ${fmtN(row[1], tr.unit)} ${tr.unit}`, icon: typeof ic === "number" ? ICON(ic) : ic, share: row[1] / teamTotal});
     }
+    work.sort((a, b) => b.share - a.share);
     const icons = finished.map(([i, e]) => ({src: e.id ? ICON(e.id) : tileIcon(+i), name: TILES[i].n}));
-    return {name: m, tiles: finished.length, drops: dropsGot, kc, icons};
-  }).sort((a, b) => b.tiles - a.tiles || b.drops - a.drops || b.kc - a.kc);
+    return {name: m, tiles: finished.length, drops: dropsGot, work, icons, effort: work.reduce((s, w) => s + w.share, 0)};
+  }).sort((a, b) => b.tiles - a.tiles || b.drops - a.drops || b.effort - a.effort);
 }
 
 // Called by index.html once the event data has loaded.

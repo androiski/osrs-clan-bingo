@@ -53,14 +53,14 @@ const TRACK = {
   14:{unit:"XP", acts:["Thieving"], proxy:"Includes all Thieving, since Pyramid Plunder isn't on the hiscores."},
   16:{unit:"XP", acts:["Fishing"], proxy:"Includes all Fishing, since aerial fishing isn't on the hiscores."},
   0:{unit:"XP", acts:["Agility"], proxy:"Includes all Agility, since the Sepulchre isn't on the hiscores."},
-  1:{unit:"KC", acts:["The Gauntlet","The Corrupted Gauntlet"]},
+  1:{unit:"KC", acts:["The Gauntlet","The Corrupted Gauntlet"], short:"Gauntlet"},
   2:{unit:"KC", acts:["Hueycoatl"]},
-  4:{unit:"KC", acts:["Tombs of Amascut","Tombs of Amascut Expert"]},
+  4:{unit:"KC", acts:["Tombs of Amascut","Tombs of Amascut Expert"], short:"ToA"},
   5:{unit:"KC", acts:["Phantom Muspah"]},
   6:{unit:"KC", acts:["Maggot King"]},
-  7:{unit:"KC", acts:["Duke Sucellus","The Leviathan","Vardorvis","The Whisperer"], label:"Total KC from the Desert Treasure II bosses (Duke Sucellus, The Leviathan, Vardorvis, The Whisperer)"},
-  9:{unit:"KC", acts:["Callisto","Artio","Venenatis","Spindel","Vetion","Calvarion"], label:"Total KC from the wilderness bosses (Callisto, Artio, Venenatis, Spindel, Vet'ion, Calvarion)"},
-  10:{unit:"KC", acts:["Theatre of Blood","Theatre of Blood Challenge Mode"]},
+  7:{unit:"KC", acts:["Duke Sucellus","The Leviathan","Vardorvis","The Whisperer"], short:"DT2 bosses", label:"Total KC from the Desert Treasure II bosses (Duke Sucellus, The Leviathan, Vardorvis, The Whisperer)"},
+  9:{unit:"KC", acts:["Callisto","Artio","Venenatis","Spindel","Vetion","Calvarion"], short:"Wildy bosses", label:"Total KC from the wilderness bosses (Callisto, Artio, Venenatis, Spindel, Vet'ion, Calvarion)"},
+  10:{unit:"KC", acts:["Theatre of Blood","Theatre of Blood Challenge Mode"], short:"ToB"},
   11:{unit:"KC", acts:["Araxxor"]},
   12:{unit:"XP", acts:["Runecraft"], icon:"https://cdn.jsdelivr.net/gh/runelite/runelite@runelite-parent-1.13.1/runelite-client/src/main/resources/skill_icons/runecraft.png"},
   13:{unit:"KC", acts:["Barrows Chests"]},
@@ -69,12 +69,24 @@ const TRACK = {
   19:{unit:"KC", acts:["Yama"]},
   20:{unit:"KC", acts:["Zalcano"]},
   21:{unit:"KC", acts:["Doom of Mokhaiotl"]},
-  22:{unit:"KC", acts:["Chambers of Xeric","Chambers of Xeric Challenge Mode"]},
+  22:{unit:"KC", acts:["Chambers of Xeric","Chambers of Xeric Challenge Mode"], short:"CoX"},
   24:{unit:"KC", acts:["Cerberus"]}
 };
 const ACT_NAMES = {"Tombs of Amascut":"ToA","Theatre of Blood":"ToB","Chambers of Xeric":"CoX","Agility":"Agility XP","Thieving":"Thieving XP","Fishing":"Fishing XP","Runecraft":"Runecraft XP","The Corrupted Gauntlet":"Corrupted Gauntlet","Tombs of Amascut Expert":"ToA Expert",
   "Theatre of Blood Challenge Mode":"ToB Hard Mode","Chambers of Xeric Challenge Mode":"CoX CM",
   "Phosanis Nightmare":"Phosani's Nightmare","Vetion":"Vet'ion"};
+
+// Icon for each tracked boss (its pet, by item ID; Barrows has no pet so it uses a
+// Barrows helm) or skill (RuneLite's skill icon). Used on the player cards.
+const SKILL_ICON = s => `https://cdn.jsdelivr.net/gh/runelite/runelite@runelite-parent-1.13.1/runelite-client/src/main/resources/skill_icons_small/${s}.png`;
+const ACT_ICON = {"Zulrah":12921,"The Gauntlet":23757,"The Corrupted Gauntlet":23757,"Hueycoatl":30152,
+  "Tombs of Amascut":27352,"Tombs of Amascut Expert":27352,"Phantom Muspah":27590,"Maggot King":33642,
+  "Duke Sucellus":28250,"The Leviathan":28252,"Vardorvis":28248,"The Whisperer":28246,
+  "Callisto":13178,"Artio":13178,"Venenatis":13177,"Spindel":13177,"Vetion":13179,"Calvarion":13179,
+  "Theatre of Blood":22473,"Theatre of Blood Challenge Mode":22473,"Araxxor":29836,"Phosanis Nightmare":24491,
+  "Yama":30888,"Zalcano":23760,"Doom of Mokhaiotl":31130,"Chambers of Xeric":20851,
+  "Chambers of Xeric Challenge Mode":20851,"Cerberus":13247,"Barrows Chests":4716,
+  "Agility":SKILL_ICON("agility"),"Thieving":SKILL_ICON("thieving"),"Fishing":SKILL_ICON("fishing"),"Runecraft":SKILL_ICON("runecraft")};
 
 // For each tile: [item name, item ID, counts toward the tile (1) or not (0), Barrows brother].
 // Built from TempleOSRS collection log categories.
