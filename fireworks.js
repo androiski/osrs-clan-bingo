@@ -3,8 +3,8 @@
 // (returns nothing) for people who've asked their device to reduce motion.
 //
 // The first rocket spells out Bingo!. After that, bursts are spheres, willows, crackles, and
-// item shapes: sparks fly out, form the pixel shape of one of the given item icons, hold
-// it for about two seconds, then fall away.
+// item shapes: sparks fly out, form the pixel shape of one of the given item icons, then
+// fall, slowly at first and then faster, fading as they go.
 // Every 15-20 seconds there's a small finale volley.
 export function fireworks(color, iconUrls = []){
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -83,19 +83,19 @@ export function fireworks(color, iconUrls = []){
     for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step)
       // OSRS chat yellow, whatever the team's colour.
       if (d[(y * w + x) * 4 + 3] > 128) px.push([x - w / 2, y - h / 2, "#ffff00"]);
-    return {px, w, h, scale: 1, size: step * 0.8, hold: 90, word: true, shadow: step * 0.55};
+    return {px, w, h, scale: 1, size: step * 0.8, word: true, shadow: step * 0.55};
   }
 
   function shapeBurst(x, y, s = pick(shapes)){
     const scale = s.scale || Math.max(3, Math.min(9, Math.min(W, H) * 0.26 / Math.max(s.w, s.h)));
     const cx = Math.min(Math.max(x, s.w * scale / 2 + 12), W - s.w * scale / 2 - 12);
     const cy = Math.max(y, s.h * scale / 2 + 12);
-    const hold = s.hold || rand(110, 150), size = s.size || scale * 0.9;
+    const size = s.size || scale * 0.9;
     for (const [px, py, col, k = 1] of s.px){
       if (sparks.length >= MAX_SPARKS) break;
       sparks.push({x, y, px: x, py: y, vx: 0, vy: 0, life: 1, decay: 0, gravity: 0, drag: 0.98,
-        color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, hold, age: rand(-18, 0),
-        shadow: s.shadow || 0, solid: true, cx, cy});
+        color: col, size: size * k, shape: true, tx: cx + px * scale, ty: cy + py * scale, age: rand(-18, 0),
+        shadow: s.shadow || 0, solid: true});
     }
     if (s.word){
       // A full burst as wide as the word: sparks coast about half the word's width.
@@ -171,19 +171,20 @@ export function fireworks(color, iconUrls = []){
       const p = sparks[i];
       p.px = p.x; p.py = p.y;
       if (p.shape){
-        // Fly to its place in the item's shape, hold, then drop like a normal spark.
+        // Fly to its place in the shape, then fall.
         p.age += dt;
         // Drift out from the burst and ease into place over about a second, fading in.
         if (p.age < 0) continue;
         if (p.age < 70){ const k = 1 - Math.pow(0.955, dt); p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; }
-        else if (p.age > 70 + p.hold){
-          // Release: the shape expands outward from the centre of its explosion and falls, slowly
-          // at first and then exponentially faster, fading, so it stays recognisable for a moment.
-          const t = p.age - 70 - p.hold;
-          if (t > 100){ sparks.splice(i, 1); continue; }
-          const grow = 1 + 0.035 * (Math.exp(t / 22) - 1);
-          p.x = p.cx + (p.tx - p.cx) * grow; p.y = p.cy + (p.ty - p.cy) * grow + 0.01 * t * t;
-          p.fade = Math.max(0, 1 - Math.pow(t / 100, 2));
+        else {
+          // Once formed it starts to fall straight away: barely at first, so the shape stays
+          // readable, then exponentially faster. Each dot falls at a slightly different speed,
+          // so the shape droops and smears downward like a firework, fading at the end.
+          const t = p.age - 70;
+          if (t > 170){ sparks.splice(i, 1); continue; }
+          if (p.fall === undefined) p.fall = rand(0.8, 1.25);
+          p.x = p.tx; p.y = p.ty + 2 * p.fall * (Math.exp(t / 38) - 1);
+          p.fade = 1 - Math.pow(Math.max(0, t - 70) / 100, 1.5);
         }
         if (p.solid){ solids.push(p); continue; }
         // Items fade in over ~0.75 s.
