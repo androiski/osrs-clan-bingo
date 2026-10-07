@@ -16,6 +16,10 @@ const tileFace = (i, tile) => { const src = tileIcon(i);
   return `${src ? `<img class="tico" src="${src}" alt="" loading="lazy">` : ""}<span class="tname"><span class="full">${tile.n}</span><span class="short">${tile.short || tile.n}</span></span>`; };
 
 let view = "all", selected = 12;
+// Icon for a tracked boss (its pet) or skill, and the distinct icons for a tile's tracking.
+const actIcon = act => { const ic = ACT_ICON[act]; return typeof ic === "number" ? ICON(ic) : ic; };
+const trackIcons = tr => [...new Set(tr.acts.map(actIcon).filter(Boolean))]
+  .map(src => `<img class="aico" src="${src}" alt="">`).join("");
 // A team's icon (chompy bird, greyhound, cake), sized by the class.
 const teamIco = (t, cls = "tico-s") => t.icon ? `<img class="${cls}" src="${ICON(t.icon)}" alt="">` : "";
 const colorVar = id => `var(--${id})`;
@@ -114,6 +118,21 @@ function renderBoard(){
   board.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;render();});
 }
 
+// The tile panel's summary: what counts for the tile, and where it's tracked from.
+function tileSummary(i, tile, src){
+  const tr = TRACK[i];
+  let counts;
+  if (tile.s === "xp") counts = `${trackIcons(tr)}${tile.n.replace(/ XP$/, "")} XP gained by the team`;
+  else {
+    const rows = (TILE_ITEMS[i] || []).filter(r => r[2]), MAX = 10;
+    counts = rows.slice(0, MAX).map(r => `<img class="cico" src="${ICON(r[1])}" alt="${r[0]}" title="${r[0]}">`).join("") +
+      (rows.length > MAX ? `<span class="more">+${rows.length - MAX} more</span>` : "");
+  }
+  const progress = tr && tile.s !== "xp" ? ` · progress from ${trackIcons(tr)}${tr.short || tr.label || tr.acts.map(a => ACT_NAMES[a] || a).join(" + ")}${tr.unit === "KC" && !tr.label ? " KC" : ""}` : "";
+  return `<div class="sum"><p><span class="lbl">Counts</span><span class="ics">${counts}</span></p>` +
+    `<p><span class="lbl">Tracked by</span><span>${src.label}${progress}</span></p></div>`;
+}
+
 function renderDetail(){
   const el = document.getElementById("detail");
   const tile = TILES[selected], src = SOURCES[tile.s];
@@ -140,7 +159,7 @@ function renderDetail(){
     return `<div class="pl"><span>${tile.count ? tile.count + " " : ""}${pd.length}/${tile.target || pd.length}</span>${pd.map(pIco).join("")}</div>`;
   }
 
-  el.innerHTML = `<h3>${tIco ? `<img class="hico" src="${tIco}" alt="">` : ""}<span>${tile.n}</span></h3><p class="how">${src.label}</p>` +
+  el.innerHTML = `<h3>${tIco ? `<img class="hico" src="${tIco}" alt="">` : ""}<span>${tile.n}</span></h3>${tileSummary(selected, tile, src)}` +
     (tile.rule ? `<p class="rule">${tile.rule}</p>` : "") +
     TEAMS.map(t=>{
       const e = (state[t.id]||{})[selected];
@@ -302,7 +321,7 @@ function renderDry(){
 
 
   el.innerHTML = `<h3>Progress</h3>
-    <p class="dsub">${tr.label || actText + (tr.unit === "KC" ? " KC" : "")}${tr.proxy ? `. ${tr.proxy}` : ""}</p>
+    <p class="dsub">${trackIcons(tr)}${tr.label || actText + (tr.unit === "KC" ? " KC" : "")}${tr.proxy ? `. ${tr.proxy}` : ""}</p>
     <div class="chart">
       <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${tr.unit} gained over time for each team on ${tile.n}">
         <g class="grid">${grid}</g><g class="axis">${axis}</g>${tgt}

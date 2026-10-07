@@ -159,6 +159,13 @@ aside .ico,.dry .ico{filter:drop-shadow(0 0 1px rgba(255,255,255,.45))}
 :root[data-theme="light"] aside .ico,:root[data-theme="light"] .dry .ico{filter:none}
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]) aside .ico,:root:not([data-theme="dark"]) .dry .ico{filter:none}}
 .how{color:var(--muted);font-size:.9rem;margin:0 0 14px}
+.sum{margin:2px 0 14px;font-size:.88rem;color:var(--muted)}
+.sum p{display:flex;gap:8px;align-items:flex-start;margin:4px 0}
+.sum .lbl{flex:none;width:74px;color:var(--ink);font-weight:600}
+.sum .ics{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+.sum .cico{width:24px;height:22px;object-fit:contain;image-rendering:pixelated}
+.sum .more{font-size:.8rem;margin-left:4px}
+.aico{width:20px;height:18px;object-fit:contain;image-rendering:pixelated;vertical-align:-4px;margin-right:4px}
 .how b{color:var(--ink)}
 .trow{border-top:1px solid var(--line);padding:10px 0}
 .trow .tn{font-weight:700;display:flex;align-items:center;gap:8px}
