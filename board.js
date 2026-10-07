@@ -156,11 +156,11 @@ function tileSummary(i, tile, src){
     counts = rows.slice(0, MAX).map(r => `<img class="cico" src="${ICON(r[1])}" alt="${r[0]}" title="${r[0]}">`).join("") +
       (rows.length > MAX ? `<span class="more">+${rows.length - MAX} more</span>` : "");
   }
-  // Skill stand-ins (e.g. Agility XP for the Sepulchre) only hint at who's doing the content,
-  // so they aren't presented as part of how the tile is tracked.
-  const progress = tr && tile.s !== "xp" && !tr.proxy ? ` · progress from ${trackIcons(tr)}${tr.short || tr.label || tr.acts.map(a => ACT_NAMES[a] || a).join(" + ")}${tr.unit === "KC" && !tr.label ? " KC" : ""}` : "";
+  // Skill stand-ins (e.g. Agility XP for the Sepulchre) aren't part of how the tile is
+  // tracked, so they get no icon here.
+  const icons = tr && !tr.proxy ? trackIcons(tr) : "";   // the boss/skill, as icons only
   return `<div class="sum"><p><span class="lbl">Counts</span><span class="ics">${counts}</span></p>` +
-    `<p><span class="lbl">Tracked by</span><span>${src.label}${progress}</span></p></div>`;
+    `<p><span class="lbl">Tracked by</span><span>${icons}${src.label}</span></p></div>`;
 }
 
 function renderDetail(){
