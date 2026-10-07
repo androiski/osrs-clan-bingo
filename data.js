@@ -4,7 +4,7 @@
 export const TEAMS = [
   {id:"tt", name:"Thompy Thiccs", icon:13071, members:["yaint thiccy","Cenaras","BIS Ben","chmsst","Wildhero","47demonsand","piinktaco","The Biplane","ll Grub ll"]},
   {id:"dd", name:"The Desert Dogs", icon:34459, members:["duhmass","ndru","Mspartam","789","Sparge","Roof Sniffa","Exviped","Bhnr","Halfmeatball"]},
-  {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","Im Lablabi","Cl0udsy","Gpmorgnchase","spotttt","Dead Naseeph","LootBuster42","PlE"]}
+  {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","Im Lablabi","nimbis","Gpmorgnchase","spotttt","Dead Naseeph","LootBuster42","PlE"]}
 ];
 
 export const SOURCES = {
@@ -41,6 +41,13 @@ export const TILES = [
   {n:"A Zenyte", short:"Zenyte", s:"clog"},
   {n:"Any Cerb Crystal", short:"Cerb Crystal", s:"clog"}
 ];
+
+// The collection log section each tile is tracked from (shown in the tile panel).
+export const CLOG_SECTION = {0:"Hallowed Sepulchre",1:"The Gauntlet",2:"Hueycoatl",3:"All Pets",4:"Tombs of Amascut",
+  5:"Phantom Muspah",6:"Maggot King",7:"Desert Treasure II bosses",8:"Boat Paints",9:"Wilderness bosses",
+  10:"Theatre of Blood",11:"Araxxor",12:"Runecraft",13:"Barrows Chests",14:"Miscellaneous",15:"Zulrah",
+  16:"Aerial Fishing",17:"Miscellaneous",18:"The Nightmare",19:"Yama",20:"Zalcano",21:"Doom of Mokhaiotl",
+  22:"Chambers of Xeric",23:"Glough's Experiments",24:"Cerberus"};
 
 // The icon shown on each board tile, by clog item name (looked up in TILE_ITEMS).
 export const TILE_ICON = {0:"Ring of endurance",1:"Enhanced crystal weapon seed",2:"Dragon hunter wand",3:34485 /* Shiba (adult, tan): a pet that doesn't count */,

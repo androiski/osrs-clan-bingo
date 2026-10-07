@@ -161,7 +161,7 @@ aside .ico,.dry .ico{filter:drop-shadow(0 0 1px rgba(255,255,255,.45))}
 .how{color:var(--muted);font-size:.9rem;margin:0 0 14px}
 .sum{margin:2px 0 14px;font-size:.88rem;color:var(--muted)}
 .sum p{display:flex;gap:8px;align-items:flex-start;margin:4px 0}
-.sum .lbl{flex:none;width:74px;color:var(--ink);font-weight:600}
+.sum .lbl{flex:none;width:96px;color:var(--ink);font-weight:600}
 .sum .ics{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
 .sum .cico{width:24px;height:22px;object-fit:contain;image-rendering:pixelated}
 .sum .more{font-size:.8rem;margin-left:4px}

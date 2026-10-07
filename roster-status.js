@@ -74,8 +74,8 @@ window.ROSTER_STATUS = {
   "Im Lablabi": {
    "status": "unsynced"
   },
-  "Cl0udsy": {
-   "status": "unsynced"
+  "nimbis": {
+   "status": "missing"
   },
   "Gpmorgnchase": {
    "status": "unsynced"
