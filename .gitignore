@@ -6,3 +6,4 @@ __pycache__/
 
 # Full-size banner originals (local only)
 images/
+worker/.wrangler/

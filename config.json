@@ -3,5 +3,5 @@
   "start": "2026-10-16T10:00:00Z",
   "end": "2026-10-19T10:00:00Z",
   "verify_hours": 3,
-  "mod_api": null
+  "mod_api": "https://runecraft-bingo-mods.androiski.workers.dev"
 }

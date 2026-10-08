@@ -8,7 +8,7 @@ compatibility_date = "2026-10-01"
 ALLOWED_ORIGINS = "https://androiski.github.io,http://localhost:8765"
 GITHUB_REPO = "androiski/runecraft-clan-bingo"
 
-# Filled in by `npx wrangler kv namespace create ENTRIES` (see worker/README.md).
+# Created with `npx wrangler kv namespace create ENTRIES` (see worker/README.md).
 [[kv_namespaces]]
 binding = "ENTRIES"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "fe1f0a63096f4831a800b7b66f8fae82"
