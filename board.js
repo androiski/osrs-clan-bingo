@@ -1,27 +1,10 @@
 // Scoring and drawing: board, scores, tile panel, progress chart, rosters, theme.
 
-import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS, CLOG_SECTION, ALT_OF, person, people} from "./data.js";
+import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS, CLOG_SECTION, person, people} from "./data.js";
 
 // The event data being shown (live or sample), set once by live-data.js through setData().
 let state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {}, NOW_H = 0;
-export function setData(d){ ({state, dry, drops, byPlayer} = asPeople(d)); byAct = d.byAct || {}; NOW_H = d.nowH; }
-
-// Second accounts (ALT_OF in data.js) shown as their main: names on completions and drops
-// become the person (the account is kept as acct, for mod entries), and per-player totals
-// are added together. Returns new objects; the data passed in isn't changed.
-function asPeople(d){
-  if (!Object.keys(ALT_OF).length) return d;
-  const named = x => x && x.by && ALT_OF[x.by] ? {...x, by: person(x.by), acct: x.by} : x;
-  const map = (o, f) => Object.fromEntries(Object.entries(o || {}).map(([k, v]) => [k, f(v)]));
-  return {...d,
-    state: map(d.state, team => map(team, named)),
-    drops: map(d.drops, byTeam => map(byTeam, list => list.map(named))),
-    byPlayer: map(d.byPlayer, byTeam => map(byTeam, rows => {
-      const sum = new Map();
-      for (const [m, v] of rows) sum.set(person(m), (sum.get(person(m)) || 0) + v);
-      return [...sum].sort((a, b) => b[1] - a[1]);
-    }))};
-}
+export function setData(d){ ({state, dry, drops, byPlayer} = d); byAct = d.byAct || {}; NOW_H = d.nowH; }
 
 function tileIcon(i){
   if (TILES[i].s === "xp") return TRACK[i].icon;
@@ -488,26 +471,29 @@ darkQuery.addEventListener("change", renderThemeBtn);
 // skill) and what they got there (every drop, the finishing one marked). The KC shows even
 // when they also got the drop. Tiles they finished come first, then by share of the team's
 // effort. Players best first.
+// Final stats: one card per person, so a second account (ALT_OF in data.js) is added into
+// its main's card. Everywhere else the accounts are shown separately.
 function playerStats(team){
   const t = state[team.id] || {};
   return people(team).map(m => {
+    const accs = team.members.filter(a => person(a) === m), mine = a => accs.includes(a);
     const parts = [];
     let dropsGot = 0, effort = 0;
     TILES.forEach((tile, i) => {
       const e = t[i], tr = TRACK[i];
-      const items = ((drops[i] || {})[team.id] || []).filter(d => d.by === m)
+      const items = ((drops[i] || {})[team.id] || []).filter(d => mine(d.by))
         .map(d => ({src: ICON(d.id), name: d.name, counts: d.kind !== "other", finished: false}));
       // A tile counts for everyone who helped get it (see helpers); the finishing item shows
       // only on the player who got it.
-      const finished = helpers(i, team.id, e).includes(m);
-      if (finished && e.by === m) items.unshift({src: e.id ? ICON(e.id) : tileIcon(i), name: e.item || tile.n, counts: true, finished: true});
+      const finished = helpers(i, team.id, e).some(mine);
+      if (finished && mine(e.by)) items.unshift({src: e.id ? ICON(e.id) : tileIcon(i), name: e.item || tile.n, counts: true, finished: true});
       dropsGot += items.length;
       let amount = "", share = 0;
       if (tr){
-        const rows = ((byPlayer[i] || {})[team.id]) || [], row = rows.find(r => r[0] === m);
-        if (row && row[1]){
-          amount = `${fmtN(row[1], tr.unit)} ${tr.unit}`;
-          share = row[1] / (rows.reduce((sum, r) => sum + r[1], 0) || 1);
+        const rows = ((byPlayer[i] || {})[team.id]) || [], got = rows.filter(r => mine(r[0])).reduce((sum, r) => sum + r[1], 0);
+        if (got){
+          amount = `${fmtN(got, tr.unit)} ${tr.unit}`;
+          share = got / (rows.reduce((sum, r) => sum + r[1], 0) || 1);
         }
       }
       if (!amount && !items.length) return;

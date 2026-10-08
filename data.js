@@ -7,8 +7,8 @@ export const TEAMS = [
   {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","Im Lablabi","nimbis","Gpmorgnchase","spotttt","Dead Naseeph","LootBuster42","PlE"]}
 ];
 
-// Second accounts: each is tracked on its own (it's in members above, and the update job and
-// mod entries use the account), but the page shows it as the same person as its main.
+// Second accounts: tracked and shown on their own everywhere (they're in members above), except
+// the Teams list and the final stats (win screen), which put them together with their main.
 export const ALT_OF = {"BenReported": "BIS Ben"};
 export const person = name => ALT_OF[name] || name;
 export const people = team => [...new Set(team.members.map(person))];
