@@ -224,7 +224,7 @@ function renderRosters(){
   const checked = !at ? (rs && rs.checked) : new Date(at).toLocaleString(undefined, {weekday: "short", hour: "numeric", minute: "2-digit"}) +
     ` (${mins < 1 ? "just now" : mins < 90 ? `${mins} min ago` : `${Math.round(mins / 60)} h ago`})`;
   document.getElementById("rosterNote").textContent = rs
-    ? `Last checked on TempleOSRS ${checked}. ${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced should install the plugin and sync/open their collection log before the start.`
+    ? `Last checked on TempleOSRS ${checked}. ${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced should install the plugin and manually sync/open their collection log before the start.`
     : "Temple status hasn't been checked yet. Run check_temple_roster.py to fill this in.";
   document.getElementById("rosters").innerHTML = TEAMS.map(t=>{
     const ps = people(t), synced = ps.filter(m=>players[m] && players[m].status === "synced").length;
@@ -435,7 +435,7 @@ function renderTimeline(){
   el.hidden = !list.length;
   if (!list.length){ el.innerHTML = ""; return; }
   list.sort((a,b)=>a.k-b.k);
-  el.innerHTML = `<h3>Timeline</h3><p class="dsub">Tiles in the order they were completed, in hours from the start.</p><ol>` +
+  el.innerHTML = `<h3>Timeline</h3><ol>` +
     list.map(({t, i, e, pts})=>{
       const tile = TILES[i], src = e.id ? ICON(e.id) : tileIcon(i);
       return `<li><button type="button" data-i="${i}" aria-pressed="${selected===i}" title="${e.item ? e.item : tile.n}">` +
