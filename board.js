@@ -503,5 +503,7 @@ export function start(){
 
 // A team's entry for a tile (mod.js uses it to show what an Uncheck would undo).
 export const entryOf = (teamId, i) => (state[teamId] || {})[i] || null;
+// A team's drops on a tile, not counting the one that finished it (mod.js lists them).
+export const dropsOf = (teamId, i) => ((drops[i] || {})[teamId] || []).slice();
 
 export {render, ranking, stats, playerStats, teamIco, colorVar, dayLabel, hoursOf, whenKey, valueAt, LINES, ICON};
