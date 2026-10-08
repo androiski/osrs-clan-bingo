@@ -1,12 +1,12 @@
 // Mod entry: lets mods manually edit a tile for a team. "Mark done" adds a completion
-// TempleOSRS missed (from a screenshot); "Uncheck" undoes a completion (the drop that
-// finished it stops counting, progress stays). It's a collapsible section at the bottom of the tile panel, for the selected
+// TempleOSRS missed (from a screenshot); "Uncheck" picks one of the team's counted drops on
+// the tile and stops it counting (any of them, finished or not; the rest stay). It's a collapsible section at the bottom of the tile panel, for the selected
 // tile. The password is checked by the Cloudflare Worker (worker/), never here, so it isn't
 // in this public code. Saved entries reach the board when GitHub rebuilds it, usually
 // within a couple of minutes. Only shown when config.json has mod_api (the Worker's address).
 
 import {TEAMS, TILES, TILE_ITEMS} from "./data.js";
-import {onDetail, entryOf, hoursOf, dayLabel} from "./board.js";
+import {onDetail, entryOf, dropsOf, hoursOf, dayLabel} from "./board.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
 const store = {
@@ -83,28 +83,38 @@ if (api){
       `${TEAMS.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select></label>`;
     if (mode === "void"){
       box.innerHTML = summary + `<form class="mform" data-entry>${modes}${teamSelect}
-        <p class="note" data-current></p>
+        <label>Drop<select name="drop" required disabled><option value="" selected disabled>Select team first</option></select></label>
         <label><span>Note <span class="opt">(optional)</span></span><input name="note" maxlength="200" placeholder="e.g. drop wasn't legit"></label>
         <label>Your name<input name="mod" maxlength="30" required value="${esc(store.get("bingo-mod-name", localStorage) || "")}"></label>
         <div class="mbtns"><button class="btn" type="submit">Uncheck</button><button class="linkish" type="button" data-lock>Lock</button></div>
-        <p class="note">Progress stays; the next qualifying drop completes it again.</p>
+        <p class="note">The drop stops counting; the others stay. If that undoes the tile, the next qualifying drop completes it again.</p>
         <p class="mmsg" role="status">${esc(msg)}</p>
       </form><div class="mlist"></div>`;
       const f = box.querySelector("form");
+      // The team's drops that count on this tile: the one that finished it (or the XP tile's
+      // completion) and the ones counting toward it. Already-unchecked drops aren't listed.
+      const nameOf = id => (TILE_ITEMS[tile] || []).find(r => r[1] === id)?.[0];
+      let options = [];
       const show = () => {
-        const e = f.team.value && entryOf(f.team.value, tile), done = e && e.done;
-        box.querySelector("[data-current]").textContent = !f.team.value ? "" : done
-          ? `Completed: ${e.item || "Done"}${e.by && e.by !== "Team" ? ` - ${e.by}` : ""} @ ${dayLabel(hoursOf(e.when))}`
-          : "Not completed, so there's nothing to uncheck.";
-        f.querySelector("[type=submit]").disabled = !done;
+        const id = f.team.value, e = entryOf(id, tile);
+        options = dropsOf(id, tile).filter(d => d.kind === "progress")
+          .map(d => ({by: d.by, item: d.name, itemId: d.id, h: d.h}));
+        if (e && e.done) options.push(e.id ? {by: e.by, item: nameOf(e.id) || e.item, itemId: e.id, h: hoursOf(e.when), last: true}
+          : {by: e.by || "Team", item: null, itemId: null, h: hoursOf(e.when), last: true});
+        options.sort((a, b) => a.h - b.h);
+        f.drop.innerHTML = !options.length ? `<option value="" selected disabled>No counted drops for this team</option>`
+          : `<option value="" selected disabled>Select drop</option>` + options.map((o, k) =>
+            `<option value="${k}">${esc(o.item || "Completion")}${o.by !== "Team" ? ` - ${esc(o.by)}` : ""} @ ${esc(dayLabel(o.h))}${o.last ? " (finished it)" : ""}</option>`).join("");
+        f.drop.disabled = !options.length;
+        f.querySelector("[type=submit]").disabled = !options.length;
       };
-      f.team.onchange = show; show();
+      f.team.onchange = show;
       f.onsubmit = async ev => {
         ev.preventDefault();
-        const e = entryOf(f.team.value, tile);
-        if (!e || !e.done) return;
-        const entry = {action: "void", team: f.team.value, tile, by: e.by || "Team", item: e.item || null, itemId: e.id ?? null,
-          h: hoursOf(e.when), note: f.note.value.trim() || null, mod: f.mod.value.trim()};
+        const o = options[+f.drop.value];
+        if (!o) return;
+        const entry = {action: "void", team: f.team.value, tile, by: o.by, item: o.item, itemId: o.itemId,
+          h: o.h, note: f.note.value.trim() || null, mod: f.mod.value.trim()};
         store.set("bingo-mod-name", entry.mod, localStorage);
         const btn = f.querySelector("[type=submit]");
         busy(btn, "Unchecking…");
