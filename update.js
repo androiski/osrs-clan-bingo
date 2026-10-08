@@ -140,6 +140,7 @@ async function preview(){
   const dir = path.join(DATA, "preview");
   const state = finish(readJSON(path.join(dir, "history.json"), {baseline: {}, points: []}),
     readJSON(path.join(dir, "events.json"), []), await modEntries(), start, end, end, [], {tests: true});
+  state.updated = new Date().toISOString();   // when it was built (the page watches this)
   writeJSON("state.json", state, dir);
   log("Built the preview board.");
 }
