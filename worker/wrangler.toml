@@ -7,8 +7,11 @@ compatibility_date = "2026-10-01"
 # Sites allowed to call the Worker from a browser (comma-separated).
 ALLOWED_ORIGINS = "https://androiski.github.io,http://localhost:8765"
 GITHUB_REPO = "androiski/runecraft-clan-bingo"
+# The event window, same as config.json: entries timed outside it are refused.
+EVENT_START = "2026-10-16T10:00:00Z"
+EVENT_END = "2026-10-19T10:00:00Z"
 
-# Filled in by `npx wrangler kv namespace create ENTRIES` (see worker/README.md).
+# Created with `npx wrangler kv namespace create ENTRIES` (see worker/README.md).
 [[kv_namespaces]]
 binding = "ENTRIES"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "fe1f0a63096f4831a800b7b66f8fae82"
