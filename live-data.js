@@ -92,6 +92,10 @@ function renderStatus(){
       : finalMs && now < finalMs ? `checking late drops · results final ${clock(finalMs)}` : "final results"]
     .filter(Boolean).join(" · ");
   for (const el of document.querySelectorAll("[data-since]")) el.textContent = `${clock(updatedMs)} (${since(updatedMs)})`;
+  // Under the board's title: when the live board was last updated (it updates every 30 min).
+  const sub = document.getElementById("boardUpdated");
+  if (sub) sub.textContent = mode === "live" || mode === "demo" ? `Last updated ${clock(updatedMs)} (${since(updatedMs)})`
+    : mode === "preview" && !sampleShown ? "Updates every 30 minutes once the bingo starts" : "";
 }
 setInterval(renderStatus, 30000);
 
