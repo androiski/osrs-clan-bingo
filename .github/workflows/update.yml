@@ -7,7 +7,7 @@ on:
   repository_dispatch:
     types: [update-board]    # started every 30 min by the Cloudflare Worker's Cron Trigger
   schedule:
-    - cron: "7,37 * * * *"   # backup only: GitHub's scheduler can run hours late
+    - cron: "15,45 * * * *"  # backup only: GitHub's scheduler can run hours late
   workflow_dispatch:
 
 permissions:
