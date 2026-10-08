@@ -12,8 +12,10 @@ Temple asks for gentle request rates, so this waits between lookups
 (.github/workflows/roster.yml); it does nothing once the event in config.json is over.
 """
 import json
+import os
+import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -57,6 +59,13 @@ def describe(s):
 
 # Nothing to do once the event is over (keeps the hourly job quiet afterwards).
 end = (json.loads(Path(__file__).with_name("config.json").read_text()) or {}).get("end")
+# GitHub's own schedule is only a backup for the Cloudflare trigger: skip it if the roster was
+# checked recently, so TempleOSRS isn't asked twice.
+if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and OUT.exists():
+    m = re.search(r'"checked": "([^"]+) UTC"', OUT.read_text(encoding="utf-8"))
+    if m and datetime.now(timezone.utc) - datetime.strptime(m.group(1), "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc) < timedelta(minutes=40):
+        print("Checked less than 40 minutes ago, so this backup run isn't needed.")
+        raise SystemExit(0)
 if end and datetime.now(timezone.utc) > datetime.fromisoformat(end.replace("Z", "+00:00")):
     print("The event has ended, so the roster isn't checked any more.")
     raise SystemExit(0)

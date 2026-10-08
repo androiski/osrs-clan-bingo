@@ -218,8 +218,13 @@ function renderRosters(){
   }));
   const all = TEAMS.flatMap(people);
   const count = st => all.filter(m=>players[m] && players[m].status === st).length;
+  // "2026-10-08 18:55 UTC" -> "Last checked Wed 11:55 AM (2 h ago)", in the viewer's time.
+  const at = rs && Date.parse(rs.checked.replace(" ", "T").replace(" UTC", "Z"));
+  const mins = Math.round((Date.now() - at) / 60000);
+  const checked = !at ? (rs && rs.checked) : new Date(at).toLocaleString(undefined, {weekday: "short", hour: "numeric", minute: "2-digit"}) +
+    ` (${mins < 1 ? "just now" : mins < 90 ? `${mins} min ago` : `${Math.round(mins / 60)} h ago`})`;
   document.getElementById("rosterNote").textContent = rs
-    ? `Checked on TempleOSRS ${rs.checked}. ${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced should install the plugin and sync/open their collection log before the start.`
+    ? `Last checked on TempleOSRS ${checked}. ${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced should install the plugin and sync/open their collection log before the start.`
     : "Temple status hasn't been checked yet. Run check_temple_roster.py to fill this in.";
   document.getElementById("rosters").innerHTML = TEAMS.map(t=>{
     const ps = people(t), synced = ps.filter(m=>players[m] && players[m].status === "synced").length;

@@ -16,6 +16,13 @@ const MAX_FAILS = 10;          // wrong passwords allowed per IP per hour
 const LIST = "entries";
 
 export default {
+  // Cron Triggers (wrangler.toml): GitHub's own schedule is unreliable (runs can come hours
+  // late), so the Worker starts the board update every 30 minutes and the roster check
+  // every hour instead.
+  async scheduled(event, env){
+    await dispatch(env, event.cron === "23 * * * *" ? "roster" : "update-board");
+  },
+
   async fetch(req, env){
     const origin = req.headers.get("Origin") || "";
     const allowed = (env.ALLOWED_ORIGINS || "").split(",").map(s => s.trim()).filter(Boolean);
@@ -109,13 +116,17 @@ async function same(a, b){
 
 // Asks GitHub to run the board update now (repository_dispatch), so the entry shows within a
 // minute or two instead of at the next half-hourly run.
-async function rebuild(env){
+const rebuild = env => dispatch(env, "mod-entry");
+
+// Starts a GitHub workflow that listens for this repository_dispatch event type.
+async function dispatch(env, type){
   if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return false;
   const res = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/dispatches`, {
     method: "POST",
     headers: {"Authorization": `Bearer ${env.GITHUB_TOKEN}`, "Accept": "application/vnd.github+json",
       "User-Agent": "runecraft-clan-bingo-mods", "Content-Type": "application/json"},
-    body: JSON.stringify({event_type: "mod-entry"}),
+    body: JSON.stringify({event_type: type}),
   });
+  if (!res.ok) console.log(`GitHub dispatch ${type} failed: ${res.status}`);
   return res.ok;
 }
