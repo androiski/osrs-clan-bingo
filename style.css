@@ -146,6 +146,8 @@ h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-r
 :root:not([data-theme="dark"]) .boardframe{background:var(--edge)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .boardframe{background:#14100a}}
 .boardtitle{text-align:center;font-family:var(--display);color:#f0d48a;padding:6px 0 10px;font-size:32px;line-height:1;text-shadow:1px 1px 0 #000}
+.boardsub{text-align:center;color:var(--muted);font-size:.8rem;margin:-2px 0 6px}
+.boardsub:empty{display:none}
 .board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
 .tile{position:relative;aspect-ratio:1/1;min-height:0;overflow:hidden;background:var(--tile);border:1px solid var(--edge);border-radius:6px;padding:8px 6px 22px;cursor:pointer;
   display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;text-align:center;font-family:var(--plain);font-weight:400;
