@@ -37,7 +37,9 @@ if (api){
     if (!res.ok) throw Object.assign(new Error(data.error || `Error ${res.status}`), {status: res.status});
     return data;
   };
+  // After a save or removal: lock again, and let the preview redraw with the change.
   const lock = () => { password = null; };
+  const changed = () => { lock(); dispatchEvent(new Event("mod-entries-changed")); };
   // While a request is out: the button shows a spinner and can't be pressed again. The
   // section is redrawn afterwards either way, which puts the button back.
   // An error shown in place, so the form keeps what was typed; the button comes back.
@@ -60,6 +62,7 @@ if (api){
     if (!password){
       box.innerHTML = summary + `<form class="mform" data-unlock>
         <p class="note">For mods: manually edit a tile for a team.</p>
+        ${Date.now() < startMs ? `<p class="note">Before the event, entries are only for testing: they show on the preview and never count.</p>` : ""}
         <label>Password<input type="password" name="pw" autocomplete="off" required></label>
         <button class="btn" type="submit">Unlock</button><p class="mmsg" role="status">${esc(msg)}</p></form>`;
       const f = box.querySelector("form");
@@ -106,7 +109,7 @@ if (api){
         busy(btn, "Unchecking…");
         try {
           const r = await call("POST", "/entries", {password, entry});
-          lock();
+          changed();
           say(r.rebuild ? "Unchecked. The board updates in a minute or two." : "Unchecked. It shows on the board at the next update (within 30 minutes).");
         } catch (err){ if (err.status === 401){ lock(); say(err.message); } else fail(f, btn, "Uncheck", err.message); }
       };
@@ -147,7 +150,7 @@ if (api){
       busy(btn, "Saving…");
       try {
         const r = await call("POST", "/entries", {password, entry});
-        lock();   // locks again; the next entry needs the password
+        changed();   // locks again; the next entry needs the password
         say(r.rebuild ? "Saved. The board updates in a minute or two." : "Saved. It shows on the board at the next update (within 30 minutes).");
       } catch (err){ if (err.status === 401){ lock(); say(err.message); } else fail(f, btn, "Save entry", err.message); }
     };
@@ -188,7 +191,7 @@ if (api){
       busy(b, "Removing…");
       try {
         const r = await call("DELETE", `/entries/${encodeURIComponent(b.dataset.del)}`, {password});
-        lock();
+        changed();
         say(r.rebuild ? "Removed. The board updates in a minute or two." : "Removed. The board catches up at the next update (within 30 minutes).");
       } catch (err){ if (err.status === 401) lock(); say(err.message); }
     });

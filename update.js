@@ -140,8 +140,10 @@ async function main(){
 
 // Builds state.json: Temple's drops plus mod entries, cut off at the first Bingo.
 function finish(history, events, entries, start, end, now, warnings){
+  // Entries added before the start were mods trying it out on the preview: they never count.
+  entries = (entries || []).filter(e => !(Date.parse(e.added) < start * 1000));
   const all = [...events, ...manualEvents(entries, start)].sort((a, b) => a.t - b.t);
-  const voids = (entries || []).filter(e => e.action === "void");
+  const voids = entries.filter(e => e.action === "void");
   let state = buildState(history, all, start, end, now, warnings, voids);
   // Nothing after the first Bingo counts (it may be earlier than last run's, after a late sync
   // or a mod entry; or gone, if a mod entry was removed).

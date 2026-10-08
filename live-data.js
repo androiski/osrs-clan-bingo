@@ -53,6 +53,16 @@ async function loadSample(){
   }
   return sample;
 }
+// The preview board: a fresh copy of the sample with the mod entries on top, so mods can
+// test Mod entry before the event (those entries never count on the real board).
+async function previewData(){
+  const copy = structuredClone(await loadSample());
+  try {
+    const m = await import("./mod-entries.js");
+    await m.applyEntries(copy, await m.loadEntries());
+  } catch {}
+  return copy;
+}
 
 let data, sampleShown = false;
 if (live){
@@ -70,8 +80,7 @@ if (live){
     data = await loadSample();
     ({startMs, endMs, updatedMs, finalMs = null} = demo.prepare(data));
   } else if (demoMode === "preview"){
-    data = await loadSample(); sampleShown = true;
-    if (demo.applyModEntries) demo.applyModEntries(data);   // the real mod entries, on top of the sample
+    data = await previewData(); sampleShown = true;
   } else {
     data = emptyData();
   }
@@ -111,8 +120,13 @@ banner.addEventListener("click", async e => {
   const b = e.target.closest("[data-sample]");
   if (!b) return;
   sampleShown = b.dataset.sample === "on";
-  setData(sampleShown ? await loadSample() : emptyData());
+  setData(sampleShown ? await previewData() : emptyData());
   renderBanner(); render();
+});
+// A mod saved or removed an entry (mod.js): redraw the preview with it.
+addEventListener("mod-entries-changed", async () => {
+  if (!sampleShown) return;
+  setData(await previewData()); render();
 });
 if (mode !== "live") renderBanner();
 if (mode === "preview" || Date.now() < startMs){
