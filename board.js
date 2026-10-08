@@ -314,12 +314,14 @@ function renderDry(){
 
   // Icon markers sit on the team's line at the time of the drop. Sizes: completion > counts toward it > other drop.
   const SIZE = {done:[14,24], progress:[11,18], other:[9,15]};
-  // Mod entries get a square instead of a circle.
-  const marker = (kind, cx, cy, src, label, manual) => {
+  // Mod entries get a square instead of a circle; a drop a mod unchecked gets an X over it.
+  const marker = (kind, cx, cy, src, label, manual, voided) => {
     const [r, w] = SIZE[kind];
     const shape = manual ? `<rect x="${cx-r}" y="${cy-r}" width="${2*r}" height="${2*r}" rx="2"/>` : `<circle cx="${cx}" cy="${cy}" r="${r}"/>`;
-    return `<g class="mk ${kind}${manual ? " manual" : ""}"><title>${label}${manual ? " (mod entry)" : ""}</title>${shape}` +
-      (src ? `<image href="${src}" x="${cx-w/2}" y="${cy-w/2+1}" width="${w}" height="${w-2}"/>` : "") + `</g>`;
+    const k = r * 0.8;
+    return `<g class="mk ${kind}${manual ? " manual" : ""}${voided ? " voided" : ""}"><title>${label}${manual ? " (mod entry)" : ""}</title>${shape}` +
+      (src ? `<image href="${src}" x="${cx-w/2}" y="${cy-w/2+1}" width="${w}" height="${w-2}"/>` : "") +
+      (voided ? `<path class="x" d="M${cx-k},${cy-k}L${cx+k},${cy+k}M${cx+k},${cy-k}L${cx-k},${cy+k}"/>` : "") + `</g>`;
   };
 
   // Step lines: a total holds until the next update. The table below names each line.
@@ -328,7 +330,7 @@ function renderDry(){
     for (let k = 1; k < s.pts.length; k++) d += `H${x(s.pts[k][0])}V${y(s.pts[k][1])}`;
     const others = s.drops.filter(dr=>dr.kind !== "done")
       .map(dr=>marker(dr.kind, x(dr.h), y(valueAt(s.pts, dr.h)), ICON(dr.id),
-        `${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}`, dr.manual)).join("");
+        `${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}`, dr.manual, dr.voided)).join("");
     let done = "";
     if (s.doneH != null){
       const src = tile.s === "xp" ? tr.icon : (s.e.id ? ICON(s.e.id) : null);

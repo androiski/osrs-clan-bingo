@@ -98,6 +98,8 @@ h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-r
 .dry .mk.progress circle,.dry .mk.progress rect{stroke-width:2}
 .dry .mk.other circle,.dry .mk.other rect{stroke-width:1.5;stroke-dasharray:3 2}
 .dry .mk.other image{opacity:.75}
+.dry .mk .x{stroke:var(--bad);stroke-width:3;stroke-linecap:round}
+.dry .mk.voided image{opacity:.5}
 .dry .mk{cursor:default}
 .dry .strip{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
 .dry .strip .ico{margin:0}
