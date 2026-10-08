@@ -241,6 +241,9 @@ section.rosters h2,section.legend h2{font-family:var(--display);font-weight:400;
 .roll .work img.fin{outline:2px solid #f0d48a;outline-offset:1px;background:rgba(240,212,138,.15)}
 .roll .work img.other{opacity:.5}
 .roll .work img{width:18px;height:16px;object-fit:contain;image-rendering:pixelated;flex:none}
+.roll .acct{display:block;margin-top:10px;padding-top:6px;border-top:1px solid rgba(255,255,255,.15);font-size:.85rem;opacity:.85}
+.roll .acct b{font-size:.95rem;margin-right:4px}
+.roll .work.none{opacity:.6;font-size:.85rem}
 .countdown.win .congrats{margin:14px 0 10px;font-family:var(--display);font-size:20px;color:#fff;text-shadow:1px 1px 0 #000}
 .roll{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;text-align:left}
 .roll > div{background:rgba(0,0,0,.28);border-radius:6px;padding:8px 10px}
