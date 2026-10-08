@@ -4,7 +4,8 @@ import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS
 
 // The event data being shown (live or sample), set once by live-data.js through setData().
 let state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {}, NOW_H = 0;
-export function setData(d){ ({state, dry, drops, byPlayer} = d); byAct = d.byAct || {}; NOW_H = d.nowH; }
+let liveSync = null;   // during the event: each player's log sync status, from the board update
+export function setData(d){ ({state, dry, drops, byPlayer} = d); byAct = d.byAct || {}; NOW_H = d.nowH; liveSync = d.sync || null; }
 
 function tileIcon(i){
   if (TILES[i].s === "xp") return TRACK[i].icon;
@@ -193,22 +194,30 @@ let started = false;
 export const onDetail = fn => { afterDetail = fn; if (started) renderDetail(); };
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+// TempleOSRS times are UTC ("2026-10-08 18:20:23"); shown in the viewer's time: a day and time
+// in the last week, otherwise just the date.
+function syncedWhen(text){
+  const at = Date.parse((text || "").replace(" ", "T") + "Z");
+  if (!at) return "";
+  const d = new Date(at), recent = Date.now() - at < 6 * 86400e3;
+  return recent ? `, last ${d.toLocaleString(undefined, {weekday: "short", hour: "numeric", minute: "2-digit"})}`
+    : `, last ${d.getDate()} ${MONTHS[d.getMonth()]}${d.getFullYear() === new Date().getFullYear() ? "" : " " + d.getFullYear()}`;
+}
 function rosterChip(s){
   if (!s) return `<span class="chip">Not checked</span>`;
-  if (s.status === "synced"){
-    const d = (s.log_last_changed || "").match(/^(\d{4})-(\d\d)-(\d\d)/);
-    const when = d ? `, last ${+d[3]} ${MONTHS[+d[2]-1]}${d[1] === String(new Date().getFullYear()) ? "" : " " + d[1]}` : "";
-    return `<span class="chip ok">Log synced${when}</span>`;
-  }
+  if (s.status === "synced") return `<span class="chip ok">Log synced${syncedWhen(s.log_last_changed)}</span>`;
   if (s.status === "unsynced") return `<span class="chip warn">Log not synced</span>`;
   if (s.status === "missing") return `<span class="chip bad">No Temple profile</span>`;
+  if (s.status === "notingroup") return `<span class="chip bad">Not in group</span>`;
   return `<span class="chip">Check failed</span>`;
 }
 
 // One line per person; someone with a second account gets each account's status. A person
 // counts as synced once all their accounts are, and otherwise takes their worst status.
 function renderRosters(){
-  const rs = window.ROSTER_STATUS;
+  // During the event the board update has each player's status from the group; before it,
+  // the roster check's (roster-status.js).
+  const rs = liveSync ? {players: liveSync, live: true} : window.ROSTER_STATUS;
   const accounts = (rs && rs.players) || {};
   const accountsOf = p => TEAMS.flatMap(t=>t.members).filter(m=>person(m) === p);
   const RANK = {missing: 0, error: 1, unsynced: 2, synced: 3};
@@ -219,11 +228,13 @@ function renderRosters(){
   const all = TEAMS.flatMap(people);
   const count = st => all.filter(m=>players[m] && players[m].status === st).length;
   // "2026-10-08 18:55 UTC" -> "Last checked Wed 11:55 AM (2 h ago)", in the viewer's time.
-  const at = rs && Date.parse(rs.checked.replace(" ", "T").replace(" UTC", "Z"));
+  const at = rs && rs.checked && Date.parse(rs.checked.replace(" ", "T").replace(" UTC", "Z"));
   const mins = Math.round((Date.now() - at) / 60000);
   const checked = !at ? (rs && rs.checked) : new Date(at).toLocaleString(undefined, {weekday: "short", hour: "numeric", minute: "2-digit"}) +
     ` (${mins < 1 ? "just now" : mins < 90 ? `${mins} min ago` : `${Math.round(mins / 60)} h ago`})`;
-  document.getElementById("rosterNote").textContent = rs
+  document.getElementById("rosterNote").textContent = rs && rs.live
+    ? `From TempleOSRS at the last board update: when each player's collection log last synced. After a repeat bingo drop, open that log page and sync it again.`
+    : rs
     ? `Last checked on TempleOSRS ${checked}. ${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced should install the plugin and manually sync/open their collection log before the start.`
     : "Temple status hasn't been checked yet. Run check_temple_roster.py to fill this in.";
   document.getElementById("rosters").innerHTML = TEAMS.map(t=>{

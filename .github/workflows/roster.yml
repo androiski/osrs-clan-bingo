@@ -1,13 +1,14 @@
 # Every hour: check each player's TempleOSRS profile and collection log sync, and save
 # roster-status.js for the Teams list. One request per player, spaced out for Temple.
-# check_temple_roster.py stops by itself once the event in config.json has ended.
+# check_temple_roster.py stops by itself once the event in config.json has started; from then
+# on the board update records each player's log sync time instead.
 name: Update roster sync status
 
 on:
   repository_dispatch:
     types: [roster]          # started every hour by the Cloudflare Worker's Cron Trigger
   schedule:
-    - cron: "23 * * * *"     # backup only: GitHub's scheduler can run hours late
+    - cron: "30 * * * *"     # backup only: GitHub's scheduler can run hours late
   workflow_dispatch:
 
 permissions:

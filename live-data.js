@@ -40,7 +40,7 @@ const emptyData = () => ({state: {}, drops: {}, byPlayer: {}, nowH: 0,
 // The preview board: data/preview/state.json, built by the update job from made-up event data
 // plus the mod entries (so mods can try Mod entry before the event; test entries never count
 // on the real board). Falls back to the old sample if it can't be loaded.
-const boardData = s => ({state: s.state, dry: s.dry, drops: s.drops, byPlayer: s.byPlayer, byAct: s.byAct, nowH: s.now_h});
+const boardData = s => ({state: s.state, dry: s.dry, drops: s.drops, byPlayer: s.byPlayer, byAct: s.byAct, nowH: s.now_h, sync: s.sync});
 let previewUpdated = null;
 async function loadSample(){
   try {
