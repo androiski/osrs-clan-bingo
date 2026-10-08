@@ -51,9 +51,6 @@ function stats(tid){
   return {tiles, lines, points: tiles + LINE_POINTS * lines, reached};
 }
 
-// Most points possible: every tile, and so every line.
-const MAX_POINTS = TILES.length + LINE_POINTS * LINES.length;
-
 // Teams in order: most points, then whoever got there first, then most tiles.
 function ranking(){
   return TEAMS.map(t=>({t, ...stats(t.id)}))
@@ -75,7 +72,7 @@ function renderScores(){
       <h2>${teamIco(r.t, "tico-m")}${r.t.name}</h2>
       <div class="nums"><span><b>${r.points}</b>${r.points === 1 ? "point" : "points"}</span>
         <span><b>${r.tiles}</b>${r.tiles === 1 ? "tile" : "tiles"}</span><span><b>${r.lines}</b>${r.lines === 1 ? "line" : "lines"}</span></div>
-      <div class="bar" aria-hidden="true"><i style="width:${r.points / MAX_POINTS * 100}%"></i></div>
+      <div class="bar" aria-hidden="true"><i style="width:${r.tiles / TILES.length * 100}%"></i></div>
     </div>`).join("");
 }
 
