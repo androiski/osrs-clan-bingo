@@ -55,10 +55,6 @@ h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-r
 .score .nums{display:flex;gap:18px;font-size:.95rem;color:var(--muted)}
 .score .nums b{color:var(--ink);font-size:1.4rem;margin-right:4px}
 .score .rank{float:right;font-family:var(--display);color:var(--c);font-size:32px;line-height:1;text-shadow:var(--shadow)}
-.score.won{background:color-mix(in srgb,var(--panel) 75%,var(--c))}
-.bingo{font-family:var(--display);font-weight:400;color:var(--ink);font-size:16px}
-.bar{height:6px;background:var(--line);border-radius:3px;margin-top:10px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--c)}
 
 .viewbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
 .viewbar span{color:var(--muted);margin-right:4px}

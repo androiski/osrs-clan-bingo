@@ -7,8 +7,7 @@
 // states of the page; see that file.
 
 import {TEAMS, TRACK} from "./data.js";
-import {setData, start, render, onRender, getView, ranking, playerStats, teamIco, colorVar,
-  dayLabel, hoursOf, whenKey, LINES} from "./board.js";
+import {setData, start, render, onRender, getView, ranking, playerStats, teamIco, colorVar} from "./board.js";
 import {fireworks} from "./fireworks.js";
 
 const status = document.getElementById("status");
@@ -42,15 +41,6 @@ let sample = null;
 async function loadSample(){
   if (sample) return sample;
   sample = (await import("./sample-data.js")).default;
-  // The preview shouldn't show anyone winning: break any finished line in the sample
-  // data by taking away its last tile.
-  if (!demoMode || demoMode === "preview") for (const team of TEAMS){
-    const t = sample.state[team.id] || {};
-    for (const line of LINES) if (line.every(i => t[i] && t[i].done)){
-      const last = line.reduce((a, i) => whenKey(t[i].when) > whenKey(t[a].when) ? i : a);
-      t[last] = {done: false, progress: 0};
-    }
-  }
   return sample;
 }
 // The preview board: a fresh copy of the sample with the mod entries on top, so mods can
@@ -69,7 +59,7 @@ if (live){
   mode = "live";
   data = {state: live.state, dry: live.dry, drops: live.drops, byPlayer: live.byPlayer, byAct: live.byAct, nowH: live.now_h};
   startMs = Date.parse(live.start); endMs = Date.parse(live.end); updatedMs = Date.parse(live.updated);
-  // After a Bingo the update job keeps checking late drops for a few hours, then stops.
+  // After the end the update job keeps checking late drops for a few hours, then stops.
   if (live.final_at) finalMs = Date.parse(live.final_at);
   if (live.final) finalMs = Math.min(finalMs || Infinity, Date.now());
 } else {
@@ -100,8 +90,9 @@ const dates = () => startMs && endMs
 function renderStatus(){
   const now = Date.now();
   status.textContent = [dates(),
-    mode === "preview" || now < startMs ? "" : now > endMs || (finalMs && now >= finalMs) ? "final results"
-      : `updated ${since(updatedMs)}${finalMs ? ` · results final ${clock(finalMs)}` : ""}`]
+    // After the end, late drops are still checked until finalMs; then the results are final.
+    mode === "preview" || now < startMs ? "" : now <= endMs ? `updated ${since(updatedMs)}`
+      : finalMs && now < finalMs ? `checking late drops · results final ${clock(finalMs)}` : "final results"]
     .filter(Boolean).join(" · ");
   for (const el of document.querySelectorAll("[data-since]")) el.textContent = `${clock(updatedMs)} (${since(updatedMs)})`;
 }
@@ -216,27 +207,25 @@ const names = team => team.members.length > 1 ? team.members.slice(0, -1).join("
 function renderResults(){
   const now = Date.now();
   if (mode === "preview" || now < startMs) return;   // the countdown is showing instead
+  // The team with the most points when time runs out wins (see ranking() in board.js).
   const ranked = ranking();
-  const winner = ranked[0] && ranked[0].first ? ranked[0] : null;
   const ended = now > endMs;
+  const winner = ended && ranked[0] && ranked[0].points > 0 ? ranked[0] : null;
   const view = getView();
   const chosen = view !== "all" ? ranked.find(r => r.t.id === view) : winner;
 
   if (!chosen){
-    if (ended) announce("", "The bingo has ended", 0, "", "No team completed a line.");
+    if (ended) announce("", "The bingo has ended", 0, "", "No team completed a tile.");
     else announce("go", "The Bingo Has Started!", endMs, "Time until the bingo ends",
-      `Ends <b>${when(endMs)}</b>. First team to complete a line wins.<br>` +
+      `Ends <b>${when(endMs)}</b>. Most points wins: 1 per tile, +3 per completed line.<br>` +
       `Last updated <b data-since></b>`);
     return;
   }
   const place = ranked.indexOf(chosen) + 1, isWinner = chosen === winner;
   const title = isWinner ? `${chosen.t.name} won!`
-    : winner || ended ? `${chosen.t.name} came ${ordinal(place)}`
+    : ended ? `${chosen.t.name} came ${ordinal(place)}`
     : `${chosen.t.name} are ${ordinal(place)} so far`;
-  const lineH = chosen.first ? hoursOf(chosen.first.when) : 0;
-  const sub = chosen.first ? (isWinner ? `BINGO achieved after ${dayLabel(lineH)} on ${when(startMs + lineH * 3600e3)}`
-      : `First line completed @ ${dayLabel(lineH)}`)
-    : `${chosen.best} of 5 on their best line · ${plural(chosen.tiles, "tile")}`;
+  const sub = `${plural(chosen.points, "point")} · ${plural(chosen.tiles, "tile")} · ${plural(chosen.lines, "line")}`;
   announce(isWinner ? "win" : "team", `${teamIco(chosen.t, "tico-l")}${title}`, 0, "", sub);
   box.querySelector("h2").insertAdjacentHTML("afterend", fireworksControl());   // right under the title, easy to spot
   box.style.setProperty("--c", colorVar(chosen.t.id));
@@ -253,7 +242,7 @@ if (startMs > Date.now()){
     `<b>${when(startMs)}</b>`);
 } else if (mode !== "preview"){
   const top = ranking()[0];
-  if (top && top.first){
+  if (top && top.points > 0 && Date.now() > endMs){   // fireworks for the winner, once time is up
     // Some bursts are shaped like the items the winning team finished.
     const icons = [...new Set(playerStats(top.t).flatMap(p => p.icons.map(i => i.src)))].slice(0, 10);
     fireworksArgs = [getComputedStyle(document.documentElement).getPropertyValue(`--${top.t.id}`).trim(), icons];

@@ -41,4 +41,5 @@ Two kinds, both with the mod's name and an optional note:
   that finished it stops counting and is shown as unchecked; any other progress stays,
   and the next qualifying drop completes the tile again.
 
-Entries after the first Bingo don't count. Removing an entry undoes it.
+Entries are only accepted for times during the event, and entries added before the event
+starts are tests: they show on the preview but never count. Removing an entry undoes it.

@@ -57,10 +57,6 @@ def describe(s):
 
 # Nothing to do once the event is over (keeps the hourly job quiet afterwards).
 end = (json.loads(Path(__file__).with_name("config.json").read_text()) or {}).get("end")
-state_file = Path(__file__).with_name("data") / "state.json"
-if state_file.exists() and (json.loads(state_file.read_text()) or {}).get("bingo"):
-    print("A team has a Bingo, so the roster isn't checked any more.")
-    raise SystemExit(0)
 if end and datetime.now(timezone.utc) > datetime.fromisoformat(end.replace("Z", "+00:00")):
     print("The event has ended, so the roster isn't checked any more.")
     raise SystemExit(0)
