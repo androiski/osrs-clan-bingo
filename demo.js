@@ -21,7 +21,7 @@ const winnerId = TEAMS.some(t => t.id === params.get("team")) ? params.get("team
 
 // The real mod entries (and the real start, to turn their times into hours into the event).
 let modEntries = [], realStart = NaN;
-if (mode && mode !== "preview") try {
+if (mode) try {
   const cfg = await (await fetch("config.json", {cache: "no-cache"})).json();
   realStart = Date.parse(cfg.start);
   if (cfg.mod_api) modEntries = await (await fetch(cfg.mod_api.replace(/\/$/, "") + "/entries", {cache: "no-store"})).json();
@@ -103,7 +103,7 @@ function makeWinner(data, id){
 
 // A rough, in-page version of what update.js does with mod entries (the real board is
 // rebuilt by update.js): "done" entries count like a drop, "void" entries uncheck.
-function applyModEntries(data){
+export function applyModEntries(data){
   const day = h => `Day ${Math.floor(h / 24) + 1}, ${String(Math.floor(h % 24)).padStart(2, "0")}:${String(Math.round(h * 60) % 60).padStart(2, "0")}`;
   const list = Array.isArray(modEntries) ? modEntries.slice() : [];
   const hourOf = e => e.action === "void" ? e.h : (Date.parse(e.when) - realStart) / 3600e3;
