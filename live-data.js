@@ -71,6 +71,7 @@ if (live){
     ({startMs, endMs, updatedMs, finalMs = null} = demo.prepare(data));
   } else if (demoMode === "preview"){
     data = await loadSample(); sampleShown = true;
+    if (demo.applyModEntries) demo.applyModEntries(data);   // the real mod entries, on top of the sample
   } else {
     data = emptyData();
   }
