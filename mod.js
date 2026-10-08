@@ -150,8 +150,14 @@ if (api){
         `<span class="opt">by ${esc(e.mod)}${e.note ? ` · ${esc(e.note)}` : ""}</span></div>` +
         `<button class="btn" type="button" data-del="${esc(e.id)}">Remove</button></div>`;
     }).join("");
+    // Two clicks to remove: the first turns the button into "Confirm remove" for a few seconds.
+    // (No confirm() pop-up: some browsers and in-app views block it and silently answer no.)
     el.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
-      if (!confirm("Remove this entry?")) return;
+      if (!b.dataset.armed){
+        b.dataset.armed = "1"; b.textContent = "Confirm remove"; b.classList.add("warn");
+        setTimeout(() => { if (b.isConnected && !b.disabled){ delete b.dataset.armed; b.textContent = "Remove"; b.classList.remove("warn"); } }, 4000);
+        return;
+      }
       busy(b, "Removing…");
       try {
         const r = await call("DELETE", `/entries/${encodeURIComponent(b.dataset.del)}`, {password});
