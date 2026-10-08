@@ -1,6 +1,7 @@
 # Mod entries Worker (Cloudflare)
 
-Lets mods add a completed tile by hand from the bingo page (the lock button in the header),
+Lets mods add a completed tile by hand from the bingo page ("Mod entry" at the bottom of the
+tile panel),
 for when TempleOSRS missed it. The mod password is checked here, never in the public site.
 
 How an entry flows: mod saves it on the page → this Worker stores it (Cloudflare KV) →
@@ -23,8 +24,8 @@ Needs a free Cloudflare account and Node. From this `worker/` folder:
    paste it. (Optional: without it, entries still show at the next half-hourly update.)
 5. `npx wrangler deploy`. It prints the Worker's address, like
    `https://runecraft-bingo-mods.<you>.workers.dev`.
-6. Put that address in `config.json` as `"mod_api"` and push. The lock button then
-   appears on the site.
+6. Put that address in `config.json` as `"mod_api"` and push. "Mod entry" then appears
+   in the tile panel.
 
 To change the password later, run step 3 again. Ten wrong passwords from one address
 lock it out for an hour.
