@@ -1,18 +1,16 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-08 13:46 UTC",
+ "checked": "2026-10-08 18:55 UTC",
  "players": {
-  "BenReported": {
-   "status": "unsynced"
-  },
   "yaint thiccy": {
    "status": "synced",
-   "log_last_changed": "2026-10-07 18:11:52"
+   "log_last_changed": "2026-10-08 16:51:43"
   },
   "Cenaras": {
    "status": "unsynced"
   },
   "BIS Ben": {
-   "status": "unsynced"
+   "status": "synced",
+   "log_last_changed": "2026-10-08 18:20:23"
   },
   "chmsst": {
    "status": "unsynced"
@@ -33,6 +31,10 @@ window.ROSTER_STATUS = {
   "ll Grub ll": {
    "status": "synced",
    "log_last_changed": "2026-10-07 17:17:18"
+  },
+  "BenReported": {
+   "status": "synced",
+   "log_last_changed": "2026-10-08 18:16:51"
   },
   "duhmass": {
    "status": "synced",
@@ -70,7 +72,7 @@ window.ROSTER_STATUS = {
    "log_last_changed": "2026-10-07 22:11:01"
   },
   "nafun": {
-   "status": "missing"
+   "status": "unsynced"
   },
   "tv milk": {
    "status": "unsynced"
@@ -83,7 +85,7 @@ window.ROSTER_STATUS = {
    "status": "unsynced"
   },
   "nimbis": {
-   "status": "missing"
+   "status": "unsynced"
   },
   "Gpmorgnchase": {
    "status": "synced",
