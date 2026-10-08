@@ -93,10 +93,10 @@ h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-r
 .dry .axis text{fill:var(--muted);font-size:11px;font-family:var(--body)}
 .dry .series path{fill:none;stroke:var(--c);stroke-width:2;stroke-linejoin:round}
 .dry .grid line.v{stroke-dasharray:2 4;opacity:.6}
-.dry .mk circle{fill:var(--bg);stroke:var(--c)}
-.dry .mk.done circle{stroke-width:3}
-.dry .mk.progress circle{stroke-width:2}
-.dry .mk.other circle{stroke-width:1.5;stroke-dasharray:3 2}
+.dry .mk circle,.dry .mk rect{fill:var(--bg);stroke:var(--c)}
+.dry .mk.done circle,.dry .mk.done rect{stroke-width:3}
+.dry .mk.progress circle,.dry .mk.progress rect{stroke-width:2}
+.dry .mk.other circle,.dry .mk.other rect{stroke-width:1.5;stroke-dasharray:3 2}
 .dry .mk.other image{opacity:.75}
 .dry .mk{cursor:default}
 .dry .strip{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}

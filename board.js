@@ -314,9 +314,11 @@ function renderDry(){
 
   // Icon markers sit on the team's line at the time of the drop. Sizes: completion > counts toward it > other drop.
   const SIZE = {done:[14,24], progress:[11,18], other:[9,15]};
-  const marker = (kind, cx, cy, src, label) => {
+  // Mod entries get a square instead of a circle.
+  const marker = (kind, cx, cy, src, label, manual) => {
     const [r, w] = SIZE[kind];
-    return `<g class="mk ${kind}"><title>${label}</title><circle cx="${cx}" cy="${cy}" r="${r}"/>` +
+    const shape = manual ? `<rect x="${cx-r}" y="${cy-r}" width="${2*r}" height="${2*r}" rx="2"/>` : `<circle cx="${cx}" cy="${cy}" r="${r}"/>`;
+    return `<g class="mk ${kind}${manual ? " manual" : ""}"><title>${label}${manual ? " (mod entry)" : ""}</title>${shape}` +
       (src ? `<image href="${src}" x="${cx-w/2}" y="${cy-w/2+1}" width="${w}" height="${w-2}"/>` : "") + `</g>`;
   };
 
@@ -326,12 +328,12 @@ function renderDry(){
     for (let k = 1; k < s.pts.length; k++) d += `H${x(s.pts[k][0])}V${y(s.pts[k][1])}`;
     const others = s.drops.filter(dr=>dr.kind !== "done")
       .map(dr=>marker(dr.kind, x(dr.h), y(valueAt(s.pts, dr.h)), ICON(dr.id),
-        `${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}`)).join("");
+        `${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}`, dr.manual)).join("");
     let done = "";
     if (s.doneH != null){
       const src = tile.s === "xp" ? tr.icon : (s.e.id ? ICON(s.e.id) : null);
       const label = tile.s === "xp" ? got(`${fmtN(tile.target, "XP")} reached`, null, s.doneH) : got(s.e.item, byNames(selected, s.t.id, s.e) || s.e.by, s.e.when);
-      done = marker("done", x(s.doneH), y(s.doneV), src, label);
+      done = marker("done", x(s.doneH), y(s.doneV), src, label, s.e.manual);
     }
     return `<g class="series" style="--c:${colorVar(s.t.id)}"><path d="${d}"/>${others}${done}</g>`;
   }).join("");

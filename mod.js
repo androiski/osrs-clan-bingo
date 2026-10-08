@@ -25,7 +25,10 @@ if (api){
   // One element, kept across redraws of the tile panel, so a half-filled form survives them.
   const box = document.createElement("details");
   box.className = "modbox";
-  let password = store.get("bingo-mod"), tile = null, msg = "", mode = "done";
+  // The password is only kept in memory while the section is in use: it locks again after
+  // every save, when the section is closed, and on reload. Nothing is stored in the browser.
+  store.set("bingo-mod", null);   // clear what older versions kept in sessionStorage
+  let password = null, tile = null, msg = "", mode = "done";
 
   const call = async (method, pathname, body) => {
     const res = await fetch(api + pathname, {method, headers: {"Content-Type": "application/json"},
@@ -34,7 +37,7 @@ if (api){
     if (!res.ok) throw Object.assign(new Error(data.error || `Error ${res.status}`), {status: res.status});
     return data;
   };
-  const lock = () => { password = null; store.set("bingo-mod", null); };
+  const lock = () => { password = null; };
   // While a request is out: the button shows a spinner and can't be pressed again. The
   // section is redrawn afterwards either way, which puts the button back.
   // An error shown in place, so the form keeps what was typed; the button comes back.
@@ -46,7 +49,7 @@ if (api){
     panel.append(box);   // the panel's content was just replaced; put the section back
     if (selected !== tile){ tile = selected; msg = ""; draw(); }
   });
-  box.addEventListener("toggle", () => { if (box.open) draw(); });
+  box.addEventListener("toggle", () => { if (!box.open){ lock(); msg = ""; } draw(); });
 
   // datetime-local fields work in the viewer's time zone, without one in the text.
   const local = ms => { const d = new Date(ms); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
@@ -57,13 +60,13 @@ if (api){
     if (!password){
       box.innerHTML = summary + `<form class="mform" data-unlock>
         <p class="note">For mods: manually edit a tile for a team.</p>
-        <label>Password<input type="password" name="pw" autocomplete="current-password" required></label>
+        <label>Password<input type="password" name="pw" autocomplete="off" required></label>
         <button class="btn" type="submit">Unlock</button><p class="mmsg" role="status">${esc(msg)}</p></form>`;
       const f = box.querySelector("form");
       f.onsubmit = async e => {
         e.preventDefault();
         busy(f.querySelector("[type=submit]"), "Checking…");
-        try { await call("POST", "/check", {password: f.pw.value}); password = f.pw.value; store.set("bingo-mod", password); say(""); }
+        try { await call("POST", "/check", {password: f.pw.value}); password = f.pw.value; say(""); }
         catch (err){ say(err.message); }
       };
       return;
@@ -103,6 +106,7 @@ if (api){
         busy(btn, "Unchecking…");
         try {
           const r = await call("POST", "/entries", {password, entry});
+          lock();
           say(r.rebuild ? "Unchecked. The board updates in a minute or two." : "Unchecked. It shows on the board at the next update (within 30 minutes).");
         } catch (err){ if (err.status === 401){ lock(); say(err.message); } else fail(f, btn, "Uncheck", err.message); }
       };
@@ -143,7 +147,7 @@ if (api){
       busy(btn, "Saving…");
       try {
         const r = await call("POST", "/entries", {password, entry});
-        // Redrawing gives a fresh, empty form.
+        lock();   // locks again; the next entry needs the password
         say(r.rebuild ? "Saved. The board updates in a minute or two." : "Saved. It shows on the board at the next update (within 30 minutes).");
       } catch (err){ if (err.status === 401){ lock(); say(err.message); } else fail(f, btn, "Save entry", err.message); }
     };
@@ -184,6 +188,7 @@ if (api){
       busy(b, "Removing…");
       try {
         const r = await call("DELETE", `/entries/${encodeURIComponent(b.dataset.del)}`, {password});
+        lock();
         say(r.rebuild ? "Removed. The board updates in a minute or two." : "Removed. The board catches up at the next update (within 30 minutes).");
       } catch (err){ if (err.status === 401) lock(); say(err.message); }
     });
