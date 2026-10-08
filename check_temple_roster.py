@@ -20,7 +20,7 @@ import requests
 
 TEAMS = {
     "Thompy Thiccs": ["yaint thiccy", "Cenaras", "BIS Ben", "chmsst", "Wildhero",
-                      "47demonsand", "piinktaco", "The Biplane", "ll Grub ll"],
+                      "47demonsand", "piinktaco", "The Biplane", "ll Grub ll", "BenReported"],
     "The Desert Dogs": ["duhmass", "ndru", "Mspartam", "789", "Sparge",
                         "Roof Sniffa", "Exviped", "Bhnr", "Halfmeatball", "nafun"],
     "The Bakery": ["tv milk", "rpwh", "Im Lablabi", "nimbis", "Gpmorgnchase",
