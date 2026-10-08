@@ -114,7 +114,7 @@ if (api){
       ${items.length ? `<label>Item<select name="item" required><option value="" selected disabled>Select item</option>` +
           `${items.map(r => `<option value="${r[1]}">${esc(r[0])}</option>`).join("")}</select></label>`
         : `<p class="note">No item for this tile: the entry marks it done.</p>`}
-      <label>Time (your time zone)<input type="datetime-local" name="when" required${startMs ? ` min="${local(startMs)}" max="${local(endMs)}"` : ""}></label>
+      <label>Time (your time zone)<input type="datetime-local" name="when" value="${local(Date.now())}" required${startMs ? ` min="${local(startMs)}" max="${local(endMs)}"` : ""}></label>
       ${startMs ? `<p class="note">Must be during the event: ${esc(whenText(startMs))} – ${esc(whenText(endMs))}.</p>` : ""}
       <label><span>Note <span class="opt">(optional)</span></span><input name="note" maxlength="200" placeholder="e.g. screenshot in #bingo"></label>
       <label>Your name<input name="mod" maxlength="30" required value="${esc(store.get("bingo-mod-name", localStorage) || "")}"></label>
