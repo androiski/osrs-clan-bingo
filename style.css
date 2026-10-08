@@ -93,10 +93,10 @@ h1 .h1ico{height:.9em;width:auto;margin-right:.3em;vertical-align:-.08em;image-r
 .dry .axis text{fill:var(--muted);font-size:11px;font-family:var(--body)}
 .dry .series path{fill:none;stroke:var(--c);stroke-width:2;stroke-linejoin:round}
 .dry .grid line.v{stroke-dasharray:2 4;opacity:.6}
-.dry .mk circle{fill:var(--bg);stroke:var(--c)}
-.dry .mk.done circle{stroke-width:3}
-.dry .mk.progress circle{stroke-width:2}
-.dry .mk.other circle{stroke-width:1.5;stroke-dasharray:3 2}
+.dry .mk circle,.dry .mk rect{fill:var(--bg);stroke:var(--c)}
+.dry .mk.done circle,.dry .mk.done rect{stroke-width:3}
+.dry .mk.progress circle,.dry .mk.progress rect{stroke-width:2}
+.dry .mk.other circle,.dry .mk.other rect{stroke-width:1.5;stroke-dasharray:3 2}
 .dry .mk.other image{opacity:.75}
 .dry .mk{cursor:default}
 .dry .strip{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
@@ -282,3 +282,27 @@ section.legend{margin-top:32px}
 .foot .demos{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin-bottom:12px}
 .foot .demos a{text-decoration:none;color:var(--ink);font-size:.85rem;padding:4px 10px}
 .foot .demos a[aria-current="page"]{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+
+/* Mod entry (mod.js): a collapsible section at the bottom of the tile panel. */
+.modbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.modbox summary{cursor:pointer;color:var(--muted);font-size:.85rem}
+.modbox[open] summary{color:var(--gold)}
+.modbox .note{color:var(--muted);font-size:.85rem;margin:0}
+.modbox h4{margin:14px 0 4px;color:var(--gold);font-size:.9rem}
+.mbtns{display:flex;align-items:center;gap:14px}
+.mmode{display:flex;gap:16px;font-size:.9rem}
+.mform .mmode label{display:inline-flex;align-items:center;gap:5px;color:var(--ink);cursor:pointer}
+.mform .btn:disabled{opacity:.5;cursor:not-allowed}
+.modbox .btn .spin{display:inline-block;width:.9em;height:.9em;margin-right:6px;vertical-align:-1px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modbox .btn.warn{border-color:var(--bad);color:var(--bad)}
+@media (prefers-reduced-motion:reduce){.modbox .btn .spin{animation-duration:2.5s}}
+.mform{display:grid;gap:10px;margin-top:10px}
+.mform label{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
+.mform input,.mform select{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--edge);border-radius:4px;padding:6px 8px;min-width:0}
+.mform .btn{justify-self:start}
+.mmsg{margin:0;font-size:.85rem;color:var(--gold);min-height:1em}
+.modbox .opt{color:var(--muted);font-size:.8rem}
+.mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dotted var(--line);font-size:.88rem}
+.linkish{all:unset;cursor:pointer;color:var(--gold);text-decoration:underline}
+.modtag{font-size:.7rem;padding:0 4px;border:1px solid currentColor;border-radius:3px;opacity:.8;vertical-align:1px}

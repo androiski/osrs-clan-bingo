@@ -175,14 +175,20 @@ function renderDetail(){
       let st;
       if (e && e.done){
         const dIco = e.id ? ICON(e.id) : tile.s === "xp" ? tIco : null;
-        st = `<div class="st ok">${dIco ? `<img class="ico" src="${dIco}" alt="">` : ""}${got(e.item || "Done", byNames(selected, t.id, e) || e.by, e.when)}</div>${prog ? `<div class="st">${prog}</div>` : ""}`;
+        st = `<div class="st ok">${dIco ? `<img class="ico" src="${dIco}" alt="">` : ""}${got(e.item || "Done", byNames(selected, t.id, e) || e.by, e.when)}${e.manual ? ` <span class="modtag" title="Entered by a mod from a screenshot">mod</span>` : ""}</div>${prog ? `<div class="st">${prog}</div>` : ""}`;
       }
       else if (prog) st = `<div class="st">${prog}</div>`;
       else if (tile.s === "xp" && e && e.progress) st = `<div class="st">${progressText(tile,e)}</div>`;
       else st = `<div class="st empty">-</div>`;
       return `<div class="trow" style="--c:${colorVar(t.id)}"><div class="tn">${teamIco(t)}${t.name}</div>${st}</div>`;
     }).join("");
+  if (afterDetail) afterDetail(el, selected);
 }
+
+// mod.js adds its entry form to the bottom of the tile panel through this.
+let afterDetail = null;
+let started = false;
+export const onDetail = fn => { afterDetail = fn; if (started) renderDetail(); };
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function rosterChip(s){
@@ -308,9 +314,11 @@ function renderDry(){
 
   // Icon markers sit on the team's line at the time of the drop. Sizes: completion > counts toward it > other drop.
   const SIZE = {done:[14,24], progress:[11,18], other:[9,15]};
-  const marker = (kind, cx, cy, src, label) => {
+  // Mod entries get a square instead of a circle.
+  const marker = (kind, cx, cy, src, label, manual) => {
     const [r, w] = SIZE[kind];
-    return `<g class="mk ${kind}"><title>${label}</title><circle cx="${cx}" cy="${cy}" r="${r}"/>` +
+    const shape = manual ? `<rect x="${cx-r}" y="${cy-r}" width="${2*r}" height="${2*r}" rx="2"/>` : `<circle cx="${cx}" cy="${cy}" r="${r}"/>`;
+    return `<g class="mk ${kind}${manual ? " manual" : ""}"><title>${label}${manual ? " (mod entry)" : ""}</title>${shape}` +
       (src ? `<image href="${src}" x="${cx-w/2}" y="${cy-w/2+1}" width="${w}" height="${w-2}"/>` : "") + `</g>`;
   };
 
@@ -320,12 +328,12 @@ function renderDry(){
     for (let k = 1; k < s.pts.length; k++) d += `H${x(s.pts[k][0])}V${y(s.pts[k][1])}`;
     const others = s.drops.filter(dr=>dr.kind !== "done")
       .map(dr=>marker(dr.kind, x(dr.h), y(valueAt(s.pts, dr.h)), ICON(dr.id),
-        `${got(dr.name, dr.by, dr.h)}${dr.kind === "other" ? " (doesn't count)" : ""}`)).join("");
+        `${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}`, dr.manual)).join("");
     let done = "";
     if (s.doneH != null){
       const src = tile.s === "xp" ? tr.icon : (s.e.id ? ICON(s.e.id) : null);
       const label = tile.s === "xp" ? got(`${fmtN(tile.target, "XP")} reached`, null, s.doneH) : got(s.e.item, byNames(selected, s.t.id, s.e) || s.e.by, s.e.when);
-      done = marker("done", x(s.doneH), y(s.doneV), src, label);
+      done = marker("done", x(s.doneH), y(s.doneV), src, label, s.e.manual);
     }
     return `<g class="series" style="--c:${colorVar(s.t.id)}"><path d="${d}"/>${others}${done}</g>`;
   }).join("");
@@ -340,7 +348,7 @@ function renderDry(){
     const all = [...s.drops.filter(dr=>dr.kind !== "done"),
       ...(s.e && s.e.done && s.e.id ? [{name:s.e.item, id:s.e.id, by:s.e.by, h:hoursOf(s.e.when), kind:"done"}] : [])];
     const icons = m => all.filter(dr=>dr.by === m).sort((a,b)=>a.h-b.h).map(dr=>
-      `<img class="ico ${dr.kind}" src="${ICON(dr.id)}" alt="${dr.name}" title="${got(dr.name, dr.by, dr.h)}${dr.kind === "other" ? " (doesn't count)" : ""}">`).join("");
+      `<img class="ico ${dr.kind}" src="${ICON(dr.id)}" alt="${dr.name}" title="${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}">`).join("");
     const who = ((byPlayer[selected]||{})[s.t.id]||[]);
     const split = who.length ? `<tr class="who"><td colspan="3">${who.map(([m,v])=>`<span>${m} <b>${fmtN(v, tr.unit)}</b>${icons(m)}</span>`).join('<i>·</i>')}</td></tr>` : "";
     return `<tr class="team"><td><span class="sw" style="--c:${colorVar(s.t.id)}"></span> ${teamIco(s.t)}${s.t.name}</td>` +
@@ -484,10 +492,14 @@ function playerStats(team){
 
 // Called by live-data.js once the event data has loaded.
 export function start(){
+  started = true;
   renderThemeBtn(); renderRosters(); renderLegend(); render();
   let lastDryW = 0;
   new ResizeObserver(()=>{ const w = document.getElementById("dry").clientWidth; if (w !== lastDryW){ lastDryW = w; renderDry(); } })
     .observe(document.getElementById("dry"));
 }
+
+// A team's entry for a tile (mod.js uses it to show what an Uncheck would undo).
+export const entryOf = (teamId, i) => (state[teamId] || {})[i] || null;
 
 export {render, ranking, stats, playerStats, teamIco, colorVar, dayLabel, hoursOf, whenKey, valueAt, LINES, ICON};
