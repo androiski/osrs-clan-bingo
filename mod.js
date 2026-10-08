@@ -64,7 +64,7 @@ if (api){
         <p class="note">For mods: manually edit a tile for a team.</p>
         ${Date.now() < startMs ? `<p class="note">Before the event, entries are only for testing: they show on the preview and never count.</p>` : ""}
         <label>Password<input type="password" name="pw" autocomplete="off" required></label>
-        <button class="btn" type="submit">Unlock</button><p class="mmsg" role="status">${esc(msg)}</p></form>`;
+        <button class="btn" type="submit">Unlock</button><p class="mmsg" role="status">${esc(msg)}</p></form><div class="mlist"></div>`;
       const f = box.querySelector("form");
       f.onsubmit = async e => {
         e.preventDefault();
@@ -72,6 +72,7 @@ if (api){
         try { await call("POST", "/check", {password: f.pw.value}); password = f.pw.value; say(""); }
         catch (err){ say(err.message); }
       };
+      listEntries();   // read-only while locked
       return;
     }
     const items = (TILE_ITEMS[tile] || []).filter(r => r[2]);
@@ -164,7 +165,7 @@ if (api){
     listEntries();
   }
 
-  // This tile's entries, newest first, each with a Remove button.
+  // This tile's entries, newest first; with a Remove button each once unlocked.
   async function listEntries(){
     const el = box.querySelector(".mlist");
     let list;
@@ -178,7 +179,7 @@ if (api){
         : `${esc(e.by)}${e.item ? ` · ${esc(e.item)}` : ""} @ ${esc(fmt(e.when))}`;
       return `<div class="mrow"><div><b>${esc(team ? team.name : e.team)}</b> · ${what}<br>` +
         `<span class="opt">by ${esc(e.mod)}${e.note ? ` · ${esc(e.note)}` : ""}</span></div>` +
-        `<button class="btn" type="button" data-del="${esc(e.id)}">Remove</button></div>`;
+        (password ? `<button class="btn" type="button" data-del="${esc(e.id)}">Remove</button>` : "") + `</div>`;
     }).join("");
     // Two clicks to remove: the first turns the button into "Confirm remove" for a few seconds.
     // (No confirm() pop-up: some browsers and in-app views block it and silently answer no.)
