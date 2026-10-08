@@ -98,8 +98,12 @@ Close finishes are checked by hand against screenshots.
   no build step). `live-data.js` is the entry point
 - `data.js` - teams, tiles, rules, which drops count and which hiscores each tile charts.
   Shared by the site and `update.js`
-- `live-data.js` - loads `data/state.json`; falls back to `sample-data.js` (made-up data)
-  when there's no live data yet, or with `?sample` in the address
+- `live-data.js` - loads `data/state.json`. Before there's live data, "Click to show preview"
+  loads `data/preview/state.json` instead
+- `data/preview/` - the preview: made-up raw data (`history.json`, `events.json`, made once
+  by `make-preview.js` from `sample-data.js`), built into `state.json` by
+  `node update.js --preview` with every mod entry (test ones included), so the preview
+  follows the real rules. The mod-entry workflow rebuilds it after each save
 - `config.json` - TempleOSRS group ID and event start/end (ISO 8601 UTC, e.g.
   `2026-10-13T00:00:00Z`). The job does nothing until all three are set
 - `check_temple_roster.py` - checks every player's TempleOSRS profile and log sync, and

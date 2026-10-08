@@ -17,6 +17,9 @@
 //
 // `node update.js --rebuild` skips TempleOSRS and just rebuilds state.json, e.g. right after a
 // mod adds or removes an entry (the Worker triggers this through GitHub).
+// `node update.js --preview` builds data/preview/state.json, the board "Click to show preview"
+// shows: made-up raw data (data/preview/, from make-preview.js) plus every mod entry, test
+// ones included, run through the same code as the real board.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -41,8 +44,8 @@ const log = (...a) => console.log(...a);
 function readJSON(file, fallback){
   try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return fallback; }
 }
-function writeJSON(name, value){
-  const file = path.join(DATA, name), text = JSON.stringify(value) + "\n";
+function writeJSON(name, value, dir = DATA){
+  const file = path.join(dir, name), text = JSON.stringify(value) + "\n";
   if (readText(file) !== text) fs.writeFileSync(file, text);
 }
 function readText(file){ try { return fs.readFileSync(file, "utf8"); } catch { return null; } }
@@ -75,6 +78,7 @@ const ACTS = [...new Set(Object.values(TRACK).flatMap(t => t.acts))];
 
 async function main(){
   const {group_id: group, start: startISO, end: endISO} = config;
+  if (process.argv.includes("--preview")) return preview();
   if (!group || !startISO || !endISO){
     log("config.json needs group_id, start and end before anything is fetched. Nothing to do.");
     return;
@@ -130,11 +134,22 @@ async function main(){
   log(`Done: ${events.length} drops counted so far.`);
 }
 
+// The preview board: shown as if the event has just finished, with all mod entries.
+async function preview(){
+  const start = Date.parse(config.start) / 1000, end = Date.parse(config.end) / 1000;
+  const dir = path.join(DATA, "preview");
+  const state = finish(readJSON(path.join(dir, "history.json"), {baseline: {}, points: []}),
+    readJSON(path.join(dir, "events.json"), []), await modEntries(), start, end, end, [], {tests: true});
+  writeJSON("state.json", state, dir);
+  log("Built the preview board.");
+}
+
 // Builds state.json: Temple's drops plus mod entries. The winner (most points at the end) is
 // worked out by the page from state.
-function finish(history, events, entries, start, end, now, warnings){
-  // Entries added before the start were mods trying it out on the preview: they never count.
-  entries = (entries || []).filter(e => !(Date.parse(e.added) < start * 1000));
+function finish(history, events, entries, start, end, now, warnings, {tests = false} = {}){
+  // Entries added before the start were mods trying it out on the preview: they only count
+  // there, never on the real board.
+  if (!tests) entries = (entries || []).filter(e => !(Date.parse(e.added) < start * 1000));
   const all = [...events, ...manualEvents(entries, start)].sort((a, b) => a.t - b.t);
   const voids = entries.filter(e => e.action === "void");
   const state = buildState(history, all, start, end, now, warnings, voids);
