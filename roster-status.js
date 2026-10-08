@@ -1,6 +1,9 @@
 window.ROSTER_STATUS = {
  "checked": "2026-10-08 13:46 UTC",
  "players": {
+  "BenReported": {
+   "status": "unsynced"
+  },
   "yaint thiccy": {
    "status": "synced",
    "log_last_changed": "2026-10-07 18:11:52"

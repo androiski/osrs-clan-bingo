@@ -2,7 +2,7 @@
 // Shared by the site and the update job (update.js).
 
 export const TEAMS = [
-  {id:"tt", name:"Thompy Thiccs", icon:13071, members:["yaint thiccy","Cenaras","BIS Ben","chmsst","Wildhero","47demonsand","piinktaco","The Biplane","ll Grub ll"]},
+  {id:"tt", name:"Thompy Thiccs", icon:13071, members:["yaint thiccy","Cenaras","BIS Ben","chmsst","Wildhero","47demonsand","piinktaco","The Biplane","ll Grub ll","BenReported"]},
   {id:"dd", name:"The Desert Dogs", icon:34459, members:["duhmass","ndru","Mspartam","789","Sparge","Roof Sniffa","Exviped","Bhnr","Halfmeatball","nafun"]},
   {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","Im Lablabi","nimbis","Gpmorgnchase","spotttt","Dead Naseeph","LootBuster42","PlE"]}
 ];
