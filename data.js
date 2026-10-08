@@ -7,6 +7,12 @@ export const TEAMS = [
   {id:"bk", name:"The Bakery", icon:1891, members:["tv milk","rpwh","Im Lablabi","nimbis","Gpmorgnchase","spotttt","Dead Naseeph","LootBuster42","PlE"]}
 ];
 
+// Second accounts: each is tracked on its own (it's in members above, and the update job and
+// mod entries use the account), but the page shows it as the same person as its main.
+export const ALT_OF = {"BenReported": "BIS Ben"};
+export const person = name => ALT_OF[name] || name;
+export const people = team => [...new Set(team.members.map(person))];
+
 export const SOURCES = {
   clog:   {mark:"Log", label:"Collection log", detail:"Read from TempleOSRS. First-time drops show up on their own with Automatically sync Collection Log on. For a repeat drop, open that collection log page again."},
   qty:    {mark:"Log ×", label:"Collection log count", detail:"Counted from how much the team's collection log counts have gone up since the start. First-time drops show up on their own; for a repeat drop, open the item's collection log page again."},

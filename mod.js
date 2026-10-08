@@ -98,9 +98,9 @@ if (api){
       const show = () => {
         const id = f.team.value, e = entryOf(id, tile);
         options = dropsOf(id, tile).filter(d => d.kind === "progress")
-          .map(d => ({by: d.by, item: d.name, itemId: d.id, h: d.h}));
-        if (e && e.done) options.push(e.id ? {by: e.by, item: nameOf(e.id) || e.item, itemId: e.id, h: hoursOf(e.when), last: true}
-          : {by: e.by || "Team", item: null, itemId: null, h: hoursOf(e.when), last: true});
+          .map(d => ({by: d.acct || d.by, item: d.name, itemId: d.id, h: d.h}));   // acct: the account, for a second account
+        if (e && e.done) options.push(e.id ? {by: e.acct || e.by, item: nameOf(e.id) || e.item, itemId: e.id, h: hoursOf(e.when), last: true}
+          : {by: e.acct || e.by || "Team", item: null, itemId: null, h: hoursOf(e.when), last: true});
         options.sort((a, b) => a.h - b.h);
         f.drop.innerHTML = !options.length ? `<option value="" selected disabled>No counted drops for this team</option>`
           : `<option value="" selected disabled>Select drop</option>` + options.map((o, k) =>

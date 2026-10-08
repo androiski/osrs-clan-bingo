@@ -210,6 +210,9 @@ section.rosters h2,section.legend h2{font-family:var(--display);font-weight:400;
 .roster ul{list-style:none;margin:0;padding:0}
 .roster li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dotted var(--line);font-size:.95rem}
 .roster li:last-child{border-bottom:0}
+.roster li.multi .accs{display:grid;gap:3px;justify-items:end}
+.roster li.multi .acc{display:flex;align-items:center;gap:6px}
+.roster li.multi small{color:var(--muted)}
 .chip{font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:0 8px;white-space:nowrap}
 .chip.ok{color:var(--ok);border-color:var(--ok)}
 .chip.warn{color:var(--warn);border-color:var(--warn)}

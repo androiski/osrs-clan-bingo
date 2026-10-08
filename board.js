@@ -1,10 +1,27 @@
 // Scoring and drawing: board, scores, tile panel, progress chart, rosters, theme.
 
-import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS, CLOG_SECTION} from "./data.js";
+import {TEAMS, SOURCES, TILES, TILE_ICON, TRACK, ACT_NAMES, ACT_ICON, TILE_ITEMS, CLOG_SECTION, ALT_OF, person, people} from "./data.js";
 
 // The event data being shown (live or sample), set once by live-data.js through setData().
 let state = {}, dry = {}, drops = {}, byPlayer = {}, byAct = {}, NOW_H = 0;
-export function setData(d){ ({state, dry, drops, byPlayer} = d); byAct = d.byAct || {}; NOW_H = d.nowH; }
+export function setData(d){ ({state, dry, drops, byPlayer} = asPeople(d)); byAct = d.byAct || {}; NOW_H = d.nowH; }
+
+// Second accounts (ALT_OF in data.js) shown as their main: names on completions and drops
+// become the person (the account is kept as acct, for mod entries), and per-player totals
+// are added together. Returns new objects; the data passed in isn't changed.
+function asPeople(d){
+  if (!Object.keys(ALT_OF).length) return d;
+  const named = x => x && x.by && ALT_OF[x.by] ? {...x, by: person(x.by), acct: x.by} : x;
+  const map = (o, f) => Object.fromEntries(Object.entries(o || {}).map(([k, v]) => [k, f(v)]));
+  return {...d,
+    state: map(d.state, team => map(team, named)),
+    drops: map(d.drops, byTeam => map(byTeam, list => list.map(named))),
+    byPlayer: map(d.byPlayer, byTeam => map(byTeam, rows => {
+      const sum = new Map();
+      for (const [m, v] of rows) sum.set(person(m), (sum.get(person(m)) || 0) + v);
+      return [...sum].sort((a, b) => b[1] - a[1]);
+    }))};
+}
 
 function tileIcon(i){
   if (TILES[i].s === "xp") return TRACK[i].icon;
@@ -205,20 +222,34 @@ function rosterChip(s){
   return `<span class="chip">Check failed</span>`;
 }
 
+// One line per person; someone with a second account gets each account's status. A person
+// counts as synced once all their accounts are, and otherwise takes their worst status.
 function renderRosters(){
   const rs = window.ROSTER_STATUS;
-  const players = (rs && rs.players) || {};
-  const all = TEAMS.flatMap(t=>t.members);
+  const accounts = (rs && rs.players) || {};
+  const accountsOf = p => TEAMS.flatMap(t=>t.members).filter(m=>person(m) === p);
+  const RANK = {missing: 0, error: 1, unsynced: 2, synced: 3};
+  const players = Object.fromEntries(TEAMS.flatMap(people).map(p=>{
+    const ss = accountsOf(p).map(m=>accounts[m]);
+    return [p, ss.some(s=>!s) ? undefined : ss.reduce((a, b)=>RANK[b.status] < RANK[a.status] ? b : a)];
+  }));
+  const all = TEAMS.flatMap(people);
   const count = st => all.filter(m=>players[m] && players[m].status === st).length;
   document.getElementById("rosterNote").textContent = rs
     ? `Checked on TempleOSRS ${rs.checked}. ${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced should install the plugin and sync/open their collection log before the start.`
     : "Temple status hasn't been checked yet. Run check_temple_roster.py to fill this in.";
   document.getElementById("rosters").innerHTML = TEAMS.map(t=>{
-    const synced = t.members.filter(m=>players[m] && players[m].status === "synced").length;
+    const ps = people(t), synced = ps.filter(m=>players[m] && players[m].status === "synced").length;
+    const line = p => {
+      const accs = accountsOf(p);
+      if (accs.length === 1) return `<li><span>${p}</span>${rosterChip(accounts[p])}</li>`;
+      return `<li class="multi"><span>${p}</span><span class="accs">` +
+        accs.map(a=>`<span class="acc"><small>${a}</small>${rosterChip(accounts[a])}</span>`).join("") + `</span></li>`;
+    };
     return `
     <div class="roster" style="--c:${colorVar(t.id)}">
-      <h3>${teamIco(t)}${t.name} (${rs ? `${synced}/${t.members.length} synced` : t.members.length})</h3>
-      <ul>${t.members.map(m=>`<li><span>${m}</span>${rosterChip(players[m])}</li>`).join("")}</ul>
+      <h3>${teamIco(t)}${t.name} (${rs ? `${synced}/${ps.length} synced` : ps.length})</h3>
+      <ul>${ps.map(line).join("")}</ul>
     </div>`;
   }).join("");
 }
@@ -459,7 +490,7 @@ darkQuery.addEventListener("change", renderThemeBtn);
 // effort. Players best first.
 function playerStats(team){
   const t = state[team.id] || {};
-  return team.members.map(m => {
+  return people(team).map(m => {
     const parts = [];
     let dropsGot = 0, effort = 0;
     TILES.forEach((tile, i) => {
