@@ -37,27 +37,24 @@ if (!demoMode){
 }
 const emptyData = () => ({state: {}, drops: {}, byPlayer: {}, nowH: 0,
   dry: Object.fromEntries(Object.keys(TRACK).map(i => [i, Object.fromEntries(TEAMS.map(t => [t.id, [[0, 0]]]))]))});
-let sample = null;
+// The preview board: data/preview/state.json, built by the update job from made-up event data
+// plus the mod entries (so mods can try Mod entry before the event; test entries never count
+// on the real board). Falls back to the old sample if it can't be loaded.
+const boardData = s => ({state: s.state, dry: s.dry, drops: s.drops, byPlayer: s.byPlayer, byAct: s.byAct, nowH: s.now_h});
+let previewUpdated = null;
 async function loadSample(){
-  if (sample) return sample;
-  sample = (await import("./sample-data.js")).default;
-  return sample;
-}
-// The preview board: a fresh copy of the sample with the mod entries on top, so mods can
-// test Mod entry before the event (those entries never count on the real board).
-async function previewData(){
-  const copy = structuredClone(await loadSample());
   try {
-    const m = await import("./mod-entries.js");
-    await m.applyEntries(copy, await m.loadEntries());
+    const res = await fetch("data/preview/state.json", {cache: "no-cache"});
+    if (res.ok){ const s = await res.json(); previewUpdated = s.updated; return boardData(s); }
   } catch {}
-  return copy;
+  return structuredClone((await import("./sample-data.js")).default);
 }
+
 
 let data, sampleShown = false;
 if (live){
   mode = "live";
-  data = {state: live.state, dry: live.dry, drops: live.drops, byPlayer: live.byPlayer, byAct: live.byAct, nowH: live.now_h};
+  data = boardData(live);
   startMs = Date.parse(live.start); endMs = Date.parse(live.end); updatedMs = Date.parse(live.updated);
   // After the end the update job keeps checking late drops for a few hours, then stops.
   if (live.final_at) finalMs = Date.parse(live.final_at);
@@ -70,7 +67,7 @@ if (live){
     data = await loadSample();
     ({startMs, endMs, updatedMs, finalMs = null} = await demo.prepare(data));
   } else if (demoMode === "preview"){
-    data = await previewData(); sampleShown = true;
+    data = await loadSample(); sampleShown = true;
   } else {
     data = emptyData();
   }
@@ -111,13 +108,24 @@ banner.addEventListener("click", async e => {
   const b = e.target.closest("[data-sample]");
   if (!b) return;
   sampleShown = b.dataset.sample === "on";
-  setData(sampleShown ? await previewData() : emptyData());
+  setData(sampleShown ? await loadSample() : emptyData());
   renderBanner(); render();
 });
-// A mod saved or removed an entry (mod.js): redraw the preview with it.
-addEventListener("mod-entries-changed", async () => {
-  if (!sampleShown) return;
-  setData(await previewData()); render();
+// A mod saved or removed an entry (mod.js): GitHub rebuilds the preview in a minute or two,
+// so check for the new board every 20 seconds for a few minutes, and redraw when it's there.
+let previewPoll = null;
+addEventListener("mod-entries-changed", () => {
+  if (!sampleShown && mode !== "demo") return;
+  clearInterval(previewPoll);
+  const was = previewUpdated, until = Date.now() + 5 * 60e3;
+  previewPoll = setInterval(async () => {
+    if (Date.now() > until) return clearInterval(previewPoll);
+    const next = await loadSample();
+    if (previewUpdated === was) return;
+    clearInterval(previewPoll);
+    if (mode === "demo") return location.reload();   // the demo rearranges the board on load
+    if (sampleShown){ setData(next); render(); }
+  }, 20000);
 });
 if (mode !== "live") renderBanner();
 if (mode === "preview" || Date.now() < startMs){

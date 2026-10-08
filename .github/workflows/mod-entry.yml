@@ -1,6 +1,6 @@
-# Rebuilds the board right after a mod adds or removes an entry. The Cloudflare Worker
-# (worker/) starts this through GitHub's repository_dispatch, so it doesn't wait for the
-# half-hourly update. No TempleOSRS requests: it only re-reads the saved data and the
+# Rebuilds the board, and the preview board, right after a mod adds or removes an entry.
+# The Cloudflare Worker (worker/) starts this through GitHub's repository_dispatch, so it
+# doesn't wait for the half-hourly update. No TempleOSRS requests: it only re-reads the saved data and the
 # mod entries. Kept separate from update.yml so it still works after that one is switched
 # off when the results are final.
 name: Apply mod entries
@@ -30,6 +30,9 @@ jobs:
 
       - name: Rebuild the board with the mod entries
         run: node update.js --rebuild
+
+      - name: Rebuild the preview board (made-up data plus every mod entry)
+        run: node update.js --preview
 
       - name: Save
         run: |
