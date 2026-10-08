@@ -7,13 +7,11 @@
 //   ?demo=ended    the results are final
 //   &team=tt|dd|bk with won/ended picks which team wins (default: whoever the sample has)
 //
-// If config.json has mod_api (the mods Worker), the real mod entries are applied on top of
-// the sample, at the same number of hours into the event, so mods can try them out before
-// the event has any real data. Reload the page after saving one.
+// The board is the preview board (data/preview/state.json, with the mod entries already in
+// it), rearranged for each mode.
 
 import {TEAMS, TILES, TILE_ITEMS} from "./data.js";
 import {LINES} from "./board.js";
-import {loadEntries, applyEntries} from "./mod-entries.js";
 
 const MODES = {preview: "before the bingo starts", started: "during the bingo",
   won: "once time is up", ended: "after the results are final"};
@@ -21,8 +19,6 @@ const params = new URLSearchParams(location.search);
 export const mode = MODES[params.get("demo")] ? params.get("demo") : null;
 const winnerId = TEAMS.some(t => t.id === params.get("team")) ? params.get("team") : null;
 
-// The real mod entries, applied on top of the sample (preview mode does this in live-data.js).
-const modEntries = mode && mode !== "preview" ? await loadEntries() : [];
 
 export const banner = () => {
   const team = winnerId && TEAMS.find(t => t.id === winnerId);
@@ -34,12 +30,10 @@ export const banner = () => {
 export async function prepare(data){
   const now = Date.now();
   if (mode === "started"){   // under way: the sample as it is, with time left
-    await applyEntries(data, modEntries);
     const startMs = now - data.nowH * 3600e3;
     return {startMs, endMs: startMs + (data.nowH + 30) * 3600e3, updatedMs: now - 4 * 60e3};
   }
-  await applyEntries(data, modEntries);
-  if (winnerId) makeWinner(data, winnerId);   // after the entries, so the chosen team still wins
+  if (winnerId) makeWinner(data, winnerId);
   // Like the real thing: the sample's last hour is the end, and the results are final
   // VERIFY_H later. "won" is mid-check (1 h after the end); "ended" is after that.
   const since = mode === "ended" ? VERIFY_H + 2 : 1;
