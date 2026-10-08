@@ -6,7 +6,7 @@
 // If demo.js is present (it's kept off the published branch), it can swap in demo
 // states of the page; see that file.
 
-import {TEAMS, TRACK} from "./data.js";
+import {TEAMS, TRACK, people} from "./data.js";
 import {setData, start, render, onRender, getView, ranking, playerStats, teamIco, colorVar} from "./board.js";
 import {fireworks} from "./fireworks.js";
 
@@ -210,7 +210,7 @@ const playerCards = team => `<div class="roll">${playerStats(team).map(p => `<di
       `title="${it.name}${it.finished ? " (finished the tile)" : it.counts ? "" : " (doesn't count)"}">`).join("") +
     (x.items.length ? `</span>` : "") + `</i>`).join("")}</span>` : "") +
   `</div>`).join("")}</div>`;
-const names = team => team.members.length > 1 ? team.members.slice(0, -1).join(", ") + " and " + team.members.at(-1) : team.members[0];
+const names = team => { const ps = people(team); return ps.length > 1 ? ps.slice(0, -1).join(", ") + " and " + ps.at(-1) : ps[0]; };
 
 function renderResults(){
   const now = Date.now();
