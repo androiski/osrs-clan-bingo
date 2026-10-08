@@ -14,8 +14,12 @@ const store = {
   set: (k, v, s = sessionStorage) => { try { v == null ? s.removeItem(k) : s.setItem(k, v); } catch {} },
 };
 
-let api = null;
-try { api = ((await (await fetch("config.json", {cache: "no-cache"})).json()).mod_api || "").replace(/\/$/, "") || null; } catch {}
+let api = null, startMs = NaN, endMs = NaN;   // entries must be timed within the event
+try {
+  const cfg = await (await fetch("config.json", {cache: "no-cache"})).json();
+  api = (cfg.mod_api || "").replace(/\/$/, "") || null;
+  startMs = Date.parse(cfg.start); endMs = Date.parse(cfg.end);
+} catch {}
 
 if (api){
   // One element, kept across redraws of the tile panel, so a half-filled form survives them.
@@ -33,6 +37,8 @@ if (api){
   const lock = () => { password = null; store.set("bingo-mod", null); };
   // While a request is out: the button shows a spinner and can't be pressed again. The
   // section is redrawn afterwards either way, which puts the button back.
+  // An error shown in place, so the form keeps what was typed; the button comes back.
+  const fail = (f, btn, label, text) => { btn.disabled = false; btn.textContent = label; f.querySelector(".mmsg").textContent = text; };
   const busy = (btn, text) => { btn.disabled = true; btn.innerHTML = `<span class="spin" aria-hidden="true"></span>${text}`; };
   const say = text => { msg = text; draw(); };
 
@@ -42,7 +48,9 @@ if (api){
   });
   box.addEventListener("toggle", () => { if (box.open) draw(); });
 
-  const localNow = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+  // datetime-local fields work in the viewer's time zone, without one in the text.
+  const local = ms => { const d = new Date(ms); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+  const whenText = ms => new Date(ms).toLocaleString(undefined, {weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit"});
 
   function draw(){
     const summary = `<summary>Mod entry</summary>`;
@@ -64,7 +72,8 @@ if (api){
     const modes = `<div class="mmode" role="radiogroup" aria-label="What to do">` +
       [["done", "Mark done"], ["void", "Uncheck"]].map(([v, l]) =>
         `<label><input type="radio" name="mode" value="${v}"${mode === v ? " checked" : ""}> ${l}</label>`).join("") + `</div>`;
-    const teamSelect = `<label>Team<select name="team">${TEAMS.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select></label>`;
+    const teamSelect = `<label>Team<select name="team" required><option value="" selected disabled>Select team</option>` +
+      `${TEAMS.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select></label>`;
     if (mode === "void"){
       box.innerHTML = summary + `<form class="mform" data-entry>${modes}${teamSelect}
         <p class="note" data-current></p>
@@ -76,8 +85,8 @@ if (api){
       </form><div class="mlist"></div>`;
       const f = box.querySelector("form");
       const show = () => {
-        const e = entryOf(f.team.value, tile), done = e && e.done;
-        box.querySelector("[data-current]").textContent = done
+        const e = f.team.value && entryOf(f.team.value, tile), done = e && e.done;
+        box.querySelector("[data-current]").textContent = !f.team.value ? "" : done
           ? `Completed: ${e.item || "Done"}${e.by && e.by !== "Team" ? ` - ${e.by}` : ""} @ ${dayLabel(hoursOf(e.when))}`
           : "Not completed, so there's nothing to uncheck.";
         f.querySelector("[type=submit]").disabled = !done;
@@ -90,39 +99,53 @@ if (api){
         const entry = {action: "void", team: f.team.value, tile, by: e.by || "Team", item: e.item || null, itemId: e.id ?? null,
           h: hoursOf(e.when), note: f.note.value.trim() || null, mod: f.mod.value.trim()};
         store.set("bingo-mod-name", entry.mod, localStorage);
-        busy(f.querySelector("[type=submit]"), "Unchecking…");
+        const btn = f.querySelector("[type=submit]");
+        busy(btn, "Unchecking…");
         try {
           const r = await call("POST", "/entries", {password, entry});
           say(r.rebuild ? "Unchecked. The board updates in a minute or two." : "Unchecked. It shows on the board at the next update (within 30 minutes).");
-        } catch (err){ if (err.status === 401) lock(); say(err.message); }
+        } catch (err){ if (err.status === 401){ lock(); say(err.message); } else fail(f, btn, "Uncheck", err.message); }
       };
       wire(f);
       return;
     }
     box.innerHTML = summary + `<form class="mform" data-entry>${modes}${teamSelect}
-      <label>Player<select name="by"></select></label>
-      ${items.length ? `<label>Item<select name="item">${items.map(r => `<option value="${r[1]}">${esc(r[0])}</option>`).join("")}</select></label>`
+      <label>Player<select name="by" required disabled><option value="" selected disabled>Select player</option></select></label>
+      ${items.length ? `<label>Item<select name="item" required><option value="" selected disabled>Select item</option>` +
+          `${items.map(r => `<option value="${r[1]}">${esc(r[0])}</option>`).join("")}</select></label>`
         : `<p class="note">No item for this tile: the entry marks it done.</p>`}
-      <label>Time (your time zone)<input type="datetime-local" name="when" value="${localNow()}" required></label>
+      <label>Time (your time zone)<input type="datetime-local" name="when" required${startMs ? ` min="${local(startMs)}" max="${local(endMs)}"` : ""}></label>
+      ${startMs ? `<p class="note">Must be during the event: ${esc(whenText(startMs))} – ${esc(whenText(endMs))}.</p>` : ""}
       <label><span>Note <span class="opt">(optional)</span></span><input name="note" maxlength="200" placeholder="e.g. screenshot in #bingo"></label>
       <label>Your name<input name="mod" maxlength="30" required value="${esc(store.get("bingo-mod-name", localStorage) || "")}"></label>
       <div class="mbtns"><button class="btn" type="submit">Save entry</button><button class="linkish" type="button" data-lock>Lock</button></div>
       <p class="mmsg" role="status">${esc(msg)}</p>
     </form><div class="mlist"></div>`;
     const f = box.querySelector("form");
-    const fill = () => { f.by.innerHTML = TEAMS.find(t => t.id === f.team.value).members.map(m => `<option>${esc(m)}</option>`).join(""); };
-    f.team.onchange = fill; fill();
+    // The browser itself blocks a time outside min/max; say why in the form too.
+    f.when.addEventListener("invalid", () => {
+      f.querySelector(".mmsg").textContent = f.when.value ? `That time is outside the event (${whenText(startMs)} – ${whenText(endMs)}).` : "Pick a time.";
+    });
+    f.team.onchange = () => {
+      f.by.innerHTML = `<option value="" selected disabled>Select player</option>` +
+        TEAMS.find(t => t.id === f.team.value).members.map(m => `<option>${esc(m)}</option>`).join("");
+      f.by.disabled = false;
+    };
     f.onsubmit = async e => {
       e.preventDefault();
       const row = items.find(r => f.item && String(r[1]) === f.item.value);
-      const entry = {team: f.team.value, tile, by: f.by.value, when: new Date(f.when.value).toISOString(),
+      const btn = f.querySelector("[type=submit]"), at = new Date(f.when.value).getTime();
+      if (!(at >= startMs && at <= endMs)) return fail(f, btn, "Save entry",
+        `That time is outside the event (${whenText(startMs)} – ${whenText(endMs)}).`);
+      const entry = {team: f.team.value, tile, by: f.by.value, when: new Date(at).toISOString(),
         item: row ? row[0] : null, itemId: row ? row[1] : null, note: f.note.value.trim() || null, mod: f.mod.value.trim()};
       store.set("bingo-mod-name", entry.mod, localStorage);
-      busy(f.querySelector("[type=submit]"), "Saving…");
+      busy(btn, "Saving…");
       try {
         const r = await call("POST", "/entries", {password, entry});
+        // Redrawing gives a fresh, empty form.
         say(r.rebuild ? "Saved. The board updates in a minute or two." : "Saved. It shows on the board at the next update (within 30 minutes).");
-      } catch (err){ if (err.status === 401) lock(); say(err.message); }
+      } catch (err){ if (err.status === 401){ lock(); say(err.message); } else fail(f, btn, "Save entry", err.message); }
     };
     wire(f);
   }

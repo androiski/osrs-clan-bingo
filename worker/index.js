@@ -10,7 +10,7 @@
 //   DELETE /entries/<id>     {password} -> removes it, then asks GitHub to rebuild
 //
 // Settings (see worker/README.md): KV namespace ENTRIES; secrets MOD_PASSWORD and
-// GITHUB_TOKEN; vars ALLOWED_ORIGINS and GITHUB_REPO.
+// GITHUB_TOKEN; vars ALLOWED_ORIGINS, GITHUB_REPO, EVENT_START and EVENT_END.
 
 const MAX_FAILS = 10;          // wrong passwords allowed per IP per hour
 const LIST = "entries";
@@ -47,7 +47,7 @@ export default {
     if (req.method === "POST" && parts[0] === "check") return json({ok: true});
 
     if (req.method === "POST" && parts[0] === "entries"){
-      const entry = clean(body.entry);
+      const entry = clean(body.entry, env);
       if (typeof entry === "string") return json({error: entry}, 400);
       entry.id = crypto.randomUUID();
       entry.added = new Date().toISOString();
@@ -69,7 +69,7 @@ export default {
 };
 
 // Checks the fields and keeps only the known ones. Returns an error message if it's wrong.
-function clean(e){
+function clean(e, env){
   if (!e || typeof e !== "object") return "Missing entry.";
   const str = (v, n) => typeof v === "string" && v.trim() && v.length <= n ? v.trim() : null;
   if (e.action === "void"){
@@ -87,7 +87,11 @@ function clean(e){
     note: e.note == null || e.note === "" ? null : str(e.note, 200), mod: str(e.mod, 30),
   };
   if (!out.team || out.tile == null || !out.by || !out.when || !out.mod) return "Team, tile, player, time and your name are needed.";
-  if (Number.isNaN(Date.parse(out.when))) return "That time isn't valid.";
+  const at = Date.parse(out.when);
+  if (Number.isNaN(at)) return "That time isn't valid.";
+  // Only during the event (EVENT_START/EVENT_END in wrangler.toml, same as config.json).
+  if (env.EVENT_START && env.EVENT_END && !(at >= Date.parse(env.EVENT_START) && at <= Date.parse(env.EVENT_END)))
+    return "That time is outside the event.";
   if (Number.isNaN(out.itemId)) return "That item isn't valid.";
   if (e.note && !out.note) return "The note is too long.";
   return out;
