@@ -62,7 +62,6 @@ if (api){
     if (!password){
       box.innerHTML = summary + `<form class="mform" data-unlock>
         <p class="note">For mods: manually edit a tile for a team.</p>
-        ${Date.now() < startMs ? `<p class="note">Before the event, entries are only for testing: they show on the preview and never count.</p>` : ""}
         <label>Password<input type="password" name="pw" autocomplete="off" required></label>
         <button class="btn" type="submit">Unlock</button><p class="mmsg" role="status">${esc(msg)}</p></form><div class="mlist"></div>`;
       const f = box.querySelector("form");
