@@ -4,8 +4,10 @@
 name: Update roster sync status
 
 on:
+  repository_dispatch:
+    types: [roster]          # started every hour by the Cloudflare Worker's Cron Trigger
   schedule:
-    - cron: "23 * * * *"   # off the hour, and away from the board update at :07 and :37
+    - cron: "23 * * * *"     # backup only: GitHub's scheduler can run hours late
   workflow_dispatch:
 
 permissions:

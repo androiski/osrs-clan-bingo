@@ -98,6 +98,10 @@ async function main(){
     return log("Rebuilt the board with the latest mod entries.");
   }
   if (prev && prev.final){ log("Results are final, so TempleOSRS isn't contacted."); return; }
+  // GitHub's own schedule is only a backup for the Cloudflare trigger: skip it if a run
+  // already happened recently, so TempleOSRS isn't asked twice.
+  if (process.env.GITHUB_EVENT_NAME === "schedule" && prev && Date.now() - Date.parse(prev.updated) < 20 * 60e3)
+    return log("Updated less than 20 minutes ago, so this backup run isn't needed.");
   const stopAt = end + VERIFY_H * 3600;
   if (now < start - PRE_START_H * 3600) return log("Before the event window, so TempleOSRS isn't contacted.");
   if (now > stopAt){
