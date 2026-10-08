@@ -202,13 +202,17 @@ const fireworksControl = () => !fireworksArgs || reduceMotion ? ""
 
 // ---- results: the winner, or the chosen team's place and players ----
 const plural = (n, w) => `<b>${n}</b> ${w}${n === 1 ? "" : "s"}`;
+// One card per player: their tiles, drops and what they put into each tile. Someone with a
+// second account gets the totals, then a section for each account.
+const workList = parts => parts.length ? `<span class="work">${parts.map(x => `<i title="${x.tile}"><img src="${x.icon}" alt="">` +
+  `<em>${x.label}${x.amount ? ` <b>${x.amount}</b>` : ""}</em>` +
+  (x.items.length ? `<span class="drops">` : "") + x.items.map(it => `<img class="drop${it.finished ? " fin" : ""}${it.counts ? "" : " other"}" src="${it.src}" alt="${it.name}" ` +
+    `title="${it.name}${it.finished ? " (finished the tile)" : it.counts ? "" : " (doesn't count)"}">`).join("") +
+  (x.items.length ? `</span>` : "") + `</i>`).join("")}</span>` : "";
 const playerCards = team => `<div class="roll">${playerStats(team).map(p => `<div><b class="who">${p.name}</b>` +
   `<span>${plural(p.tiles, "tile")} · ${plural(p.drops, "drop")}</span>` +
-  (p.parts.length ? `<span class="work">${p.parts.map(x => `<i title="${x.tile}"><img src="${x.icon}" alt="">` +
-    `<em>${x.label}${x.amount ? ` <b>${x.amount}</b>` : ""}</em>` +
-    (x.items.length ? `<span class="drops">` : "") + x.items.map(it => `<img class="drop${it.finished ? " fin" : ""}${it.counts ? "" : " other"}" src="${it.src}" alt="${it.name}" ` +
-      `title="${it.name}${it.finished ? " (finished the tile)" : it.counts ? "" : " (doesn't count)"}">`).join("") +
-    (x.items.length ? `</span>` : "") + `</i>`).join("")}</span>` : "") +
+  (p.accounts ? p.accounts.map(a => `<span class="acct"><b>${a.name}</b> ${plural(a.tiles, "tile")} · ${plural(a.drops, "drop")}</span>` +
+    (workList(a.parts) || `<span class="work none">Nothing yet</span>`)).join("") : workList(p.parts)) +
   `</div>`).join("")}</div>`;
 const names = team => { const ps = people(team); return ps.length > 1 ? ps.slice(0, -1).join(", ") + " and " + ps.at(-1) : ps[0]; };
 

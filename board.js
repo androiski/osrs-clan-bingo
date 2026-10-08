@@ -471,12 +471,19 @@ darkQuery.addEventListener("change", renderThemeBtn);
 // skill) and what they got there (every drop, the finishing one marked). The KC shows even
 // when they also got the drop. Tiles they finished come first, then by share of the team's
 // effort. Players best first.
-// Final stats: one card per person, so a second account (ALT_OF in data.js) is added into
-// its main's card. Everywhere else the accounts are shown separately.
+// Final stats: one card per person. Someone with a second account (ALT_OF in data.js) gets
+// totals for both, plus each account's own stats (accounts) to show under them.
 function playerStats(team){
   const t = state[team.id] || {};
   return people(team).map(m => {
-    const accs = team.members.filter(a => person(a) === m), mine = a => accs.includes(a);
+    const accs = team.members.filter(a => person(a) === m);
+    const all = statsFor(accs);
+    return {name: m, ...all, accounts: accs.length > 1 ? accs.map(a => ({name: a, ...statsFor([a])})) : null};
+  }).sort((a, b) => b.tiles - a.tiles || b.drops - a.drops || b.effort - a.effort);
+
+  // What these accounts did, tile by tile.
+  function statsFor(accs){
+    const mine = a => accs.includes(a);
     const parts = [];
     let dropsGot = 0, effort = 0;
     TILES.forEach((tile, i) => {
@@ -505,8 +512,8 @@ function playerStats(team){
     });
     parts.sort((a, b) => b.finished - a.finished || b.items.length - a.items.length || b.share - a.share);
     const icons = parts.filter(x => x.finished).map(x => ({src: x.done, name: x.tile}));
-    return {name: m, tiles: icons.length, drops: dropsGot, parts, icons, effort};
-  }).sort((a, b) => b.tiles - a.tiles || b.drops - a.drops || b.effort - a.effort);
+    return {tiles: icons.length, drops: dropsGot, parts, icons, effort};
+  }
 }
 
 // Called by live-data.js once the event data has loaded.
