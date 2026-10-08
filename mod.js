@@ -31,6 +31,9 @@ if (api){
     return data;
   };
   const lock = () => { password = null; store.set("bingo-mod", null); };
+  // While a request is out: the button shows a spinner and can't be pressed again. The
+  // section is redrawn afterwards either way, which puts the button back.
+  const busy = (btn, text) => { btn.disabled = true; btn.innerHTML = `<span class="spin" aria-hidden="true"></span>${text}`; };
   const say = text => { msg = text; draw(); };
 
   onDetail((panel, selected) => {
@@ -51,6 +54,7 @@ if (api){
       const f = box.querySelector("form");
       f.onsubmit = async e => {
         e.preventDefault();
+        busy(f.querySelector("[type=submit]"), "Checking…");
         try { await call("POST", "/check", {password: f.pw.value}); password = f.pw.value; store.set("bingo-mod", password); say(""); }
         catch (err){ say(err.message); }
       };
@@ -86,6 +90,7 @@ if (api){
         const entry = {action: "void", team: f.team.value, tile, by: e.by || "Team", item: e.item || null, itemId: e.id ?? null,
           h: hoursOf(e.when), note: f.note.value.trim() || null, mod: f.mod.value.trim()};
         store.set("bingo-mod-name", entry.mod, localStorage);
+        busy(f.querySelector("[type=submit]"), "Unchecking…");
         try {
           const r = await call("POST", "/entries", {password, entry});
           say(r.rebuild ? "Unchecked. The board updates in a minute or two." : "Unchecked. It shows on the board at the next update (within 30 minutes).");
@@ -113,6 +118,7 @@ if (api){
       const entry = {team: f.team.value, tile, by: f.by.value, when: new Date(f.when.value).toISOString(),
         item: row ? row[0] : null, itemId: row ? row[1] : null, note: f.note.value.trim() || null, mod: f.mod.value.trim()};
       store.set("bingo-mod-name", entry.mod, localStorage);
+      busy(f.querySelector("[type=submit]"), "Saving…");
       try {
         const r = await call("POST", "/entries", {password, entry});
         say(r.rebuild ? "Saved. The board updates in a minute or two." : "Saved. It shows on the board at the next update (within 30 minutes).");
@@ -146,6 +152,7 @@ if (api){
     }).join("");
     el.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
       if (!confirm("Remove this entry?")) return;
+      busy(b, "Removing…");
       try {
         const r = await call("DELETE", `/entries/${encodeURIComponent(b.dataset.del)}`, {password});
         say(r.rebuild ? "Removed. The board updates in a minute or two." : "Removed. The board catches up at the next update (within 30 minutes).");

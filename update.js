@@ -140,7 +140,7 @@ async function main(){
 
 // Builds state.json: Temple's drops plus mod entries, cut off at the first Bingo.
 function finish(history, events, entries, start, end, now, warnings){
-  const all = [...events, ...manualEvents(entries)].sort((a, b) => a.t - b.t);
+  const all = [...events, ...manualEvents(entries, start)].sort((a, b) => a.t - b.t);
   const voids = (entries || []).filter(e => e.action === "void");
   let state = buildState(history, all, start, end, now, warnings, voids);
   // Nothing after the first Bingo counts (it may be earlier than last run's, after a late sync
@@ -175,11 +175,12 @@ async function modEntries(){
 
 // Each "done" entry becomes a drop ("manual"), or for a tile with no item (the XP tile) a straight
 // "done" ("manual-tile"). Entries that don't fit the board are skipped with a note in the log.
-function manualEvents(entries){
+function manualEvents(entries, start){
   const out = [];
   for (const e of entries || []){
     if (e.action === "void") continue;   // handled in buildState
     const p = teamOf(e.by), t = Math.floor(Date.parse(e.when) / 1000);
+    if (t < start){ log(`  ! Mod entry ${e.id} is from before the start; skipped.`); continue; }
     if (!p || p.team !== e.team || !TILES[e.tile] || !Number.isFinite(t)){ log(`  ! Mod entry ${e.id} doesn't match the board; skipped.`); continue; }
     if (e.itemId != null){
       if (!(TILE_ITEMS[e.tile] || []).some(r => r[1] === e.itemId)){ log(`  ! Mod entry ${e.id}: item isn't on that tile; skipped.`); continue; }

@@ -293,6 +293,9 @@ section.legend{margin-top:32px}
 .mmode{display:flex;gap:16px;font-size:.9rem}
 .mform .mmode label{display:inline-flex;align-items:center;gap:5px;color:var(--ink);cursor:pointer}
 .mform .btn:disabled{opacity:.5;cursor:not-allowed}
+.modbox .btn .spin{display:inline-block;width:.9em;height:.9em;margin-right:6px;vertical-align:-1px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.modbox .btn .spin{animation-duration:2.5s}}
 .mform{display:grid;gap:10px;margin-top:10px}
 .mform label{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
 .mform input,.mform select{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--edge);border-radius:4px;padding:6px 8px;min-width:0}
