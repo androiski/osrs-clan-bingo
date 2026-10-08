@@ -78,7 +78,7 @@ if (live){
   if (demoMode && demoMode !== "preview"){
     mode = "demo";
     data = await loadSample();
-    ({startMs, endMs, updatedMs, finalMs = null} = demo.prepare(data));
+    ({startMs, endMs, updatedMs, finalMs = null} = await demo.prepare(data));
   } else if (demoMode === "preview"){
     data = await previewData(); sampleShown = true;
   } else {
