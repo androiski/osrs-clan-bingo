@@ -1,5 +1,5 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-07 20:06 UTC",
+ "checked": "2026-10-08 00:20 UTC",
  "players": {
   "yaint thiccy": {
    "status": "synced",
@@ -63,7 +63,8 @@ window.ROSTER_STATUS = {
    "log_last_changed": "2026-10-07 17:38:50"
   },
   "Halfmeatball": {
-   "status": "unsynced"
+   "status": "synced",
+   "log_last_changed": "2026-10-07 22:11:01"
   },
   "nafun": {
    "status": "missing"
@@ -82,7 +83,8 @@ window.ROSTER_STATUS = {
    "status": "missing"
   },
   "Gpmorgnchase": {
-   "status": "unsynced"
+   "status": "synced",
+   "log_last_changed": "2026-10-07 23:00:43"
   },
   "spotttt": {
    "status": "synced",
@@ -94,7 +96,7 @@ window.ROSTER_STATUS = {
   },
   "LootBuster42": {
    "status": "synced",
-   "log_last_changed": "2026-10-02 04:34:26"
+   "log_last_changed": "2026-10-07 23:34:31"
   },
   "PlE": {
    "status": "synced",
