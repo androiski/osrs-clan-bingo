@@ -38,39 +38,40 @@ function whenKey(when){
   return m ? (+m[1])*1440 + (+m[2])*60 + (+m[3]) : Infinity;
 }
 
-// First team to complete a full row, column or diagonal wins. A line counts as
-// complete at the time its last tile was completed.
+// Points: 1 per tile, plus 3 per completed line (any row, column or diagonal of 5). The
+// team with the most points when time runs out wins; on a tie, whoever reached that score
+// first. reached = when the team's last tile was completed (its score hasn't changed since).
+const LINE_POINTS = 3;
 function stats(tid){
   const t = state[tid] || {};
   const done = i => t[i] && t[i].done;
   const tiles = TILES.filter((_,i)=>done(i)).length;
-  const best = Math.max(...LINES.map(l=>l.filter(done).length));
-  let first = null;
-  for (const l of LINES){
-    if (!l.every(done)) continue;
-    const last = l.reduce((a,i)=> whenKey(t[i].when) > whenKey(t[a].when) ? i : a);
-    if (!first || whenKey(t[last].when) < whenKey(first.when)) first = {when:t[last].when};
-  }
-  return {tiles, best, first};
+  const lines = LINES.filter(l=>l.every(done)).length;
+  const reached = Math.max(-Infinity, ...TILES.map((_,i)=>done(i) ? whenKey(t[i].when) : -Infinity));
+  return {tiles, lines, points: tiles + LINE_POINTS * lines, reached};
 }
 
-// Teams in finishing order: first line soonest, then closest to a line, then most tiles.
+// Teams in order: most points, then whoever got there first, then most tiles.
 function ranking(){
   return TEAMS.map(t=>({t, ...stats(t.id)}))
-    .sort((a,b)=> (a.first ? whenKey(a.first.when) : Infinity) - (b.first ? whenKey(b.first.when) : Infinity)
-      || b.best-a.best || b.tiles-a.tiles);
+    .sort((a,b)=> b.points-a.points || a.reached-b.reached || b.tiles-a.tiles);
+}
+
+// Points a completed tile earned when it was done: 1, plus 3 for each line it finished.
+function tilePoints(tid, i){
+  const t = state[tid] || {}, k = whenKey((t[i] || {}).when);
+  const doneBy = j => t[j] && t[j].done && whenKey(t[j].when) <= k;
+  return 1 + LINE_POINTS * LINES.filter(l=>l.includes(i) && l.every(doneBy)).length;
 }
 
 function renderScores(){
   const ranked = ranking();
   document.getElementById("scores").innerHTML = ranked.map((r,i)=>`
-    <div class="score${r.first?" won":""}" style="--c:${colorVar(r.t.id)}">
+    <div class="score" style="--c:${colorVar(r.t.id)}">
       <span class="rank">#${i+1}</span>
       <h2>${teamIco(r.t, "tico-m")}${r.t.name}</h2>
-      ${r.first
-        ? `<div class="bingo">Bingo! Line completed @ ${dayLabel(hoursOf(r.first.when))}</div>`
-        : `<div class="nums"><span><b>${r.tiles}</b>${r.tiles === 1 ? "tile" : "tiles"}</span></div>
-      <div class="bar" title="${r.best} of 5 on their best line"><i style="width:${r.best/5*100}%"></i></div>`}
+      <div class="nums"><span><b>${r.points}</b>${r.points === 1 ? "point" : "points"}</span>
+        <span><b>${r.tiles}</b>${r.tiles === 1 ? "tile" : "tiles"}</span><span><b>${r.lines}</b>${r.lines === 1 ? "line" : "lines"}</span></div>
     </div>`).join("");
 }
 
@@ -399,30 +400,28 @@ export const onRender = fn => { afterRender = fn; };
 export const getView = () => view;
 
 // Every completed tile in the order it was done (for the chosen team, or all teams), with the
-// tile that finished a team's first line marked Bingo!. Clicking one selects that tile.
+// points it earned (more than 1 when it finished a line). Clicking one selects that tile.
 function renderTimeline(){
   const el = document.getElementById("timeline");
   if (!el) return;   // an old cached index.html without the section
   const list = [];
   for (const t of TEAMS){
     if (view !== "all" && view !== t.id) continue;
-    const first = stats(t.id).first;
-    let bingo = first ? whenKey(first.when) : null;
-    const done = TILES.map((_, i)=>({t, i, e:(state[t.id]||{})[i]}))
-      .filter(x=>x.e && x.e.done && whenKey(x.e.when) !== Infinity)
-      .map(x=>({...x, k:whenKey(x.e.when)})).sort((a,b)=>a.k-b.k);
-    for (const x of done){ if (x.k === bingo){ x.bingo = true; bingo = null; } list.push(x); }
+    TILES.forEach((_, i)=>{
+      const e = (state[t.id]||{})[i];
+      if (e && e.done && whenKey(e.when) !== Infinity) list.push({t, i, e, k:whenKey(e.when), pts:tilePoints(t.id, i)});
+    });
   }
   el.hidden = !list.length;
   if (!list.length){ el.innerHTML = ""; return; }
   list.sort((a,b)=>a.k-b.k);
   el.innerHTML = `<h3>Timeline</h3><p class="dsub">Tiles in the order they were completed, in hours from the start.</p><ol>` +
-    list.map(({t, i, e, bingo})=>{
+    list.map(({t, i, e, pts})=>{
       const tile = TILES[i], src = e.id ? ICON(e.id) : tileIcon(i);
       return `<li><button type="button" data-i="${i}" aria-pressed="${selected===i}" title="${e.item ? e.item : tile.n}">` +
         `<span class="when">${dayLabel(hoursOf(e.when))}</span>` +
         `<span class="who"><span class="sw" style="--c:${colorVar(t.id)}"></span>${teamIco(t)}${view === "all" ? `<span class="tname">${t.name}</span>` : ""}</span>` +
-        `<span class="what">${src ? `<img class="ico" src="${src}" alt="">` : ""}${tile.n}${bingo ? ` <span class="btag">Bingo!</span>` : ""}</span>` +
+        `<span class="what">${src ? `<img class="ico" src="${src}" alt="">` : ""}${tile.n}${pts > 1 ? ` <span class="btag" title="Finished ${(pts-1)/LINE_POINTS === 1 ? "a line" : `${(pts-1)/LINE_POINTS} lines`}">+${pts}</span>` : ""}</span>` +
         `<span class="by">${byNames(i, t.id, e)}</span></button></li>`;
     }).join("") + `</ol>`;
   el.querySelectorAll("button[data-i]").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;render();});

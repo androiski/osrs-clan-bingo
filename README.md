@@ -1,7 +1,8 @@
 # Runecraft Clan Bingo 2026
 
 Live board for the clan bingo: 3 teams, a 5x5 board, tracked from TempleOSRS.
-The first team to complete a row, column or diagonal wins.
+Scoring: 1 point per tile, plus 3 per completed line (row, column or diagonal). The team
+with the most points when time runs out wins; on a tie, whoever reached that score first.
 
 ## How it works
 
@@ -48,11 +49,10 @@ Every 30 minutes (`.github/workflows/update.yml`) it makes 3 read-only requests:
 - Someone who first syncs mid-event gets a fresh baseline, so their old log isn't counted.
   Repeat drops noticed after the end are logged for organisers, not counted.
 - Outside the event window it doesn't contact TempleOSRS at all.
-- **A Bingo ends it.** Once a team completes a line, nothing after that moment counts. The
-  job keeps checking for `verify_hours` (config.json, default 3) to catch drops that
-  happened before the Bingo but were synced late, then saves the results as final and
-  switches off both scheduled workflows (re-enable them from the Actions tab if needed).
-  The roster check stops as soon as there's a Bingo.
+- **After the end** the job keeps checking for `verify_hours` (config.json, default 3) to
+  catch drops that happened during the event but were synced late, then saves the results
+  as final and switches off both scheduled workflows (re-enable them from the Actions tab
+  if needed). Nothing after the end counts.
 
 It writes, to `data/`:
 
