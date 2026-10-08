@@ -94,6 +94,7 @@ async function main(){
     const state = finish(readJSON(path.join(DATA, "history.json"), {baseline: {}, points: []}),
       readJSON(path.join(DATA, "events.json"), []), entries, start, end, now, prev.warnings || []);
     if (prev.final) state.final = true;   // a late ruling doesn't reopen the event
+    state.sync = prev.sync;
     writeJSON("state.json", state);
     return log("Rebuilt the board with the latest mod entries.");
   }
@@ -134,7 +135,9 @@ async function main(){
   writeJSON("history.json", history);
   writeJSON("counts.json", counts);
   writeJSON("events.json", events);
-  writeJSON("state.json", finish(history, events, live ? await modEntries() : [], start, end, now, warnings));
+  const state = finish(history, events, live ? await modEntries() : [], start, end, now, warnings);
+  state.sync = syncTimes(members, clog);
+  writeJSON("state.json", state);
   log(`Done: ${events.length} drops counted so far.`);
 }
 
@@ -160,6 +163,21 @@ function finish(history, events, entries, start, end, now, warnings, {tests = fa
   const state = buildState(history, all, start, end, now, warnings, voids);
   state.final_at = new Date((end + VERIFY_H * 3600) * 1000).toISOString();
   return state;
+}
+
+// Each player's TempleOSRS status for the Teams list, from the group (the hourly roster check
+// stops when the event starts): "synced" with when their collection log last changed,
+// "unsynced" (in the group, log never synced), or "notingroup".
+function syncTimes(members, clog){
+  const inGroup = new Set(Object.values(members.memberlist || {}).map(m => norm(m.player)));
+  const logs = new Map((clog.members || []).map(m => [norm(m.player), m.last_changed]));
+  const out = {};
+  for (const t of TEAMS) for (const rsn of t.members){
+    const n = norm(rsn);
+    out[rsn] = logs.has(n) ? {status: "synced", log_last_changed: logs.get(n)}
+      : {status: inGroup.has(n) ? "unsynced" : "notingroup"};
+  }
+  return out;
 }
 
 // ---- mod entries ---------------------------------------------------------------------

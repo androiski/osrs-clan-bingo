@@ -20,7 +20,7 @@ export default {
   // late), so the Worker starts the board update every 30 minutes and the roster check
   // every hour instead.
   async scheduled(event, env){
-    await dispatch(env, event.cron === "23 * * * *" ? "roster" : "update-board");
+    await dispatch(env, event.cron === "30 * * * *" ? "roster" : "update-board");
   },
 
   async fetch(req, env){

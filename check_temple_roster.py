@@ -9,7 +9,7 @@ index.html loads to show each player's Temple status on the Teams list.
 Run: python check_temple_roster.py   (needs: pip install requests)
 Temple asks for gentle request rates, so this waits between lookups
 (27 players takes about 5 minutes). GitHub Actions runs it every hour
-(.github/workflows/roster.yml); it does nothing once the event in config.json is over.
+(.github/workflows/roster.yml); it does nothing once the event in config.json has started.
 """
 import json
 import os
@@ -57,8 +57,9 @@ def describe(s):
             "error": f"ERROR ({s.get('error')})"}[s["status"]]
 
 
-# Nothing to do once the event is over (keeps the hourly job quiet afterwards).
-end = (json.loads(Path(__file__).with_name("config.json").read_text()) or {}).get("end")
+# Only needed before the event: once it starts, the board update records each player's log
+# sync time from the group (state.json "sync"), and the Teams list shows that instead.
+start = (json.loads(Path(__file__).with_name("config.json").read_text()) or {}).get("start")
 # GitHub's own schedule is only a backup for the Cloudflare trigger: skip it if the roster was
 # checked recently, so TempleOSRS isn't asked twice.
 if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and OUT.exists():
@@ -66,8 +67,8 @@ if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and OUT.exists():
     if m and datetime.now(timezone.utc) - datetime.strptime(m.group(1), "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc) < timedelta(minutes=40):
         print("Checked less than 40 minutes ago, so this backup run isn't needed.")
         raise SystemExit(0)
-if end and datetime.now(timezone.utc) > datetime.fromisoformat(end.replace("Z", "+00:00")):
-    print("The event has ended, so the roster isn't checked any more.")
+if start and datetime.now(timezone.utc) > datetime.fromisoformat(start.replace("Z", "+00:00")):
+    print("The event has started, so the roster isn't checked any more (the board update covers it).")
     raise SystemExit(0)
 
 results = {}

@@ -19,4 +19,4 @@ id = "fe1f0a63096f4831a800b7b66f8fae82"
 # Starts the board update every 30 min and the roster check every hour (see scheduled() in
 # index.js). Times are UTC.
 [triggers]
-crons = ["15,45 * * * *", "23 * * * *"]
+crons = ["15,45 * * * *", "30 * * * *"]
