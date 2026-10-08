@@ -1,5 +1,5 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-08 19:29 UTC",
+ "checked": "2026-10-08 22:37 UTC",
  "players": {
   "yaint thiccy": {
    "status": "synced",
@@ -72,14 +72,15 @@ window.ROSTER_STATUS = {
    "log_last_changed": "2026-10-07 22:11:01"
   },
   "nafun": {
-   "status": "unsynced"
+   "status": "synced",
+   "log_last_changed": "2026-10-08 21:24:41"
   },
   "tv milk": {
    "status": "unsynced"
   },
   "rpwh": {
    "status": "synced",
-   "log_last_changed": "2026-10-01 12:25:33"
+   "log_last_changed": "2026-10-08 19:36:00"
   },
   "Im Lablabi": {
    "status": "unsynced"
@@ -105,7 +106,7 @@ window.ROSTER_STATUS = {
   },
   "PlE": {
    "status": "synced",
-   "log_last_changed": "2026-10-05 20:52:18"
+   "log_last_changed": "2026-10-08 21:14:01"
   }
  }
 };
