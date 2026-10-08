@@ -414,8 +414,8 @@ let afterRender = null;
 export const onRender = fn => { afterRender = fn; };
 export const getView = () => view;
 
-// Every completed tile in the order it was done (for the chosen team, or all teams), with the
-// points it earned (more than 1 when it finished a line). Clicking one selects that tile.
+// Every completed tile in the order it was done (for the chosen team, or all teams); a tile
+// that finished a line is tagged with the line bonus (+3 each). Clicking one selects that tile.
 function renderTimeline(){
   const el = document.getElementById("timeline");
   if (!el) return;   // an old cached index.html without the section
@@ -436,7 +436,7 @@ function renderTimeline(){
       return `<li><button type="button" data-i="${i}" aria-pressed="${selected===i}" title="${e.item ? e.item : tile.n}">` +
         `<span class="when">${dayLabel(hoursOf(e.when))}</span>` +
         `<span class="who"><span class="sw" style="--c:${colorVar(t.id)}"></span>${teamIco(t)}${view === "all" ? `<span class="tname">${t.name}</span>` : ""}</span>` +
-        `<span class="what">${src ? `<img class="ico" src="${src}" alt="">` : ""}${tile.n}${pts > 1 ? ` <span class="btag" title="Finished ${(pts-1)/LINE_POINTS === 1 ? "a line" : `${(pts-1)/LINE_POINTS} lines`}">+${pts}</span>` : ""}</span>` +
+        `<span class="what">${src ? `<img class="ico" src="${src}" alt="">` : ""}${tile.n}${pts > 1 ? ` <span class="btag" title="Finished ${(pts-1)/LINE_POINTS === 1 ? "a line" : `${(pts-1)/LINE_POINTS} lines`}">+${pts-1}</span>` : ""}</span>` +
         `<span class="by">${byNames(i, t.id, e)}</span></button></li>`;
     }).join("") + `</ol>`;
   el.querySelectorAll("button[data-i]").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;render();});
