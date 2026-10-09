@@ -1,5 +1,5 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-09 00:37 UTC",
+ "checked": "2026-10-09 01:37 UTC",
  "players": {
   "yaint thiccy": {
    "status": "synced",
@@ -80,7 +80,7 @@ window.ROSTER_STATUS = {
   },
   "rpwh": {
    "status": "synced",
-   "log_last_changed": "2026-10-08 23:58:14"
+   "log_last_changed": "2026-10-09 00:41:34"
   },
   "Im Lablabi": {
    "status": "unsynced"
@@ -102,7 +102,7 @@ window.ROSTER_STATUS = {
   },
   "LootBuster42": {
    "status": "synced",
-   "log_last_changed": "2026-10-07 23:34:31"
+   "log_last_changed": "2026-10-09 01:35:26"
   },
   "PlE": {
    "status": "synced",
