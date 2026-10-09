@@ -8,14 +8,14 @@ index.html loads to show each player's Temple status on the Teams list.
 
 Run: python check_temple_roster.py   (needs: pip install requests)
 Temple asks for gentle request rates, so this waits between lookups
-(27 players takes about 5 minutes). GitHub Actions runs it every hour
-(.github/workflows/roster.yml); it does nothing once the event in config.json has started.
+(29 players takes about 6 minutes). GitHub Actions runs it every hour
+(.github/workflows/roster.yml) and it only saves when a status changed; it does nothing once
+the event in config.json has started.
 """
 import json
-import os
 import re
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -60,13 +60,6 @@ def describe(s):
 # Only needed before the event: once it starts, the board update records each player's log
 # sync time from the group (state.json "sync"), and the Teams list shows that instead.
 start = (json.loads(Path(__file__).with_name("config.json").read_text()) or {}).get("start")
-# GitHub's own schedule is only a backup for the Cloudflare trigger: skip it if the roster was
-# checked recently, so TempleOSRS isn't asked twice.
-if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and OUT.exists():
-    m = re.search(r'"checked": "([^"]+) UTC"', OUT.read_text(encoding="utf-8"))
-    if m and datetime.now(timezone.utc) - datetime.strptime(m.group(1), "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc) < timedelta(minutes=40):
-        print("Checked less than 40 minutes ago, so this backup run isn't needed.")
-        raise SystemExit(0)
 if start and datetime.now(timezone.utc) > datetime.fromisoformat(start.replace("Z", "+00:00")):
     print("The event has started, so the roster isn't checked any more (the board update covers it).")
     raise SystemExit(0)
@@ -79,8 +72,25 @@ for team, players in TEAMS.items():
         print(f"  {rsn:<15} {describe(results[rsn])}")
         time.sleep(DELAY_SECONDS)
 
+# Only save when someone's status changed, so the repo doesn't get a commit every hour. Sync
+# times change whenever someone plays, so they aren't saved (during the event the board update
+# has them). A lookup that failed keeps the player's last known status.
+before = {}
+if OUT.exists():
+    m = re.search(r"=\s*(\{.*\});", OUT.read_text(encoding="utf-8"), re.S)
+    before = json.loads(m.group(1)).get("players", {}) if m else {}
+players = {}
+for rsn, s in results.items():
+    if s["status"] == "error" and rsn in before:
+        players[rsn] = before[rsn]
+    else:
+        players[rsn] = {k: v for k, v in s.items() if k != "log_last_changed"}
+if players == before:
+    print("\nNo status changed, so roster-status.js is left as it is.")
+    raise SystemExit(0)
+
 payload = {"checked": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-           "players": results}
+           "players": players}
 OUT.write_text("window.ROSTER_STATUS = " + json.dumps(payload, indent=1) + ";\n",
                encoding="utf-8")
 print(f"\nWrote {OUT.name}")
