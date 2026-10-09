@@ -23,6 +23,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main   # the latest main when the job starts, not when it was queued
 
       - uses: actions/setup-node@v4
         with:
@@ -44,6 +46,6 @@ jobs:
             echo "No changes."
           else
             git commit -m "Apply mod entries"
-            git pull --rebase
+            git pull --rebase -X theirs   # if another run saved first, this newer result wins
             git push
           fi

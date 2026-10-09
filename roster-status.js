@@ -1,5 +1,5 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-08 19:29 UTC",
+ "checked": "2026-10-09 15:35 UTC",
  "players": {
   "yaint thiccy": {
    "status": "synced",
@@ -53,7 +53,7 @@ window.ROSTER_STATUS = {
   },
   "Sparge": {
    "status": "synced",
-   "log_last_changed": "2026-07-25 11:59:26"
+   "log_last_changed": "2026-10-09 13:01:30"
   },
   "Roof Sniffa": {
    "status": "synced",
@@ -72,14 +72,15 @@ window.ROSTER_STATUS = {
    "log_last_changed": "2026-10-07 22:11:01"
   },
   "nafun": {
-   "status": "unsynced"
+   "status": "synced",
+   "log_last_changed": "2026-10-08 21:24:41"
   },
   "tv milk": {
    "status": "unsynced"
   },
   "rpwh": {
    "status": "synced",
-   "log_last_changed": "2026-10-01 12:25:33"
+   "log_last_changed": "2026-10-09 00:41:34"
   },
   "Im Lablabi": {
    "status": "unsynced"
@@ -101,11 +102,11 @@ window.ROSTER_STATUS = {
   },
   "LootBuster42": {
    "status": "synced",
-   "log_last_changed": "2026-10-07 23:34:31"
+   "log_last_changed": "2026-10-09 01:35:26"
   },
   "PlE": {
    "status": "synced",
-   "log_last_changed": "2026-10-05 20:52:18"
+   "log_last_changed": "2026-10-09 14:38:44"
   }
  }
 };
