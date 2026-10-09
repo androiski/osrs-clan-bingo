@@ -1,5 +1,5 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-09 12:37 UTC",
+ "checked": "2026-10-09 13:37 UTC",
  "players": {
   "yaint thiccy": {
    "status": "synced",
@@ -53,7 +53,7 @@ window.ROSTER_STATUS = {
   },
   "Sparge": {
    "status": "synced",
-   "log_last_changed": "2026-07-25 11:59:26"
+   "log_last_changed": "2026-10-09 13:01:30"
   },
   "Roof Sniffa": {
    "status": "synced",
