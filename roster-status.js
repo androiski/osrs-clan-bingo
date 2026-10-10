@@ -1,5 +1,5 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-10 08:36 UTC",
+ "checked": "2026-10-10 14:36 UTC",
  "players": {
   "yaint thiccy": {
    "status": "synced",
@@ -80,7 +80,7 @@ window.ROSTER_STATUS = {
   },
   "rpwh": {
    "status": "synced",
-   "log_last_changed": "2026-10-09 00:41:34"
+   "log_last_changed": "2026-10-10 11:32:37"
   },
   "Im Lablabi": {
    "status": "unsynced"
