@@ -1,5 +1,5 @@
 window.ROSTER_STATUS = {
- "checked": "2026-10-10 14:36 UTC",
+ "checked": "2026-10-10 20:36 UTC",
  "players": {
   "yaint thiccy": {
    "status": "synced",
@@ -61,7 +61,7 @@ window.ROSTER_STATUS = {
   },
   "Exviped": {
    "status": "synced",
-   "log_last_changed": "2026-10-09 19:48:07"
+   "log_last_changed": "2026-10-10 18:46:51"
   },
   "Bhnr": {
    "status": "synced",
@@ -98,7 +98,7 @@ window.ROSTER_STATUS = {
   },
   "Dead Naseeph": {
    "status": "synced",
-   "log_last_changed": "2026-09-29 19:13:11"
+   "log_last_changed": "2026-10-10 17:25:43"
   },
   "LootBuster42": {
    "status": "synced",
