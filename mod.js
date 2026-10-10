@@ -178,7 +178,9 @@ if (api){
   async function listEntries(){
     const el = box.querySelector(".mlist");
     let list;
-    try { list = (await call("GET", "/entries")).filter(e => e.tile === tile); } catch (err){ el.textContent = err.message; return; }
+    // Once the event has started, entries added before it (preview tests) don't count: hide them.
+    const started = Date.now() >= startMs;
+    try { list = (await call("GET", "/entries")).filter(e => e.tile === tile && !(started && Date.parse(e.added) < startMs)); } catch (err){ el.textContent = err.message; return; }
     if (!list.length) return;
     const fmt = iso => new Date(iso).toLocaleString(undefined, {weekday: "short", hour: "numeric", minute: "2-digit"});
     el.innerHTML = `<h4>Entries on this tile</h4>` + list.sort((a, b) => Date.parse(b.added) - Date.parse(a.added)).map(e => {

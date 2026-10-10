@@ -57,11 +57,44 @@ async function temple(url){
   const wait = lastRequest + GAP_MS - Date.now();
   if (wait > 0) await sleep(wait);
   lastRequest = Date.now();
-  const res = await fetch(url, {headers: {"User-Agent": "runecraft-clan-bingo board (github.com/androiski/runecraft-clan-bingo)"}});
-  if (!res.ok) throw new Error(`TempleOSRS ${res.status} for ${url}`);
-  const body = await res.json();
+  // Up to 2 retries (after 10s, then 30s) on a network error, timeout, bad status or non-JSON.
+  let body;
+  for (let k = 0; ; k++){
+    try {
+      const res = await fetch(url, {headers: {"User-Agent": "runecraft-clan-bingo board (github.com/androiski/runecraft-clan-bingo)"}, signal: AbortSignal.timeout(30e3)});
+      if (!res.ok) throw new Error(`TempleOSRS ${res.status} for ${url}`);
+      try { body = await res.json(); } catch { throw new Error(`TempleOSRS sent something that isn't JSON for ${url}`); }
+      break;
+    } catch (err){
+      if (k >= 2) throw err;
+      log(`  ! ${err.message}; trying again.`);
+      await sleep(k ? 30e3 : 10e3);
+      lastRequest = Date.now();
+    }
+  }
   if (body.error) throw new Error(`TempleOSRS error for ${url}: ${JSON.stringify(body.error)}`);
   return body.data;
+}
+
+// Before the start: ask Temple to re-read the hiscores for roster players it hasn't checked in
+// 24h, so the baseline isn't months old (else their first event update books months of gains).
+// The page answers in HTML, not JSON, so it skips temple(); failures are only logged.
+async function refreshStale(members, now){
+  let n = 0;
+  for (const m of Object.values(members.memberlist || {})){
+    if (!teamOf(m.player) || now - (+m.last_checked_unix_time || 0) < 86400) continue;
+    const wait = lastRequest + GAP_MS - Date.now();
+    if (wait > 0) await sleep(wait);
+    lastRequest = Date.now();
+    try {
+      const res = await fetch(`https://templeosrs.com/php/add_datapoint.php?player=${encodeURIComponent(m.player)}`,
+        {headers: {"User-Agent": "runecraft-clan-bingo board (github.com/androiski/runecraft-clan-bingo)"}, signal: AbortSignal.timeout(30e3)});
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      n++;
+      log(`  Asked TempleOSRS to update ${m.player} (last checked ${m.last_checked || "never"}).`);
+    } catch (err){ log(`  ! Couldn't ask TempleOSRS to update ${m.player}: ${err.message}`); }
+  }
+  return n > 0;
 }
 
 // Roster: Temple's spelling of a name -> our player and team.
@@ -114,7 +147,8 @@ async function main(){
   fs.mkdirSync(DATA, {recursive: true});
   log(live ? "Event running: checking for drops." : "Before the start: refreshing the baseline.");
 
-  const members = await temple(`${API}/group_member_info.php?id=${group}&skills&bosses`);
+  let members = await temple(`${API}/group_member_info.php?id=${group}&skills&bosses`);
+  if (!live && await refreshStale(members, now)) members = await temple(`${API}/group_member_info.php?id=${group}&skills&bosses`);
   const recent = await temple(`${API}/collection-log/group_recent_items.php?group=${group}&count=200`);
   const clog = await temple(`${API}/collection-log/group_collection_log.php?group=${group}&categories=all&includecount=1`);
 
@@ -127,15 +161,16 @@ async function main(){
   }
   warnings.forEach(w => log("  !", w));
 
-  const history = updateHistory(readJSON(path.join(DATA, "history.json"), {baseline: {}, points: []}), members, live, now);
+  const entries = live ? await modEntries() : [];
+  const history = updateHistory(readJSON(path.join(DATA, "history.json"), {baseline: {}, points: []}), members, live, now, end);
   const {counts, events} = updateDrops(
     readJSON(path.join(DATA, "counts.json"), {}), readJSON(path.join(DATA, "events.json"), []),
-    recent, clog, live, now, start, end);
+    recent, clog, live, now, start, end, entries);
 
   writeJSON("history.json", history);
   writeJSON("counts.json", counts);
   writeJSON("events.json", events);
-  const state = finish(history, events, live ? await modEntries() : [], start, end, now, warnings);
+  const state = finish(history, events, entries, start, end, now, warnings);
   state.sync = syncTimes(members, clog);
   writeJSON("state.json", state);
   log(`Done: ${events.length} drops counted so far.`);
@@ -155,9 +190,7 @@ async function preview(){
 // Builds state.json: Temple's drops plus mod entries. The winner (most points at the end) is
 // worked out by the page from state.
 function finish(history, events, entries, start, end, now, warnings, {tests = false} = {}){
-  // Entries added before the start were mods trying it out on the preview: they only count
-  // there, never on the real board.
-  if (!tests) entries = (entries || []).filter(e => !(Date.parse(e.added) < start * 1000));
+  entries = realEntries(entries, start, tests);
   const all = [...events, ...manualEvents(entries, start)].sort((a, b) => a.t - b.t);
   const voids = entries.filter(e => e.action === "void");
   const state = buildState(history, all, start, end, now, warnings, voids);
@@ -200,6 +233,26 @@ async function modEntries(){
   }
 }
 
+// Entries added before the start were mods trying it out on the preview: they only count
+// there, never on the real board.
+const realEntries = (entries, start, tests) => tests ? entries || [] : (entries || []).filter(e => !(Date.parse(e.added) < start * 1000));
+
+// Drops a mod has entered by hand that still stand (not voided), per "rsn|itemId".
+function manualQty(entries, start){
+  entries = realEntries(entries, start, false);
+  const voids = entries.filter(e => e.action === "void"), H = t => Math.round((t - start) / 36) / 100;
+  const out = new Map();
+  for (const e of manualEvents(entries, start)){
+    if (e.id == null) continue;
+    const m = entries.find(x => x.id === e.entry);
+    if (voids.some(v => v.team === m.team && v.tile === m.tile && v.by === e.rsn && Math.abs(H(e.t) - v.h) < 0.02 && (v.itemId == null || v.itemId === e.id))) continue;
+    const k = `${e.rsn}|${e.id}`;
+    out.set(k, (out.get(k) || 0) + 1);
+  }
+  return out;
+}
+const qtyOf = e => e.qty || 1;
+
 // Each "done" entry becomes a drop ("manual"), or for a tile with no item (the XP tile) a straight
 // "done" ("manual-tile"). Entries that don't fit the board are skipped with a note in the log.
 function manualEvents(entries, start){
@@ -221,14 +274,15 @@ function manualEvents(entries, start){
 
 // history = {baseline: {rsn: {act: value}}, points: [[unixTime, {rsn: {act: value}}]]}
 // Points only record values that changed, so the file stays small.
-function updateHistory(history, members, live, now){
-  const current = {};
+function updateHistory(history, members, live, now, end){
+  const current = {}, tm = {};
   for (const m of Object.values(members.memberlist || {})){
     const p = teamOf(m.player);
     if (!p) continue;
     const v = {};
     for (const act of ACTS) v[act] = Math.max(0, Number((m.skills || {})[act] ?? (m.bosses || {})[act] ?? 0) || 0);
     current[p.rsn] = v;
+    tm[p.rsn] = m;
   }
   if (!live){
     history.baseline = current;
@@ -236,7 +290,7 @@ function updateHistory(history, members, live, now){
     return history;
   }
   const latest = replay(history);
-  const changes = {};
+  const changes = {}, late = {};
   for (const [rsn, v] of Object.entries(current)){
     if (!history.baseline[rsn]){
       // First seen after the start (e.g. joined the Temple group late): gains count from now.
@@ -246,9 +300,20 @@ function updateHistory(history, members, live, now){
     }
     const diff = {};
     for (const act of ACTS) if (v[act] !== latest[rsn][act]) diff[act] = v[act];
-    if (Object.keys(diff).length) changes[rsn] = diff;
+    if (!Object.keys(diff).length) continue;
+    // Seen after the end (verify hours): if Temple says the XP/KC last changed before the end,
+    // book it at that time so buildState keeps it.
+    const tc = Math.max(+tm[rsn]?.last_changed_xp_unix_time || 0, +tm[rsn]?.last_changed_kc_unix_time || 0);
+    if (end != null && now > end && tc && tc <= end) late[rsn] = diff;
+    else changes[rsn] = diff;
   }
   if (Object.keys(changes).length) history.points.push([now, changes]);
+  for (const [rsn, diff] of Object.entries(late)){
+    const t = Math.max(+tm[rsn].last_changed_xp_unix_time || 0, +tm[rsn].last_changed_kc_unix_time || 0);
+    history.points.push([t, {[rsn]: diff}]);
+    log(`  ${rsn}: KC/XP seen after the end but changed before it; counted.`);
+  }
+  history.points.sort((a, b) => a[0] - b[0]);
   return history;
 }
 
@@ -263,20 +328,28 @@ function replay(history, upTo = Infinity){
 
 // ---- drops ---------------------------------------------------------------------------
 
-// counts = {rsn: {itemId: count}} at the start. events = [{t, rsn, id, name, src}]
+// counts = {rsn: {itemId: count}} at the start. events = [{t, rsn, id, name, src, qty?}]
+// (qty: several of a stackable seen in one go; missing means 1)
 // src "new" comes from Temple's recent-items feed (real time of the drop);
 // src "repeat" is a count that went up, timed to the run that noticed it.
-function updateDrops(counts, events, recent, clog, live, now, start, end){
-  const current = {};
+// A mod entry and Temple can both report the same drop. Rule: a player's standing mod entries
+// for an item stand in for that many of Temple's, so Temple only adds drops beyond them. The
+// count path takes the log rise minus (Temple qty + mod qty); a "new to log" feed item is
+// skipped while the mod entries outnumber Temple's own drops of that item.
+function updateDrops(counts, events, recent, clog, live, now, start, end, entries = []){
+  const current = {}, changed = {};
   for (const m of clog.members || []){
     const p = teamOf(m.player);
     if (!p) continue;
+    changed[p.rsn] = Date.parse(String(m.last_changed || "").replace(" ", "T") + "Z") / 1000;
     const c = {};
     for (const [id, n] of Object.entries(m.items || {})) if (itemName.has(+id)) c[id] = +n;
     current[p.rsn] = c;
   }
   if (!live) return {counts: current, events: []};
 
+  const manual = manualQty(entries, start);
+  const templeQty = (rsn, id) => events.filter(e => e.rsn === rsn && e.id === id).reduce((s, e) => s + qtyOf(e), 0);
   const seen = new Set(events.map(e => `${e.rsn}|${e.id}|${e.t}`));
   for (const it of recent || []){
     const p = teamOf(it.player), t = +it.date_unix;
@@ -284,6 +357,10 @@ function updateDrops(counts, events, recent, clog, live, now, start, end){
     const key = `${p.rsn}|${+it.id}|${t}`;
     if (seen.has(key)) continue;
     seen.add(key);
+    if ((manual.get(`${p.rsn}|${+it.id}`) || 0) > templeQty(p.rsn, +it.id)){
+      log(`  = ${itemName.get(+it.id)} - ${p.rsn} (new to their log, already entered by a mod)`);
+      continue;
+    }
     events.push({t, rsn: p.rsn, id: +it.id, name: itemName.get(+it.id), src: "new"});
     log(`  + ${itemName.get(+it.id)} - ${p.rsn} (new to their log)`);
   }
@@ -297,14 +374,17 @@ function updateDrops(counts, events, recent, clog, live, now, start, end){
       continue;
     }
     for (const [id, n] of Object.entries(c)){
-      const counted = events.filter(e => e.rsn === rsn && e.id === +id).length;
+      const counted = templeQty(rsn, +id) + (manual.get(`${rsn}|${+id}`) || 0);
       const extra = n - (counts[rsn][id] || 0) - counted;
       if (extra <= 0) continue;
-      if (now > end){
+      // Time it to the log's last change when that's a sane time (after the start, not in the
+      // future): the count can't have gone up after the log last changed. Else the run time.
+      const lc = changed[rsn], t = lc >= start && lc <= now ? lc : now;
+      if (t > end){
         log(`  ${rsn}: ${extra}x ${itemName.get(+id)} seen after the end, so not counted (check by hand).`);
         continue;
       }
-      for (let k = 0; k < extra; k++) events.push({t: now, rsn, id: +id, name: itemName.get(+id), src: "repeat"});
+      events.push({t, rsn, id: +id, name: itemName.get(+id), src: "repeat", ...(extra > 1 ? {qty: extra} : {})});
       log(`  + ${extra}x ${itemName.get(+id)} - ${rsn} (repeat, count went up)`);
     }
   }
@@ -378,7 +458,7 @@ function buildState(history, events, start, end, now, warnings, voids = []){
           const r = info.get(e.id);
           if (!r[2]) continue;
           if (!tile.target || (tile.alone || []).includes(r[0])){ done = {by: e.rsn, when: H(e.t), item: r[0], id: e.id, ev: e}; break; }
-          progress++;
+          progress += qtyOf(e);
           if (progress >= tile.target){ done = {by: e.rsn, when: H(e.t), item: r[0], id: e.id, ev: e}; break; }
         }
       }
@@ -388,12 +468,13 @@ function buildState(history, events, start, end, now, warnings, voids = []){
         if (m) done = {by: m.rsn, when: H(m.t), item: "Marked done by a mod", manual: true};
       }
       if (done && done.ev && done.ev.src === "manual") done.manual = true;
+      if (done && done.ev && qtyOf(done.ev) > 1) done.qty = qtyOf(done.ev);
       if (done){ const {ev, ...d} = done; state[team.id][i] = {done: true, progress: tile.target, ...d}; }
       else if (progress) state[team.id][i] = {done: false, progress};
 
       // Every drop on this tile except the one that finished it.
       const list = all.filter(e => !done || e !== done.ev).map(e => ({
-        h: H(e.t), name: e.name, id: e.id, by: e.rsn, kind: info.get(e.id)[2] && !isVoid(e) ? "progress" : "other",
+        h: H(e.t), name: e.name, id: e.id, by: e.rsn, ...(qtyOf(e) > 1 ? {qty: e.qty} : {}), kind: info.get(e.id)[2] && !isVoid(e) ? "progress" : "other",
         ...(e.src === "manual" ? {manual: true} : {}), ...(isVoid(e) ? {voided: true} : {})}));
       if (list.length) (drops[i] ||= {})[team.id] = list;
     });
@@ -402,7 +483,7 @@ function buildState(history, events, start, end, now, warnings, voids = []){
     now_h: Math.max(0, nowH), warnings, state, dry, drops, byPlayer, byAct};
 }
 
-export {main, updateHistory, updateDrops, buildState};
+export {main, updateHistory, updateDrops, buildState, finish};
 
 // Run the job when started directly (node update.js), not when imported by a test.
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
