@@ -9,13 +9,14 @@ index.html loads to show each player's Temple status on the Teams list.
 Run: python check_temple_roster.py   (needs: pip install requests)
 Temple asks for gentle request rates, so this waits between lookups
 (29 players takes about 6 minutes). GitHub Actions runs it every hour
-(.github/workflows/roster.yml) and it only saves when a status changed; it does nothing once
+(.github/workflows/roster.yml) and saves when a status changed, or every 6 hours when only
+sync times did; it does nothing once
 the event in config.json has started.
 """
 import json
 import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -32,6 +33,7 @@ TEAMS = {
 URL = "https://templeosrs.com/api/player_info.php"
 DELAY_SECONDS = 12
 OUT = Path(__file__).with_name("roster-status.js")
+TIMES_EVERY_H = 6   # when only sync times changed, save at most this often
 
 
 def check(rsn):
@@ -72,21 +74,23 @@ for team, players in TEAMS.items():
         print(f"  {rsn:<15} {describe(results[rsn])}")
         time.sleep(DELAY_SECONDS)
 
-# Only save when someone's status changed, so the repo doesn't get a commit every hour. Sync
-# times change whenever someone plays, so they aren't saved (during the event the board update
-# has them). A lookup that failed keeps the player's last known status.
-before = {}
+# Save straight away when someone's status changed. Sync times change whenever someone plays,
+# so when only those moved, save at most every few hours rather than committing every hour.
+# A lookup that failed keeps the player's last known status.
+before, saved = {}, None
 if OUT.exists():
     m = re.search(r"=\s*(\{.*\});", OUT.read_text(encoding="utf-8"), re.S)
-    before = json.loads(m.group(1)).get("players", {}) if m else {}
-players = {}
-for rsn, s in results.items():
-    if s["status"] == "error" and rsn in before:
-        players[rsn] = before[rsn]
-    else:
-        players[rsn] = {k: v for k, v in s.items() if k != "log_last_changed"}
+    old = json.loads(m.group(1)) if m else {}
+    before = old.get("players", {})
+    saved = datetime.strptime(old["checked"], "%Y-%m-%d %H:%M UTC").replace(tzinfo=timezone.utc) if old.get("checked") else None
+players = {rsn: before[rsn] if s["status"] == "error" and rsn in before else s for rsn, s in results.items()}
+# A synced player whose saved entry has no sync time yet counts as a status change.
+status = lambda ps: {rsn: (s["status"], s["status"] == "synced" and bool(s.get("log_last_changed"))) for rsn, s in ps.items()}
 if players == before:
-    print("\nNo status changed, so roster-status.js is left as it is.")
+    print("\nNothing changed, so roster-status.js is left as it is.")
+    raise SystemExit(0)
+if status(players) == status(before) and saved and datetime.now(timezone.utc) - saved < timedelta(hours=TIMES_EVERY_H):
+    print(f"\nOnly sync times changed and the last save was under {TIMES_EVERY_H} h ago, so it's left as it is.")
     raise SystemExit(0)
 
 payload = {"checked": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),

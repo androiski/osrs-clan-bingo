@@ -235,7 +235,7 @@ function renderRosters(){
   document.getElementById("rosterNote").textContent = rs && rs.live
     ? `From TempleOSRS at the last board update: when each player's collection log last synced. After a repeat bingo drop, open that log page and sync it again.`
     : rs
-    ? `Checked on TempleOSRS every hour, last change ${checked}. ${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced should install the plugin and manually sync/open their collection log before the start.`
+    ? `Checked on TempleOSRS every hour, last updated ${checked}.${count("synced")} of ${all.length} players have synced their collection log${count("missing") ? "," : " and"} ${count("unsynced")} haven't${count("missing") ? `, and ${count("missing")} ${count("missing") === 1 ? "has" : "have"} no Temple profile` : ""}. Anyone not synced should install the plugin and manually sync/open their collection log before the start.`
     : "Temple status hasn't been checked yet. Run check_temple_roster.py to fill this in.";
   document.getElementById("rosters").innerHTML = TEAMS.map(t=>{
     const ps = people(t), synced = ps.filter(m=>players[m] && players[m].status === "synced").length;
