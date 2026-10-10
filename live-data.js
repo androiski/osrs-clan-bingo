@@ -77,7 +77,7 @@ setData(data);
 // ---- status line, banner and layout ----
 const since = ms => {
   const mins = Math.max(0, Math.round((Date.now() - ms) / 60000));
-  return mins < 1 ? "just now" : mins < 90 ? `${mins} min ago` : `${Math.round(mins / 60)} h ${mins % 60} min ago`;
+  return mins < 1 ? "just now" : mins < 90 ? `${mins} min ago` : `${Math.floor(mins / 60)} h ${mins % 60} min ago`;
 };
 const clock = ms => new Date(ms).toLocaleTimeString(undefined, {hour: "numeric", minute: "2-digit"});
 // Under the title: the event's dates, plus how fresh the data is while it runs.
@@ -228,7 +228,8 @@ function renderResults(){
   const ended = now > endMs;
   const winner = ended && ranked[0] && ranked[0].points > 0 ? ranked[0] : null;
   const view = getView();
-  const chosen = view !== "all" ? ranked.find(r => r.t.id === view) : winner;
+  // During the event, picking a team keeps the countdown; places show once it ends.
+  const chosen = !ended ? null : view !== "all" ? ranked.find(r => r.t.id === view) : winner;
 
   if (!chosen){
     if (ended) announce("", "The bingo has ended", 0, "", "No team completed a tile.");
@@ -239,9 +240,11 @@ function renderResults(){
   }
   const place = ranked.indexOf(chosen) + 1, isWinner = chosen === winner;
   const title = isWinner ? `${chosen.t.name} won!`
-    : ended ? `${chosen.t.name} came ${ordinal(place)}`
-    : `${chosen.t.name} are ${ordinal(place)} so far`;
-  const sub = `${plural(chosen.points, "point")} · ${plural(chosen.tiles, "tile")} · ${plural(chosen.lines, "line")}`;
+    : `${chosen.t.name} came ${ordinal(place)}`;
+  // A tie on points goes to whoever reached that score first (ranking() in board.js).
+  const tied = isWinner && ranked[1] && ranked[1].points === chosen.points;
+  const sub = `${plural(chosen.points, "point")} · ${plural(chosen.tiles, "tile")} · ${plural(chosen.lines, "line")}` +
+    (tied ? `<br>Tied on points; reached this score first.` : "");
   announce(isWinner ? "win" : "team", `${teamIco(chosen.t, "tico-l")}${title}`, 0, "", sub);
   box.querySelector("h2").insertAdjacentHTML("afterend", fireworksControl());   // right under the title, easy to spot
   box.style.setProperty("--c", colorVar(chosen.t.id));

@@ -42,12 +42,12 @@ Every 30 minutes (`.github/workflows/update.yml`) it makes 3 read-only requests:
 | `collection-log/group_collection_log.php?includecount=1` | every member's item counts | repeat drops (a count went up) |
 
 - **Before the start** (from 3 hours before), each run refreshes a baseline of everyone's
-  counts, KC and XP.
+  counts, KC and XP. Players TempleOSRS hasn't checked in 24h are asked to update first.
 - **During the event**, new log items come from the recent-items feed with real times.
-  A count that rose more than the drops already recorded is a repeat drop, timed to that run.
+  A count that rose more than the drops already recorded is a repeat drop, timed to the log's last change.
   KC/XP gains are measured against the baseline.
 - Someone who first syncs mid-event gets a fresh baseline, so their old log isn't counted.
-  Repeat drops noticed after the end are logged for organisers, not counted.
+  Repeat drops and KC/XP noticed after the end count if Temple says they changed before it.
 - Outside the event window it doesn't contact TempleOSRS at all.
 - **After the end** the job keeps checking for `verify_hours` (config.json, default 3) to
   catch drops that happened during the event but were synced late, then saves the results

@@ -40,6 +40,12 @@ export default {
 
     if (req.method === "GET" && parts[0] === "entries") return json(await list());
 
+    // Only the write routes go on to the password check, so a browser opening the Worker URL
+    // (GET /, /favicon.ico) doesn't count as wrong passwords.
+    const route = req.method === "POST" && (parts[0] === "check" || parts[0] === "entries")
+      || req.method === "DELETE" && parts[0] === "entries" && parts[1];
+    if (!route) return json({error: "Not found."}, 404);
+
     // Everything else needs the password.
     let body = {};
     try { body = await req.json(); } catch {}

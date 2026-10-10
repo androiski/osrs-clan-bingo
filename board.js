@@ -149,13 +149,13 @@ function renderDetail(){
   const tIco = tileIcon(selected);
   const rows = TILE_ITEMS[selected] || [];
   const brotherOf = name => (rows.find(r=>r[0] === name) || [])[3];
-  const ico = d => `<img class="ico" src="${ICON(d.id)}" alt="${d.name}" title="${got(d.name, d.by, d.h)}">`;
+  const ico = d => `<img class="ico" src="${ICON(d.id)}" alt="${qtyName(d)}" title="${got(qtyName(d), d.by, d.h)}">`;
 
   // Drops so far that count toward the tile. Barrows tracks every brother at once until one set is whole.
   function progressLines(t, e){
     const pd = ((drops[selected]||{})[t.id]||[]).filter(d=>d.kind === "progress");
     if (e && e.done && !pd.length) return "";
-    if (e && e.done && e.id) pd.push({name:e.item, id:e.id, by:e.by, h:hoursOf(e.when)});
+    if (e && e.done && e.id) pd.push({name:e.item, id:e.id, by:e.by, h:hoursOf(e.when), qty:e.qty});
     pd.sort((a,b)=>a.h-b.h);
     if (!pd.length) return "";
     if (rows.some(r=>r[3])){
@@ -166,7 +166,7 @@ function renderDetail(){
         .map(([b,set])=>`<div class="pl"><span>${b} ${set.size}/4</span>${[...set.values()].map(ico).join("")}</div>`).join("");
     }
     const pIco = tile.countIcon ? d => ico({...d, id: tile.countIcon}) : ico;
-    return `<div class="pl"><span>${tile.count ? tile.count + " " : ""}${pd.length}/${tile.target || pd.length}</span>${pd.map(pIco).join("")}</div>`;
+    return `<div class="pl"><span>${tile.count ? tile.count + " " : ""}${tile.target ? `${Math.min(qtySum(pd), tile.target)}/${tile.target}` : `${qtySum(pd)}/${qtySum(pd)}`}</span>${pd.map(pIco).join("")}</div>`;
   }
 
   el.innerHTML = `<h3>${tIco ? `<img class="hico" src="${tIco}" alt="">` : ""}<span>${tile.n}</span></h3>${tileSummary(selected, tile, src)}` +
@@ -220,7 +220,7 @@ function renderRosters(){
   const rs = liveSync ? {players: liveSync, live: true} : window.ROSTER_STATUS;
   const accounts = (rs && rs.players) || {};
   const accountsOf = p => TEAMS.flatMap(t=>t.members).filter(m=>person(m) === p);
-  const RANK = {missing: 0, error: 1, unsynced: 2, synced: 3};
+  const RANK = {notingroup: 0, missing: 0, error: 1, unsynced: 2, synced: 3};
   const players = Object.fromEntries(TEAMS.flatMap(people).map(p=>{
     const ss = accountsOf(p).map(m=>accounts[m]);
     return [p, ss.some(s=>!s) ? undefined : ss.reduce((a, b)=>RANK[b.status] < RANK[a.status] ? b : a)];
@@ -258,6 +258,9 @@ function renderLegend(){
     `<div><b><code>${s.mark}</code> ${s.label}</b>${s.detail}</div>`).join("");
 }
 
+// A stackable seen several at once is one drop with qty (missing means 1).
+const qtySum = list => list.reduce((s, d) => s + (d.qty || 1), 0);
+const qtyName = d => d.qty > 1 ? `${d.name} ×${d.qty}` : d.name;
 const got = (item, by, when) => `${item}${by && by !== "Team" ? ` - ${by}` : ""} @ ${dayLabel(typeof when === "number" ? when : hoursOf(when))}`;
 // Who got a tile: the finisher, plus anyone whose drops it needed. Count tiles take the drops
 // that made up the target; Barrows only the pieces of the set that was finished. XP tiles
@@ -271,7 +274,7 @@ function helpers(i, tid, e){
   if (rows.some(r => r[3])){
     const brother = (e.item || "").replace(/'s set$/, ""), seen = new Set();
     pd = pd.filter(d => (rows.find(r => r[0] === d.name) || [])[3] === brother && !seen.has(d.name) && seen.add(d.name));
-  } else pd = pd.slice(0, tile.target - 1);
+  } else { let n = e.qty || 1; pd = pd.filter(d => n < tile.target && (n += d.qty || 1)); }
   return [...new Set([...pd.map(d => d.by), e.by])];
 }
 const byNames = (i, tid, e) => helpers(i, tid, e).join(", ");
@@ -362,7 +365,7 @@ function renderDry(){
     for (let k = 1; k < s.pts.length; k++) d += `H${x(s.pts[k][0])}V${y(s.pts[k][1])}`;
     const others = s.drops.filter(dr=>dr.kind !== "done")
       .map(dr=>marker(dr.kind, x(dr.h), y(valueAt(s.pts, dr.h)), ICON(dr.id),
-        `${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}`, dr.manual, dr.voided)).join("");
+        `${got(qtyName(dr), dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}`, dr.manual, dr.voided)).join("");
     let done = "";
     if (s.doneH != null){
       const src = tile.s === "xp" ? tr.icon : (s.e.id ? ICON(s.e.id) : null);
@@ -380,9 +383,9 @@ function renderDry(){
         `${byNames(selected, s.t.id, s.e) ? `${byNames(selected, s.t.id, s.e)} · ` : ""}${dayLabel(hoursOf(s.e.when))}`;
     // Each player's gain, with icons for every drop they got here (the finishing one included).
     const all = [...s.drops.filter(dr=>dr.kind !== "done"),
-      ...(s.e && s.e.done && s.e.id ? [{name:s.e.item, id:s.e.id, by:s.e.by, h:hoursOf(s.e.when), kind:"done"}] : [])];
+      ...(s.e && s.e.done && s.e.id ? [{name:s.e.item, id:s.e.id, by:s.e.by, h:hoursOf(s.e.when), qty:s.e.qty, kind:"done"}] : [])];
     const icons = m => all.filter(dr=>dr.by === m).sort((a,b)=>a.h-b.h).map(dr=>
-      `<img class="ico ${dr.kind}" src="${ICON(dr.id)}" alt="${dr.name}" title="${got(dr.name, dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}">`).join("");
+      `<img class="ico ${dr.kind}" src="${ICON(dr.id)}" alt="${qtyName(dr)}" title="${got(qtyName(dr), dr.by, dr.h)}${dr.voided ? " (unchecked by a mod)" : dr.kind === "other" ? " (doesn't count)" : ""}">`).join("");
     const who = ((byPlayer[selected]||{})[s.t.id]||[]);
     const split = who.length ? `<tr class="who"><td colspan="3">${who.map(([m,v])=>`<span>${m} <b>${fmtN(v, tr.unit)}</b>${icons(m)}</span>`).join('<i>·</i>')}</td></tr>` : "";
     return `<tr class="team"><td><span class="sw" style="--c:${colorVar(s.t.id)}"></span> ${teamIco(s.t)}${s.t.name}</td>` +
@@ -505,12 +508,12 @@ function playerStats(team){
     TILES.forEach((tile, i) => {
       const e = t[i], tr = TRACK[i];
       const items = ((drops[i] || {})[team.id] || []).filter(d => mine(d.by))
-        .map(d => ({src: ICON(d.id), name: d.name, counts: d.kind !== "other", finished: false}));
+        .map(d => ({src: ICON(d.id), name: qtyName(d), qty: d.qty || 1, counts: d.kind !== "other", finished: false}));
       // A tile counts for everyone who helped get it (see helpers); the finishing item shows
       // only on the player who got it.
       const finished = helpers(i, team.id, e).some(mine);
       if (finished && mine(e.by)) items.unshift({src: e.id ? ICON(e.id) : tileIcon(i), name: e.item || tile.n, counts: true, finished: true});
-      dropsGot += items.length;
+      dropsGot += qtySum(items);
       let amount = "", share = 0;
       if (tr){
         const rows = ((byPlayer[i] || {})[team.id]) || [], got = rows.filter(r => mine(r[0])).reduce((sum, r) => sum + r[1], 0);
